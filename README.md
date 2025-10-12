@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="https://github.com/Samueli924/chaoxing"><img src="https://img.shields.io/github/stars/Samueli924/chaoxing" alt="Stars" /></a>
-  <a href="https://github.com/ViVi141/chaoxing"><img src="https://img.shields.io/badge/version-2.2.0-blue" alt="Version" /></a>
+  <a href="https://github.com/ViVi141/chaoxing"><img src="https://img.shields.io/badge/version-2.2.1-blue" alt="Version" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-green" alt="License" /></a>
   <img src="https://img.shields.io/badge/Refine-v5-orange" alt="Refine v5" />
   <img src="https://img.shields.io/badge/React_Router-v7-blue" alt="React Router v7" />
@@ -10,7 +10,7 @@
 
 > 基于[Samueli924/chaoxing](https://github.com/Samueli924/chaoxing)的增强版本，提供命令行和Web两种使用方式
 > 
-> 🆕 **v2.2.0更新**: 升级到Refine v5架构 + 图形化数据库迁移功能
+> 🆕 **v2.2.1更新**: 新增5种题库（含硅基流动AI）+ 4种通知方式（含SMTP邮件）
 
 ---
 
@@ -160,7 +160,7 @@ GPL-3.0 License
 
 ---
 
-## 🆕 v2.2.1 更新内容
+## 🆕 v2.2.0 & v2.2.1 更新内容
 
 ### 技术栈升级
 - ✅ Refine v4 → **v5**（大版本升级）

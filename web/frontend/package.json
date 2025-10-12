@@ -1,6 +1,6 @@
 {
   "name": "chaoxing-web-refine",
-  "version": "2.1.0",
+  "version": "2.2.1",
   "description": "超星学习通多用户Web管理平台 - Refine版本",
   "type": "module",
   "scripts": {

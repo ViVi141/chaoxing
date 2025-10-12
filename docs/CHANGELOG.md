@@ -1,5 +1,83 @@
 # 📝 更新日志
 
+## v2.2.1 (2025-10-12)
+
+### ✨ 新功能
+
+#### 5种题库全面支持（Web + 命令行）
+- ✅ **言溪题库**（TikuYanxi） - Token-based
+- ✅ **LIKE知识库**（TikuLike） - Token-based + AI模型
+- ✅ **TikuAdapter** - 开源自建服务
+- ✅ **AI大模型** - OpenAI兼容API（DeepSeek、Moonshot等）
+- ✅ **硅基流动AI**（SiliconFlow）⚡ - 性价比最高，推荐使用
+
+#### 4种通知方式完整支持
+- ✅ **Server酱** - 多平台推送
+- ✅ **Qmsg酱** - QQ推送
+- ✅ **Bark** - iOS推送
+- ✅ **SMTP邮件** 📧 - 新增支持（Gmail、QQ、163等）
+
+#### Web平台配置界面
+- ✅ 题库配置页面 - 动态表单，根据选择显示对应配置项
+- ✅ 通知配置页面 - 支持所有通知方式的可视化配置
+- ✅ 系统配置页面 - 完善管理员系统设置标签页
+
+### 🔧 技术实现
+
+#### 后端更新
+- ✅ `api/notification.py` - 新增SMTP邮件通知类（+200行）
+  - 支持TLS/SSL加密
+  - HTML格式美化邮件
+  - 完整错误处理
+- ✅ `web/backend/schemas.py` - 扩展题库和通知配置字段
+  - TikuConfig：支持所有AI题库配置
+  - NotificationConfig：支持SMTP配置
+
+#### 前端更新
+- ✅ `web/frontend/src/pages/config/full.tsx` - 配置界面重构（+300行）
+  - 5种题库配置表单
+  - 4种通知配置表单
+  - 动态渲染、智能提示
+- ✅ `web/frontend/src/pages/admin/SystemConfig.tsx` - 系统设置完善
+  - 功能列表展示
+  - 系统信息显示
+
+#### 配置文件更新
+- ✅ `config_template.ini` - 添加SMTP配置示例
+- ✅ 支持硅基流动AI完整配置
+
+### 📚 文档新增
+- ✅ `docs/NEW_FEATURES.md` - 详细功能说明文档（320行）
+  - 5种题库完整配置指南
+  - 4种通知方式使用说明
+  - 常见问题和故障排查
+  - 使用场景推荐
+
+### 🎯 代码修改统计
+- **5个文件**更新
+- **500+行**代码新增
+- **1个新文档**（NEW_FEATURES.md）
+- **TypeScript错误**: 0个
+- **代码质量**: 通过所有检查
+
+### 💡 推荐配置
+```ini
+[tiku]
+provider=SiliconFlow
+siliconflow_key=sk-你的密钥
+siliconflow_model=deepseek-ai/DeepSeek-R1
+
+[notification]
+provider=SMTP
+smtp_host=smtp.gmail.com
+smtp_port=587
+smtp_username=your_email@gmail.com
+smtp_password=your_app_password
+smtp_to_email=recipient@example.com
+```
+
+---
+
 ## v2.2.0 (2025-10-13)
 
 ### 🎉 重大技术升级
