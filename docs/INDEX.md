@@ -24,6 +24,7 @@
 - [本地部署](../web/START_GUIDE.md) - 本地开发环境搭建
 - [Docker部署](../web/DOCKER_DEPLOYMENT.md) - 容器化部署
 - [生产部署](../web/DEPLOYMENT_GUIDE.md) - 生产环境部署指南
+- [数据库迁移](DATABASE_MIGRATION.md) - SQLite迁移到PostgreSQL指南
 
 ---
 
@@ -49,5 +50,16 @@
 
 ---
 
-**最后更新：** 2025-10-12
+---
+
+## 🆕 v2.2.0 更新
+
+- [Refine v5升级报告](../REFINE_V5_UPGRADE_COMPLETE.md)
+- [数据库迁移指南](DATABASE_MIGRATION.md)
+- [升级指南](UPGRADE_GUIDE.md)
+
+---
+
+**版本：** v2.2.0  
+**最后更新：** 2025-10-13
 

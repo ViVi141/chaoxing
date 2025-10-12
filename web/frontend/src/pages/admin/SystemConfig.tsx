@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Card, Form, Input, InputNumber, Switch, Button, message, Tabs, Alert, Space, Select, Descriptions } from 'antd';
+import { Card, Form, Input, InputNumber, Switch, Button, message, Tabs, Alert, Space, Descriptions } from 'antd';
 import { SaveOutlined, ReloadOutlined, MailOutlined, SettingOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { axiosInstance } from '../../providers/authProvider';
-
-const { TabPane } = Tabs;
-const { TextArea } = Input;
 
 export const SystemConfig = () => {
   const [smtpForm] = Form.useForm();
@@ -113,17 +110,19 @@ export const SystemConfig = () => {
           style={{ marginBottom: 24 }}
         />
 
-        <Tabs defaultActiveKey="smtp">
-          {/* SMTP配置 */}
-          <TabPane
-            tab={
-              <span>
-                <MailOutlined />
-                SMTP邮件配置
-              </span>
-            }
-            key="smtp"
-          >
+        <Tabs 
+          defaultActiveKey="smtp"
+          items={[
+            {
+              key: 'smtp',
+              label: (
+                <span>
+                  <MailOutlined />
+                  SMTP邮件配置
+                </span>
+              ),
+              children: (
+                <>
             <Card title="SMTP服务器配置" style={{ marginBottom: 16 }}>
               <Form
                 form={smtpForm}
@@ -292,34 +291,36 @@ export const SystemConfig = () => {
                 </Descriptions>
               </Card>
             )}
-          </TabPane>
-
-          {/* 系统设置 */}
-          <TabPane
-            tab={
-              <span>
-                <SettingOutlined />
-                系统设置
-              </span>
-            }
-            key="system"
-          >
-            <Card>
-              <Alert
-                message="功能开发中"
-                description="更多系统设置（任务限制、日志级别等）即将推出"
-                type="info"
-                showIcon
-              />
-              
-              <div style={{ marginTop: 24 }}>
-                <Button onClick={initDefaults}>
-                  初始化默认配置
-                </Button>
-              </div>
-            </Card>
-          </TabPane>
-        </Tabs>
+                </>
+              ),
+            },
+            {
+              key: 'system',
+              label: (
+                <span>
+                  <SettingOutlined />
+                  系统设置
+                </span>
+              ),
+              children: (
+                <Card>
+                  <Alert
+                    message="功能开发中"
+                    description="更多系统设置（任务限制、日志级别等）即将推出"
+                    type="info"
+                    showIcon
+                  />
+                  
+                  <div style={{ marginTop: 24 }}>
+                    <Button onClick={initDefaults}>
+                      初始化默认配置
+                    </Button>
+                  </div>
+                </Card>
+              ),
+            },
+          ]}
+        />
       </Card>
     </div>
   );

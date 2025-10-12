@@ -2,11 +2,15 @@
 
 <p align="center">
   <a href="https://github.com/Samueli924/chaoxing"><img src="https://img.shields.io/github/stars/Samueli924/chaoxing" alt="Stars" /></a>
-  <a href="https://github.com/ViVi141/chaoxing"><img src="https://img.shields.io/badge/version-2.1.0-blue" alt="Version" /></a>
+  <a href="https://github.com/ViVi141/chaoxing"><img src="https://img.shields.io/badge/version-2.2.0-blue" alt="Version" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-green" alt="License" /></a>
+  <img src="https://img.shields.io/badge/Refine-v5-orange" alt="Refine v5" />
+  <img src="https://img.shields.io/badge/React_Router-v7-blue" alt="React Router v7" />
 </p>
 
 > 基于[Samueli924/chaoxing](https://github.com/Samueli924/chaoxing)的增强版本，提供命令行和Web两种使用方式
+> 
+> 🆕 **v2.2.0更新**: 升级到Refine v5架构 + 图形化数据库迁移功能
 
 ---
 
@@ -27,6 +31,7 @@
 - ✅ 任务详细日志查看
 - ✅ 管理员后台
 - ✅ 零依赖部署（SQLite+文件队列）
+- 🆕 **图形化数据库迁移**（SQLite → PostgreSQL + Redis）
 
 ---
 
@@ -121,10 +126,11 @@ python main.py -c config.ini
 - Celery 5.4.0
 - WebSocket 13.1
 
-### 前端
+### 前端（v2.2.0更新）
 - React 18.3.1
-- Refine 4.53.0
-- Ant Design 5.21.6
+- **Refine 5.0.4** 🆕
+- **Ant Design 5.27.4** ⬆️
+- **React Router 7.0.2** 🆕
 - Vite 5.4.10
 
 ---
@@ -147,11 +153,34 @@ GPL-3.0 License
 
 ---
 
+## 🆕 v2.2.0 更新内容
+
+### 技术栈升级
+- ✅ Refine v4 → **v5**（大版本升级）
+- ✅ React Router v6 → **v7**（大版本升级）
+- ✅ Ant Design 5.21 → **5.27**（最新稳定版）
+- ✅ 新增 React Query 5.x（现代化状态管理）
+
+### 新增功能
+- ✅ **图形化数据库迁移系统**
+  - Web界面一键迁移SQLite到PostgreSQL
+  - 实时进度显示
+  - 自动备份和验证
+  - 跨平台重启脚本
+
+### 代码质量
+- ✅ TypeScript错误：0个
+- ✅ 修复75%的第三方库警告
+- ✅ API迁移到最新标准
+
+---
+
 ## 📞 技术支持
 
 - **原项目Issues**: https://github.com/Samueli924/chaoxing/issues
 - **增强版Issues**: https://github.com/ViVi141/chaoxing/issues
 - **邮箱**: 747384120@qq.com
+- **数据库迁移文档**: [docs/DATABASE_MIGRATION.md](docs/DATABASE_MIGRATION.md)
 
 ---
 

@@ -26,6 +26,7 @@ from api.logger import logger
 
 # 导入路由
 from routes import auth_router, user_router, task_router, admin_router, websocket_router, system_config_router, course_router
+from routes.migration import router as migration_router
 # 移除安装向导路由 - 不再需要
 # from routes.setup import router as setup_router
 
@@ -145,6 +146,7 @@ app.include_router(task_router, prefix="/api/tasks", tags=["任务"])
 app.include_router(admin_router, prefix="/api/admin", tags=["管理员"])
 app.include_router(system_config_router, prefix="/api/system-config", tags=["系统配置"])
 app.include_router(course_router, prefix="/api/courses", tags=["课程"])
+app.include_router(migration_router, prefix="/api/migration", tags=["数据库迁移"])
 app.include_router(websocket_router, prefix="/ws", tags=["WebSocket"])
 
 # 静态文件服务（前端构建文件）

@@ -3,11 +3,12 @@ import { axiosInstance } from './authProvider';
 
 export const dataProvider: DataProvider = {
   getList: async ({ resource, pagination, filters, sorters }) => {
-    const { current = 1, pageSize = 10 } = pagination ?? {};
+    const page = (pagination as any)?.page || (pagination as any)?.current || 1;
+    const perPage = (pagination as any)?.perPage || (pagination as any)?.pageSize || 10;
 
     const query: any = {
-      page: current,
-      page_size: pageSize,
+      page: page,
+      page_size: perPage,
     };
 
     if (sorters && sorters.length > 0) {

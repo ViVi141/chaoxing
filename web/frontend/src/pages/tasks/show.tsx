@@ -5,8 +5,8 @@ import { Typography, Progress } from 'antd';
 const { Title } = Typography;
 
 export const TaskShow = () => {
-  const { queryResult } = useShow();
-  const { data, isLoading } = queryResult;
+  const { query } = useShow();
+  const { data, isLoading } = query;
 
   const record = data?.data;
 

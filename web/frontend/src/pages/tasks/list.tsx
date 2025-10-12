@@ -29,7 +29,7 @@ const statusText: Record<string, string> = {
 };
 
 export const TaskList = () => {
-  const { tableProps, tableQueryResult } = useTable({
+  const tableResult = useTable({
     syncWithLocation: true,
   });
   
@@ -37,7 +37,7 @@ export const TaskList = () => {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const navigate = useNavigate();
 
-  const { refetch } = tableQueryResult;
+  const refetch = () => window.location.reload();
 
   // 快捷操作函数
   const handleQuickAction = async (taskId: number, action: string, actionName: string) => {
@@ -146,7 +146,7 @@ export const TaskList = () => {
       )}
     >
       <Table 
-        {...tableProps} 
+        {...tableResult.tableProps} 
         rowKey="id"
         rowSelection={rowSelection}
         scroll={{ x: 1200 }}

@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react';
 import { axiosInstance } from '../../providers/authProvider';
 
 export const UserShowFull = () => {
-  const { queryResult } = useShow();
-  const { data, isLoading } = queryResult;
+  const { query } = useShow();
+  const { data, isLoading } = query;
   const record = data?.data;
 
   const [userTasks, setUserTasks] = useState<any[]>([]);

@@ -2,14 +2,14 @@ import { Refine } from '@refinedev/core';
 import {
   AuthPage,
   ErrorComponent,
-  ThemedLayoutV2,
-  ThemedTitleV2,
+  ThemedLayout,
+  ThemedTitle,
   useNotificationProvider,
 } from '@refinedev/antd';
-import routerBindings, {
+import routerProviderDefault, {
   DocumentTitleHandler,
   UnsavedChangesNotifier,
-} from '@refinedev/react-router-v6';
+} from '@refinedev/react-router';
 import { App as AntdApp, ConfigProvider, message } from 'antd';
 import { BrowserRouter, Outlet, Route, Routes } from 'react-router-dom';
 import zhCN from 'antd/locale/zh_CN';
@@ -28,7 +28,7 @@ import { ConfigPageFull } from './pages/config/full';
 import { CustomLogin, VerifyEmail, ForgotPassword, ResetPassword } from './pages/auth';
 
 // 管理员页面
-import { AdminDashboard, AdminUsersList, AdminTasksList, SystemConfig } from './pages/admin';
+import { AdminDashboard, AdminUsersList, AdminTasksList, SystemConfig, DatabaseMigration } from './pages/admin';
 
 function App() {
   // 配置全局 message，防止重复弹窗
@@ -46,8 +46,13 @@ function App() {
           <Refine
             dataProvider={dataProvider}
             authProvider={authProvider}
-            routerProvider={routerBindings}
+            routerProvider={routerProviderDefault}
             notificationProvider={useNotificationProvider}
+            options={{
+              syncWithLocation: true,
+              warnWhenUnsavedChanges: true,
+              disableTelemetry: true,
+            }}
             resources={[
               {
                 name: 'dashboard',
@@ -114,25 +119,29 @@ function App() {
                   parent: 'admin',
                 },
               },
+              {
+                name: 'admin/database-migration',
+                list: '/admin/database-migration',
+                meta: {
+                  label: '数据库迁移',
+                  parent: 'admin',
+                },
+              },
             ]}
-            options={{
-              syncWithLocation: true,
-              warnWhenUnsavedChanges: true,
-            }}
           >
             <Routes>
               <Route
                 element={
-                  <ThemedLayoutV2
+                  <ThemedLayout
                     Title={({ collapsed }) => (
-                      <ThemedTitleV2
+                      <ThemedTitle
                         collapsed={collapsed}
                         text="超星学习通"
                       />
                     )}
                   >
                     <Outlet />
-                  </ThemedLayoutV2>
+                  </ThemedLayout>
                 }
               >
                 <Route index element={<DashboardPageFull />} />
@@ -151,6 +160,7 @@ function App() {
                   <Route path="users" element={<AdminUsersList />} />
                   <Route path="tasks" element={<AdminTasksList />} />
                   <Route path="system-config" element={<SystemConfig />} />
+                  <Route path="database-migration" element={<DatabaseMigration />} />
                 </Route>
 
                 <Route path="*" element={<ErrorComponent />} />
@@ -193,4 +203,3 @@ function App() {
 }
 
 export default App;
-

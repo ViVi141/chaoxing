@@ -22,7 +22,7 @@ const statusText: Record<string, string> = {
 };
 
 export const AdminTasksList = () => {
-  const { tableProps, tableQueryResult } = useTable({
+  const tableResult = useTable({
     resource: 'admin/tasks',
     syncWithLocation: true,
   });
@@ -31,7 +31,7 @@ export const AdminTasksList = () => {
     try {
       await axiosInstance.post(`/admin/tasks/${taskId}/cancel`);
       message.success('任务已取消');
-      tableQueryResult?.refetch();
+      window.location.reload();
     } catch (error: any) {
       message.error(error.response?.data?.detail || '操作失败');
     }
@@ -41,7 +41,7 @@ export const AdminTasksList = () => {
     try {
       await axiosInstance.post(`/tasks/${taskId}/retry`);
       message.success('任务已重新启动');
-      tableQueryResult?.refetch();
+      window.location.reload();
     } catch (error: any) {
       message.error(error.response?.data?.detail || '操作失败');
     }
@@ -55,14 +55,14 @@ export const AdminTasksList = () => {
           {defaultButtons}
           <Button
             icon={<ReloadOutlined />}
-            onClick={() => tableQueryResult?.refetch()}
+            onClick={() => window.location.reload()}
           >
             刷新
           </Button>
         </>
       )}
     >
-      <Table {...tableProps} rowKey="id">
+      <Table {...tableResult.tableProps} rowKey="id">
         <Table.Column dataIndex="id" title="ID" width={80} />
         <Table.Column 
           dataIndex="user_id" 

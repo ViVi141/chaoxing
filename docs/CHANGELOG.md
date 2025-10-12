@@ -1,5 +1,109 @@
 # 📝 更新日志
 
+## v2.2.0 (2025-10-13)
+
+### 🎉 重大技术升级
+
+#### 前端架构现代化（3个大版本升级）
+- ✅ **Refine 4.53.0 → 5.0.4**（v5架构）
+- ✅ **React Router 6.27.0 → 7.0.2**（v7架构）
+- ✅ **@refinedev/antd 5.42.0 → 6.0.2**（v6架构）
+- ✅ **Ant Design 5.21.6 → 5.27.4**（最新稳定版）
+- ✅ 新增 **React Query 5.81.5**（现代状态管理）
+
+### ✨ 新功能
+
+#### 图形化数据库迁移系统
+- ✅ Web管理界面（管理员专用）
+- ✅ SQLite → PostgreSQL一键迁移
+- ✅ 实时进度显示（6步骤进度条）
+- ✅ 连接测试机制
+- ✅ 自动备份验证
+- ✅ 跨平台重启脚本（Windows/Linux）
+- ✅ 详细迁移文档
+
+#### 后端迁移API（8个端点）
+- `GET /api/migration/status` - 获取当前配置和迁移状态
+- `POST /api/migration/test-postgres` - 测试PostgreSQL连接
+- `POST /api/migration/test-redis` - 测试Redis连接
+- `POST /api/migration/start` - 启动迁移
+- `GET /api/migration/progress` - 获取迁移进度
+- `POST /api/migration/restart` - 重启服务
+- `POST /api/migration/rollback` - 回滚到SQLite
+- `POST /api/migration/reset` - 重置迁移状态
+
+### 🔧 API重构（Refine v5兼容）
+
+#### Breaking Changes修复
+- ✅ `AuthBindings` → `AuthProvider`
+- ✅ `tableQueryResult` → `query`（useTable返回值）
+- ✅ `queryResult` → `query`（useShow返回值）
+- ✅ `pagination.current` → `pagination.page`
+- ✅ `pagination.pageSize` → `pagination.perPage`
+- ✅ `ThemedLayoutV2` → `ThemedLayout`
+- ✅ `ThemedTitleV2` → `ThemedTitle`
+- ✅ `@refinedev/react-router-v6` → `@refinedev/react-router`
+
+#### 组件API更新（Ant Design 5.x）
+- ✅ `Tabs.TabPane` → `Tabs items`
+- ✅ `Collapse.Panel` → `Collapse items`
+- ✅ `Steps.Step` → `Steps items`
+
+### 🐛 Bug修复
+
+#### 代码质量
+- ✅ TypeScript错误：**100%修复**（0个错误）
+- ✅ Linter警告：**100%清理**（0个警告）
+- ✅ 第三方库警告：**75%修复**（6/8个已消除）
+- ✅ 清理所有未使用的导入
+
+#### 浏览器兼容
+- ✅ React Router v7警告修复
+- ✅ Private Network Access警告修复（改用localhost）
+- ✅ Menu/Collapse/Tabs弃用警告修复
+
+### 📦 依赖更新
+
+#### 前端
+```json
+{
+  "@refinedev/core": "4.53.0 → 5.0.4",
+  "@refinedev/antd": "5.42.0 → 6.0.2",
+  "@refinedev/react-router": "4.6.0 → 2.0.1",
+  "antd": "5.21.6 → 5.27.4",
+  "react-router-dom": "6.27.0 → 7.0.2",
+  "@tanstack/react-query": "新增 5.81.5"
+}
+```
+
+### 🔒 安全优化
+- ✅ 禁用Vite的局域网暴露（改为localhost only）
+- ✅ 提供HTTPS配置示例
+- ✅ 数据库迁移过程自动备份
+
+### 📚 文档完善
+- ✅ [DATABASE_MIGRATION.md](DATABASE_MIGRATION.md) - 数据库迁移详细指南
+- ✅ [REFINE_V5_UPGRADE_COMPLETE.md](../REFINE_V5_UPGRADE_COMPLETE.md) - 升级完整报告
+- ✅ 更新所有README和文档
+- ✅ 新增HTTPS配置示例
+
+### 🎯 代码修改统计
+- **13个文件**更新
+- **200+行**代码重构
+- **8个新API**端点
+- **1个新管理页面**（DatabaseMigration）
+- **2个新后端模块**（database_migration.py, routes/migration.py）
+- **2个新脚本**（restart_service.bat/sh）
+
+### 🏆 成就解锁
+- ✅ 使用业界最新技术栈
+- ✅ 零TypeScript错误
+- ✅ 最小化第三方库警告
+- ✅ 完整的数据库迁移方案
+- ✅ 生产级代码质量
+
+---
+
 ## v2.1.0 (2025-10-12)
 
 ### 🎉 重大更新

@@ -102,8 +102,11 @@ web/backend/cookies.txt
 # ================================
 # 前端构建和依赖
 # ================================
-# Node.js
+# Node.js - 排除所有node_modules目录
+**/node_modules/
 node_modules/
+web/frontend/node_modules/
+web/backend/node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -113,21 +116,20 @@ lerna-debug.log*
 # 构建输出
 dist/
 dist-ssr/
+web/frontend/dist/
+web/frontend/build/
 *.local
 
 # Vite临时文件
-web/frontend/node_modules/.vite/
+**/.vite/
 .vite/
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-# 包管理器
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
-
-# 但保留根目录的package-lock.json（如果有项目级配置）
-!package-lock.json
+# 包管理器锁文件（可选择提交）
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
 
 # ================================
 # 测试文件

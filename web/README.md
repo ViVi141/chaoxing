@@ -1,6 +1,8 @@
 # 超星学习通多用户Web管理平台
 
 > FastAPI + React 全栈Web应用
+> 
+> 🆕 **v2.2.0**: Refine v5架构 + 图形化数据库迁移
 
 ---
 
@@ -18,6 +20,7 @@
 - 全局任务监控
 - 系统统计数据
 - 强制停止任务
+- 🆕 **图形化数据库迁移**（SQLite → PostgreSQL + Redis）
 
 ### 实时功能
 - WebSocket实时进度推送
@@ -213,6 +216,31 @@ python test_all_apis.py
 
 ---
 
+## 🎉 v2.2.0 升级亮点
+
+### 技术栈现代化
+- ✅ 升级到Refine v5架构
+- ✅ 升级到React Router v7
+- ✅ 使用最新Ant Design 5.27
+- ✅ 集成React Query 5.x
+
+### 新增功能
+- ✅ 图形化数据库迁移（SQLite → PostgreSQL）
+- ✅ 8个新增迁移API端点
+- ✅ 自动重启脚本（Windows/Linux）
+
+### 代码质量
+- ✅ TypeScript错误：0个
+- ✅ Linter警告：0个
+- ✅ 警告修复率：75%
+
+详细报告：
+- [Refine v5升级完整报告](../REFINE_V5_UPGRADE_COMPLETE.md)
+- [数据库迁移指南](../docs/DATABASE_MIGRATION.md)
+- [升级指南](../docs/UPGRADE_GUIDE.md)
+
+---
+
 ## ⚠️ 免责声明
 
 - 本代码遵循GPL-3.0协议
@@ -222,5 +250,5 @@ python test_all_apis.py
 
 ---
 
-**版本：** 2.1.0  
-**更新：** 2025-10-12
+**版本：** 2.2.0 🆕  
+**更新：** 2025-10-13

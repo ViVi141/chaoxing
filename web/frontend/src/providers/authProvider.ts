@@ -1,4 +1,4 @@
-import { AuthBindings } from '@refinedev/core';
+import { AuthProvider } from '@refinedev/core';
 import axios from 'axios';
 
 const API_URL = 'http://localhost:8000/api';
@@ -31,8 +31,8 @@ axiosInstance.interceptors.response.use(
   }
 );
 
-export const authProvider: AuthBindings = {
-  login: async ({ username, password }) => {
+export const authProvider: AuthProvider = {
+  login: async ({ username, password }: { username: string; password: string }) => {
     try {
       // 清除旧token
       localStorage.removeItem('token');
@@ -123,7 +123,7 @@ export const authProvider: AuthBindings = {
     }
   },
 
-  onError: async (error) => {
+  onError: async (error: any) => {
     if (error.response?.status === 401) {
       return {
         logout: true,

@@ -1,4 +1,4 @@
-import { Card, Row, Col, Statistic, Table, Tag, Typography, List, Empty, Spin, Avatar, Space, Progress } from 'antd';
+import { Card, Row, Col, Statistic, Table, Tag, Typography, List, Progress } from 'antd';
 import { 
   UserOutlined, 
   FileTextOutlined, 
@@ -10,7 +10,25 @@ import {
 import { useEffect, useState } from 'react';
 import { axiosInstance } from '../../providers/authProvider';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
+
+// 状态颜色映射
+const statusColors: Record<string, string> = {
+  pending: 'default',
+  running: 'processing',
+  completed: 'success',
+  failed: 'error',
+  cancelled: 'warning',
+};
+
+// 状态文本映射
+const statusText: Record<string, string> = {
+  pending: '等待中',
+  running: '运行中',
+  completed: '已完成',
+  failed: '失败',
+  cancelled: '已取消',
+};
 
 export const AdminDashboard = () => {
   const [stats, setStats] = useState<any>({});

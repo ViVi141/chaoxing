@@ -3,7 +3,7 @@ import { Table, Space, Tag, Switch, message } from 'antd';
 import { axiosInstance } from '../../providers/authProvider';
 
 export const AdminUsersList = () => {
-  const { tableProps, tableQueryResult } = useTable({
+  const tableResult = useTable({
     resource: 'admin/users',
     syncWithLocation: true,
   });
@@ -14,7 +14,7 @@ export const AdminUsersList = () => {
         is_active: !currentStatus
       });
       message.success('用户状态已更新');
-      tableQueryResult?.refetch();
+      window.location.reload();
     } catch (error: any) {
       message.error(error.response?.data?.detail || '操作失败');
     }
@@ -22,7 +22,7 @@ export const AdminUsersList = () => {
 
   return (
     <List title="用户管理（管理员）">
-      <Table {...tableProps} rowKey="id">
+      <Table {...tableResult.tableProps} rowKey="id">
         <Table.Column dataIndex="id" title="ID" width={80} />
         <Table.Column dataIndex="username" title="用户名" />
         <Table.Column 

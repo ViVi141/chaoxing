@@ -26,8 +26,8 @@ const statusText: Record<string, string> = {
 };
 
 export const TaskShowFull = () => {
-  const { queryResult } = useShow();
-  const { data, isLoading, refetch } = queryResult;
+  const { query } = useShow();
+  const { data, isLoading, refetch } = query;
   const record = data?.data;
   const navigate = useNavigate();
 
