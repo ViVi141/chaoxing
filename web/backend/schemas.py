@@ -62,12 +62,38 @@ class TikuConfig(BaseModel):
     submit: bool = Field(False, description="是否提交")
     cover_rate: float = Field(0.9, description="覆盖率")
     delay: float = Field(1.0, description="查询延迟")
+    # AI题库专用字段
+    endpoint: Optional[str] = Field(None, description="AI API端点")
+    key: Optional[str] = Field(None, description="AI API密钥")
+    model: Optional[str] = Field(None, description="AI模型名称")
+    min_interval_seconds: Optional[int] = Field(3, description="API请求最小间隔（秒）")
+    http_proxy: Optional[str] = Field(None, description="HTTP代理")
+    # 硅基流动专用字段
+    siliconflow_key: Optional[str] = Field(None, description="硅基流动API Key")
+    siliconflow_model: Optional[str] = Field(None, description="硅基流动模型")
+    siliconflow_endpoint: Optional[str] = Field(None, description="硅基流动端点")
+    # LIKE知识库专用字段
+    likeapi_search: Optional[bool] = Field(False, description="LIKE联网搜索")
+    likeapi_model: Optional[str] = Field(None, description="LIKE模型")
+    # TikuAdapter专用字段
+    url: Optional[str] = Field(None, description="TikuAdapter URL")
+    # 判断题选项配置
+    true_list: Optional[str] = Field("正确,对,√,是", description="判断题正确选项")
+    false_list: Optional[str] = Field("错误,错,×,否,不对,不正确", description="判断题错误选项")
 
 
 class NotificationConfig(BaseModel):
     """通知配置"""
     provider: Optional[str] = Field(None, description="通知提供商")
     url: Optional[str] = Field(None, description="通知URL")
+    # SMTP邮件专用字段
+    smtp_host: Optional[str] = Field(None, description="SMTP服务器")
+    smtp_port: Optional[int] = Field(587, description="SMTP端口")
+    smtp_username: Optional[str] = Field(None, description="SMTP用户名")
+    smtp_password: Optional[str] = Field(None, description="SMTP密码")
+    smtp_to_email: Optional[str] = Field(None, description="接收邮箱")
+    smtp_from_name: Optional[str] = Field("超星学习通", description="发件人名称")
+    smtp_use_tls: Optional[bool] = Field(True, description="使用TLS")
 
 
 class UserConfigBase(BaseModel):

@@ -273,5 +273,101 @@ class Bark(NotificationService):
             logger.error(f"Bark返回数据解析失败: {e}")
 
 
+class SMTP(NotificationService):
+    """
+    SMTP邮件通知服务
+    """
+    
+    def _init_service(self) -> None:
+        """初始化SMTP服务"""
+        required_fields = ['smtp_host', 'smtp_port', 'smtp_username', 'smtp_password', 'smtp_to_email']
+        
+        # 检查必填字段
+        for field in required_fields:
+            if not self._conf or not self._conf.get(field):
+                self.disabled = True
+                logger.info(f"SMTP配置不完整（缺少{field}），已忽略SMTP通知服务")
+                return
+        
+        self.smtp_host = self._conf['smtp_host']
+        self.smtp_port = int(self._conf.get('smtp_port', 587))
+        self.smtp_username = self._conf['smtp_username']
+        self.smtp_password = self._conf['smtp_password']
+        self.smtp_to_email = self._conf['smtp_to_email']
+        self.smtp_from_name = self._conf.get('smtp_from_name', '超星学习通')
+        self.smtp_use_tls = self._conf.get('smtp_use_tls', 'true').lower() in ['true', '1', 'yes']
+        
+        logger.info(f"已初始化SMTP通知服务，服务器: {self.smtp_host}:{self.smtp_port}")
+    
+    def _send(self, message: str) -> None:
+        """
+        通过SMTP发送邮件通知
+        
+        Args:
+            message: 要发送的消息内容
+        """
+        import smtplib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        from email.utils import formataddr
+        from datetime import datetime
+        
+        try:
+            # 创建邮件对象
+            msg = MIMEMultipart('alternative')
+            msg['From'] = formataddr((self.smtp_from_name, self.smtp_username))
+            msg['To'] = self.smtp_to_email
+            msg['Subject'] = f'【超星学习通】任务通知 - {datetime.now().strftime("%Y-%m-%d %H:%M")}'
+            
+            # 纯文本内容
+            text_content = message
+            
+            # HTML内容（更美观）
+            html_content = f"""
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+                    <h2 style="color: #1890ff; border-bottom: 2px solid #1890ff; padding-bottom: 10px;">
+                        📚 超星学习通任务通知
+                    </h2>
+                    <div style="padding: 20px; background-color: #f9f9f9; border-radius: 5px; margin: 20px 0;">
+                        <pre style="white-space: pre-wrap; word-wrap: break-word; font-family: 'Courier New', monospace; font-size: 14px;">{message}</pre>
+                    </div>
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px;">
+                        <p>此邮件由超星学习通自动化系统发送，请勿直接回复。</p>
+                        <p style="color: #999;">发送时间: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+            
+            # 添加内容
+            part1 = MIMEText(text_content, 'plain', 'utf-8')
+            part2 = MIMEText(html_content, 'html', 'utf-8')
+            msg.attach(part1)
+            msg.attach(part2)
+            
+            # 连接SMTP服务器并发送
+            if self.smtp_use_tls:
+                # 使用TLS加密（587端口）
+                server = smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=10)
+                server.starttls()
+            else:
+                # 使用SSL加密（465端口）
+                server = smtplib.SMTP_SSL(self.smtp_host, self.smtp_port, timeout=10)
+            
+            server.login(self.smtp_username, self.smtp_password)
+            server.sendmail(self.smtp_username, [self.smtp_to_email], msg.as_string())
+            server.quit()
+            
+            logger.info(f"SMTP邮件通知发送成功: {self.smtp_to_email}")
+            
+        except smtplib.SMTPException as e:
+            logger.error(f"SMTP邮件发送失败: {e}")
+        except Exception as e:
+            logger.error(f"SMTP邮件发送异常: {e}")
+
+
 # 为了向后兼容，保留原来的Notification类
 Notification = DefaultNotification

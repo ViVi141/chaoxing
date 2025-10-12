@@ -8,6 +8,7 @@
 
 - [README.md](../README.md) - 项目主页和快速开始
 - [快速安装指南](QUICK_START.md) - 5分钟快速上手
+- [新增功能说明](NEW_FEATURES.md) - 题库和通知功能详解 ⚡
 
 ---
 
@@ -52,14 +53,14 @@
 
 ---
 
-## 🆕 v2.2.0 更新
+## 🆕 v2.2.1 更新
 
-- [Refine v5升级报告](../REFINE_V5_UPGRADE_COMPLETE.md)
-- [数据库迁移指南](DATABASE_MIGRATION.md)
-- [升级指南](UPGRADE_GUIDE.md)
+- [新增功能说明](NEW_FEATURES.md) - AI题库 + SMTP通知 ⚡
+- [数据库迁移指南](DATABASE_MIGRATION.md) - SQLite → PostgreSQL
+- [升级指南](UPGRADE_GUIDE.md) - 版本升级步骤
 
 ---
 
-**版本：** v2.2.0  
-**最后更新：** 2025-10-13
+**版本：** v2.2.1  
+**最后更新：** 2025-10-12
 

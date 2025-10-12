@@ -210,9 +210,10 @@ export const ConfigPageFull = () => {
                   >
                     <Select size="large" placeholder="请选择题库" allowClear>
                       <Select.Option value="TikuYanxi">言溪题库</Select.Option>
-                      <Select.Option value="TikuWangke">网课题库</Select.Option>
-                      <Select.Option value="TikuIcodef">Icodef题库</Select.Option>
-                      <Select.Option value="TikuAPI">自定义API</Select.Option>
+                      <Select.Option value="TikuLike">LIKE知识库</Select.Option>
+                      <Select.Option value="TikuAdapter">TikuAdapter</Select.Option>
+                      <Select.Option value="AI">AI大模型（OpenAI兼容）</Select.Option>
+                      <Select.Option value="SiliconFlow">硅基流动AI ⚡</Select.Option>
                     </Select>
                   </Form.Item>
 
@@ -223,17 +224,11 @@ export const ConfigPageFull = () => {
                     }
                   >
                     {({ getFieldValue }) => {
-                      return getFieldValue('provider') ? (
+                      const provider = getFieldValue('provider');
+                      
+                      // 通用配置
+                      const commonFields = (
                         <>
-                          <Form.Item
-                            label="题库Token"
-                            name="token"
-                            rules={[{ required: true, message: '请输入题库Token' }]}
-                            tooltip="从题库网站获取的API Token"
-                          >
-                            <Input.Password placeholder="请输入题库Token" size="large" />
-                          </Form.Item>
-
                           <Form.Item
                             label="查询延迟（秒）"
                             name="delay"
@@ -252,7 +247,7 @@ export const ConfigPageFull = () => {
                           <Form.Item
                             label="题目覆盖率"
                             name="cover_rate"
-                            initialValue={0.8}
+                            initialValue={0.9}
                             tooltip="搜到的题目占总题目的比例，达到此比例才提交"
                           >
                             <InputNumber 
@@ -260,7 +255,7 @@ export const ConfigPageFull = () => {
                               max={1} 
                               step={0.1} 
                               style={{ width: '100%' }} 
-                              formatter={value => `${((value ?? 0.8) * 100)}%`}
+                              formatter={value => `${((value ?? 0.9) * 100)}%`}
                               size="large"
                             />
                           </Form.Item>
@@ -278,7 +273,161 @@ export const ConfigPageFull = () => {
                             />
                           </Form.Item>
                         </>
-                      ) : null;
+                      );
+
+                      // 言溪题库
+                      if (provider === 'TikuYanxi') {
+                        return (
+                          <>
+                            <Form.Item
+                              label="题库Token"
+                              name="tokens"
+                              rules={[{ required: true, message: '请输入题库Token' }]}
+                              tooltip="从言溪题库获取的Token，多个用逗号分隔"
+                              extra={<a href="https://tk.enncy.cn/" target="_blank" rel="noreferrer">获取Token →</a>}
+                            >
+                              <Input.Password placeholder="多个Token用逗号分隔" size="large" />
+                            </Form.Item>
+                            {commonFields}
+                          </>
+                        );
+                      }
+
+                      // LIKE知识库
+                      if (provider === 'TikuLike') {
+                        return (
+                          <>
+                            <Form.Item
+                              label="LIKE Token"
+                              name="tokens"
+                              rules={[{ required: true, message: '请输入LIKE Token' }]}
+                              extra={<a href="https://www.datam.site/" target="_blank" rel="noreferrer">获取Token →</a>}
+                            >
+                              <Input.Password placeholder="请输入LIKE Token" size="large" />
+                            </Form.Item>
+                            <Form.Item label="联网搜索" name="likeapi_search" valuePropName="checked" initialValue={false}>
+                              <Switch />
+                            </Form.Item>
+                            <Form.Item label="模型选择" name="likeapi_model" initialValue="deepseek-v3">
+                              <Select>
+                                <Select.Option value="deepseek-v3">DeepSeek V3</Select.Option>
+                                <Select.Option value="gpt-4o">GPT-4o</Select.Option>
+                              </Select>
+                            </Form.Item>
+                            {commonFields}
+                          </>
+                        );
+                      }
+
+                      // TikuAdapter
+                      if (provider === 'TikuAdapter') {
+                        return (
+                          <>
+                            <Form.Item
+                              label="TikuAdapter URL"
+                              name="url"
+                              rules={[
+                                { required: true, message: '请输入TikuAdapter URL' },
+                                { type: 'url', message: '请输入有效的URL' }
+                              ]}
+                              extra={<a href="https://github.com/DokiDoki1103/tikuAdapter" target="_blank" rel="noreferrer">项目地址 →</a>}
+                            >
+                              <Input placeholder="http://localhost:8000" size="large" />
+                            </Form.Item>
+                            {commonFields}
+                          </>
+                        );
+                      }
+
+                      // AI大模型
+                      if (provider === 'AI') {
+                        return (
+                          <>
+                            <Alert
+                              message="OpenAI兼容API"
+                              description="支持所有兼容OpenAI格式的API（如DeepSeek、Moonshot等）"
+                              type="info"
+                              style={{ marginBottom: 16 }}
+                            />
+                            <Form.Item
+                              label="API端点"
+                              name="endpoint"
+                              rules={[{ required: true, message: '请输入API端点' }]}
+                              tooltip="API地址，可能需要带/v1路径"
+                            >
+                              <Input placeholder="https://api.example.com/v1" size="large" />
+                            </Form.Item>
+                            <Form.Item
+                              label="API Key"
+                              name="key"
+                              rules={[{ required: true, message: '请输入API Key' }]}
+                            >
+                              <Input.Password placeholder="sk-..." size="large" />
+                            </Form.Item>
+                            <Form.Item
+                              label="模型名称"
+                              name="model"
+                              rules={[{ required: true, message: '请输入模型名称' }]}
+                            >
+                              <Input placeholder="gpt-4o-mini" size="large" />
+                            </Form.Item>
+                            <Form.Item label="请求间隔（秒）" name="min_interval_seconds" initialValue={3}>
+                              <InputNumber min={0} max={60} style={{ width: '100%' }} />
+                            </Form.Item>
+                            <Form.Item label="HTTP代理（可选）" name="http_proxy">
+                              <Input placeholder="http://proxy.example.com" size="large" />
+                            </Form.Item>
+                            {commonFields}
+                          </>
+                        );
+                      }
+
+                      // 硅基流动
+                      if (provider === 'SiliconFlow') {
+                        return (
+                          <>
+                            <Alert
+                              message="硅基流动AI - 推荐！"
+                              description="性价比极高的AI答题服务，支持DeepSeek-R1等先进模型"
+                              type="success"
+                              style={{ marginBottom: 16 }}
+                            />
+                            <Form.Item
+                              label="API Key"
+                              name="siliconflow_key"
+                              rules={[{ required: true, message: '请输入硅基流动API Key' }]}
+                              extra={<a href="https://cloud.siliconflow.cn/account/ak" target="_blank" rel="noreferrer">获取API Key →</a>}
+                            >
+                              <Input.Password placeholder="sk-..." size="large" />
+                            </Form.Item>
+                            <Form.Item 
+                              label="模型选择" 
+                              name="siliconflow_model" 
+                              initialValue="deepseek-ai/DeepSeek-R1"
+                              extra={<a href="https://docs.siliconflow.cn/cn/api-reference/chat-completions/chat-completions" target="_blank" rel="noreferrer">查看支持的模型 →</a>}
+                            >
+                              <Select>
+                                <Select.Option value="deepseek-ai/DeepSeek-R1">DeepSeek-R1（推荐）</Select.Option>
+                                <Select.Option value="deepseek-ai/DeepSeek-V3">DeepSeek-V3</Select.Option>
+                                <Select.Option value="Qwen/Qwen2.5-72B-Instruct">Qwen2.5-72B</Select.Option>
+                              </Select>
+                            </Form.Item>
+                            <Form.Item 
+                              label="API端点" 
+                              name="siliconflow_endpoint" 
+                              initialValue="https://api.siliconflow.cn/v1/chat/completions"
+                            >
+                              <Input size="large" />
+                            </Form.Item>
+                            <Form.Item label="请求间隔（秒）" name="min_interval_seconds" initialValue={3}>
+                              <InputNumber min={0} max={60} style={{ width: '100%' }} />
+                            </Form.Item>
+                            {commonFields}
+                          </>
+                        );
+                      }
+
+                      return null;
                     }}
                   </Form.Item>
 
@@ -323,10 +472,9 @@ export const ConfigPageFull = () => {
                   >
                     <Select size="large" placeholder="请选择通知服务" allowClear>
                       <Select.Option value="ServerChan">Server酱</Select.Option>
-                      <Select.Option value="PushPlus">PushPlus</Select.Option>
-                      <Select.Option value="Bark">Bark</Select.Option>
-                      <Select.Option value="DingTalk">钉钉</Select.Option>
-                      <Select.Option value="WeChat">企业微信</Select.Option>
+                      <Select.Option value="Qmsg">Qmsg酱</Select.Option>
+                      <Select.Option value="Bark">Bark（iOS）</Select.Option>
+                      <Select.Option value="SMTP">📧 SMTP邮件</Select.Option>
                     </Select>
                   </Form.Item>
 
@@ -337,38 +485,116 @@ export const ConfigPageFull = () => {
                     }
                   >
                     {({ getFieldValue }) => {
-                      return getFieldValue('provider') ? (
-                        <>
-                          <Form.Item
-                            label="Webhook URL"
-                            name="url"
-                            rules={[
-                              { required: true, message: '请输入Webhook URL' },
-                              { type: 'url', message: '请输入有效的URL' }
-                            ]}
-                            tooltip="从通知服务获取的Webhook地址"
-                          >
-                            <Input placeholder="https://..." size="large" />
-                          </Form.Item>
+                      const provider = getFieldValue('provider');
 
-                          <Form.Item
-                            label="Token/密钥"
-                            name="token"
-                            tooltip="部分服务需要额外的Token或密钥"
-                          >
-                            <Input.Password placeholder="请输入Token（可选）" size="large" />
-                          </Form.Item>
+                      // Server酱、Qmsg、Bark（需要URL）
+                      if (provider === 'ServerChan' || provider === 'Qmsg' || provider === 'Bark') {
+                        return (
+                          <>
+                            <Form.Item
+                              label="Webhook URL"
+                              name="url"
+                              rules={[
+                                { required: true, message: '请输入Webhook URL' },
+                                { type: 'url', message: '请输入有效的URL' }
+                              ]}
+                              tooltip="从通知服务获取的Webhook地址"
+                              extra={
+                                provider === 'ServerChan' ? <a href="https://sct.ftqq.com/" target="_blank" rel="noreferrer">获取URL →</a> :
+                                provider === 'Qmsg' ? <a href="https://qmsg.zendee.cn/" target="_blank" rel="noreferrer">获取URL →</a> :
+                                provider === 'Bark' ? <a href="https://bark.day.app/" target="_blank" rel="noreferrer">获取URL →</a> : null
+                              }
+                            >
+                              <Input placeholder="https://..." size="large" />
+                            </Form.Item>
+                          </>
+                        );
+                      }
 
-                          <Form.Item
-                            label="启用通知"
-                            name="enabled"
-                            initialValue={true}
-                            valuePropName="checked"
-                          >
-                            <Switch checkedChildren="启用" unCheckedChildren="禁用" />
-                          </Form.Item>
-                        </>
-                      ) : null;
+                      // SMTP邮件
+                      if (provider === 'SMTP') {
+                        return (
+                          <>
+                            <Alert
+                              message="SMTP邮件通知"
+                              description="配置您的邮箱SMTP服务，任务完成或出错时会发送邮件通知"
+                              type="info"
+                              style={{ marginBottom: 16 }}
+                            />
+                            <Form.Item
+                              label="SMTP服务器"
+                              name="smtp_host"
+                              rules={[{ required: true, message: '请输入SMTP服务器地址' }]}
+                              tooltip="例如：smtp.gmail.com、smtp.qq.com"
+                            >
+                              <Input placeholder="smtp.gmail.com" size="large" />
+                            </Form.Item>
+
+                            <Form.Item
+                              label="SMTP端口"
+                              name="smtp_port"
+                              initialValue={587}
+                              rules={[{ required: true, message: '请输入SMTP端口' }]}
+                              tooltip="TLS通常使用587端口，SSL使用465端口"
+                            >
+                              <InputNumber min={1} max={65535} style={{ width: '100%' }} size="large" />
+                            </Form.Item>
+
+                            <Form.Item
+                              label="发件邮箱/用户名"
+                              name="smtp_username"
+                              rules={[
+                                { required: true, message: '请输入邮箱地址' },
+                                { type: 'email', message: '请输入有效的邮箱地址' }
+                              ]}
+                              tooltip="通常是您的完整邮箱地址"
+                            >
+                              <Input placeholder="your_email@gmail.com" size="large" />
+                            </Form.Item>
+
+                            <Form.Item
+                              label="SMTP密码/授权码"
+                              name="smtp_password"
+                              rules={[{ required: true, message: '请输入SMTP密码' }]}
+                              tooltip="Gmail需使用应用专用密码，QQ/163需使用授权码"
+                            >
+                              <Input.Password placeholder="密码或授权码" size="large" />
+                            </Form.Item>
+
+                            <Form.Item
+                              label="接收通知的邮箱"
+                              name="smtp_to_email"
+                              rules={[
+                                { required: true, message: '请输入接收邮箱' },
+                                { type: 'email', message: '请输入有效的邮箱地址' }
+                              ]}
+                              tooltip="通知将发送到此邮箱"
+                            >
+                              <Input placeholder="recipient@example.com" size="large" />
+                            </Form.Item>
+
+                            <Form.Item
+                              label="发件人名称"
+                              name="smtp_from_name"
+                              initialValue="超星学习通"
+                            >
+                              <Input size="large" />
+                            </Form.Item>
+
+                            <Form.Item
+                              label="使用TLS加密"
+                              name="smtp_use_tls"
+                              initialValue={true}
+                              valuePropName="checked"
+                              tooltip="大多数SMTP服务器需要TLS（587端口）或SSL（465端口）"
+                            >
+                              <Switch checkedChildren="TLS(587)" unCheckedChildren="SSL(465)" />
+                            </Form.Item>
+                          </>
+                        );
+                      }
+
+                      return null;
                     }}
                   </Form.Item>
 

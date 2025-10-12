@@ -20,7 +20,8 @@
 - ✅ 视频/音频自动播放（1.0-2.0倍速）
 - ✅ 文档自动阅读
 - ✅ 章节测验自动答题
-- ✅ 题库集成支持
+- ✅ 5种题库支持（含AI大模型）
+- ✅ 4种通知方式（含SMTP邮件）
 - ✅ 配置文件加密
 - ✅ 日志自动脱敏
 
@@ -29,8 +30,10 @@
 - ✅ 任务管理（创建/启动/暂停/取消/重试）
 - ✅ 实时进度展示（WebSocket）
 - ✅ 任务详细日志查看
-- ✅ 管理员后台
+- ✅ 管理员后台（系统配置/用户管理）
 - ✅ 零依赖部署（SQLite+文件队列）
+- 🆕 **5种题库**（言溪/LIKE/TikuAdapter/AI/硅基流动）
+- 🆕 **4种通知**（Server酱/Qmsg/Bark/SMTP邮件）
 - 🆕 **图形化数据库迁移**（SQLite → PostgreSQL + Redis）
 
 ---
@@ -85,6 +88,7 @@ python main.py -c config.ini
 ## 📚 文档
 
 - **快速开始**: [docs/QUICK_START.md](docs/QUICK_START.md)
+- **新增功能**: [docs/NEW_FEATURES.md](docs/NEW_FEATURES.md) ⚡
 - **文档索引**: [docs/INDEX.md](docs/INDEX.md)
 - **API文档**: [docs/API.md](docs/API.md)
 - **架构说明**: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
@@ -97,13 +101,16 @@ python main.py -c config.ini
 ## 🎯 使用场景
 
 ### 个人使用
-使用**命令行版**，简单快速
+- 使用**命令行版** + **硅基流动AI** ⚡
+- 简单快速，成本低，效果好
 
 ### 小团队(<50人)
-使用**Web平台简单模式**，零依赖部署
+- 使用**Web平台简单模式** + **言溪/LIKE题库**
+- 零依赖部署，易于管理
 
 ### 大规模部署(>50人)
-使用**Web平台标准模式** + Docker
+- 使用**Web平台标准模式** + **AI大模型** + Docker
+- 高性能，支持集群
 
 ---
 
@@ -153,7 +160,7 @@ GPL-3.0 License
 
 ---
 
-## 🆕 v2.2.0 更新内容
+## 🆕 v2.2.1 更新内容
 
 ### 技术栈升级
 - ✅ Refine v4 → **v5**（大版本升级）
@@ -162,6 +169,19 @@ GPL-3.0 License
 - ✅ 新增 React Query 5.x（现代化状态管理）
 
 ### 新增功能
+- ✅ **5种题库支持**
+  - 言溪题库（TikuYanxi）
+  - LIKE知识库（TikuLike）
+  - TikuAdapter（开源）
+  - AI大模型（OpenAI兼容）
+  - 硅基流动AI（SiliconFlow）⚡ 推荐
+  
+- ✅ **4种通知方式**
+  - Server酱（多平台推送）
+  - Qmsg酱（QQ推送）
+  - Bark（iOS推送）
+  - SMTP邮件 📧 新增
+  
 - ✅ **图形化数据库迁移系统**
   - Web界面一键迁移SQLite到PostgreSQL
   - 实时进度显示
@@ -172,6 +192,9 @@ GPL-3.0 License
 - ✅ TypeScript错误：0个
 - ✅ 修复75%的第三方库警告
 - ✅ API迁移到最新标准
+
+### 详细说明
+查看完整功能说明：[docs/NEW_FEATURES.md](docs/NEW_FEATURES.md)
 
 ---
 

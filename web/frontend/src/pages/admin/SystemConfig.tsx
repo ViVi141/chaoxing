@@ -305,17 +305,70 @@ export const SystemConfig = () => {
               children: (
                 <Card>
                   <Alert
-                    message="功能开发中"
-                    description="更多系统设置（任务限制、日志级别等）即将推出"
+                    message="系统配置管理"
+                    description="管理系统级配置，修改后立即生效"
                     type="info"
                     showIcon
+                    style={{ marginBottom: 24 }}
                   />
-                  
-                  <div style={{ marginTop: 24 }}>
-                    <Button onClick={initDefaults}>
-                      初始化默认配置
-                    </Button>
-                  </div>
+
+                  <Descriptions bordered column={1} style={{ marginBottom: 24 }}>
+                    <Descriptions.Item label="前端地址">
+                      {window.location.origin}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="后端API">
+                      {window.location.protocol}//{window.location.hostname}:5000
+                    </Descriptions.Item>
+                    <Descriptions.Item label="配置版本">
+                      v2.2.1
+                    </Descriptions.Item>
+                  </Descriptions>
+
+                  <Card title="配置选项" size="small" style={{ marginBottom: 16 }}>
+                    <Space direction="vertical" style={{ width: '100%' }}>
+                      <div>
+                        <strong>✅ SMTP邮件配置</strong>
+                        <div style={{ color: '#666', fontSize: 12 }}>
+                          支持邮箱验证、密码重置、系统通知邮件
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <strong>✅ 用户题库配置</strong>
+                        <div style={{ color: '#666', fontSize: 12 }}>
+                          支持5种题库：言溪、LIKE知识库、TikuAdapter、AI大模型、硅基流动AI
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <strong>✅ 用户通知配置</strong>
+                        <div style={{ color: '#666', fontSize: 12 }}>
+                          支持Server酱、Qmsg、Bark、SMTP邮件通知
+                        </div>
+                      </div>
+
+                      <div>
+                        <strong>✅ 数据库迁移</strong>
+                        <div style={{ color: '#666', fontSize: 12 }}>
+                          图形化界面迁移SQLite到PostgreSQL
+                        </div>
+                      </div>
+                    </Space>
+                  </Card>
+
+                  <Card title="高级操作" size="small">
+                    <Space>
+                      <Button onClick={initDefaults} type="default">
+                        初始化默认配置
+                      </Button>
+                      <Button 
+                        type="link" 
+                        onClick={() => window.open('/admin/database-migration', '_self')}
+                      >
+                        数据库迁移
+                      </Button>
+                    </Space>
+                  </Card>
                 </Card>
               ),
             },
