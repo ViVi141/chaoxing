@@ -314,13 +314,44 @@ async def get_statistics(
     )
     failed_tasks = failed_tasks_result.scalar()
     
+    # 今日统计
+    from datetime import datetime, timedelta
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    today_completed_result = await db.execute(
+        select(func.count(Task.id)).where(
+            Task.status == "completed",
+            Task.end_time >= today_start
+        )
+    )
+    today_completed = today_completed_result.scalar()
+    
+    today_failed_result = await db.execute(
+        select(func.count(Task.id)).where(
+            Task.status == "failed",
+            Task.end_time >= today_start
+        )
+    )
+    today_failed = today_failed_result.scalar()
+    
+    # 计算成功率
+    if total_tasks > 0:
+        success_rate = round((completed_tasks / total_tasks) * 100, 1)
+    else:
+        success_rate = 0
+    
+    # 返回驼峰命名的字段名（与前端一致）
     return {
-        "total_users": total_users,
-        "active_users": active_users,
-        "total_tasks": total_tasks,
-        "running_tasks": running_tasks,
-        "completed_tasks": completed_tasks,
-        "failed_tasks": failed_tasks
+        "totalUsers": total_users,
+        "activeUsers": active_users,
+        "totalTasks": total_tasks,
+        "runningTasks": running_tasks,
+        "completedTasks": completed_tasks,
+        "failedTasks": failed_tasks,
+        "todayCompleted": today_completed,
+        "todayFailed": today_failed,
+        "successRate": success_rate,
+        "warnings": 0  # 可以根据实际需求实现
     }
 
 
@@ -362,4 +393,92 @@ async def get_system_logs(
         "page_size": page_size,
         "total_pages": (total + page_size - 1) // page_size
     }
+
+
+@router.post("/recover-tasks", response_model=MessageResponse)
+async def recover_interrupted_tasks_manually(
+    admin_user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    手动恢复被中断的任务
+    
+    管理员专用 - 重新提交所有running或pending状态的任务
+    """
+    from datetime import datetime
+    
+    try:
+        # 查找所有 running 或 pending 状态的任务
+        result = await db.execute(
+            select(Task).where(Task.status.in_(["running", "pending"]))
+        )
+        interrupted_tasks = result.scalars().all()
+        
+        if not interrupted_tasks:
+            return {"message": "没有发现需要恢复的任务"}
+        
+        recovered_count = 0
+        failed_count = 0
+        
+        for task in interrupted_tasks:
+            try:
+                # 获取用户信息
+                user_result = await db.execute(
+                    select(User).where(User.id == task.user_id)
+                )
+                user = user_result.scalar_one_or_none()
+                
+                if not user or not user.is_active:
+                    # 用户不存在或已禁用，标记任务为失败
+                    task.status = "failed"
+                    task.error_msg = "任务恢复失败：用户不存在或已被禁用"
+                    task.end_time = datetime.utcnow()
+                    failed_count += 1
+                    logger.warning(f"任务 {task.id}: 用户不可用，标记为失败")
+                    continue
+                
+                # 重置任务状态
+                task.status = "pending"
+                task.progress = 0
+                task.celery_task_id = None
+                task.error_msg = f"由管理员 {admin_user.username} 手动恢复"
+                task.start_time = None
+                
+                await db.commit()
+                
+                # 重新提交任务到Celery
+                from tasks.study_tasks import start_study_task
+                celery_task = start_study_task.delay(task.id)
+                
+                # 更新Celery任务ID
+                task.celery_task_id = celery_task.id
+                task.status = "running"
+                task.start_time = datetime.utcnow()
+                await db.commit()
+                
+                recovered_count += 1
+                logger.info(f"任务 {task.id} 已由管理员 {admin_user.username} 手动恢复")
+                
+            except Exception as task_error:
+                task.status = "failed"
+                task.error_msg = f"任务恢复失败: {str(task_error)}"
+                task.end_time = datetime.utcnow()
+                await db.commit()
+                failed_count += 1
+                logger.error(f"任务 {task.id} 恢复失败: {task_error}")
+        
+        message = f"任务恢复完成：成功恢复 {recovered_count} 个任务"
+        if failed_count > 0:
+            message += f"，{failed_count} 个任务恢复失败"
+        
+        logger.info(f"管理员 {admin_user.username} 手动恢复任务: {message}")
+        
+        return {"message": message}
+        
+    except Exception as e:
+        logger.error(f"手动恢复任务失败: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"恢复任务失败: {str(e)}"
+        )
 

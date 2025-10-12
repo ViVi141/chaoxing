@@ -1,4 +1,4 @@
-import { Card, Form, Input, InputNumber, Button, message, Tabs, Select, Switch, Divider, Typography, Alert } from 'antd';
+import { Card, Form, Input, InputNumber, Button, message, Tabs, Select, Switch, Divider, Typography, Alert, Space } from 'antd';
 import { SaveOutlined } from '@ant-design/icons';
 import { useState, useEffect } from 'react';
 import { axiosInstance } from '../../providers/authProvider';
@@ -10,6 +10,7 @@ export const ConfigPageFull = () => {
   const [tikuForm] = Form.useForm();
   const [notificationForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [testingTiku, setTestingTiku] = useState(false);
 
   useEffect(() => {
     loadConfig();
@@ -71,6 +72,33 @@ export const ConfigPageFull = () => {
       message.error(error.response?.data?.detail || '保存失败');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const testTikuConfig = async () => {
+    try {
+      // 验证表单
+      const values = await tikuForm.validateFields();
+      
+      setTestingTiku(true);
+      const response = await axiosInstance.post('/user/config/test-tiku', values);
+      message.success(response.data.message || '题库验证成功');
+      
+      // 显示测试结果
+      if (response.data.detail) {
+        message.info({
+          content: response.data.detail,
+          duration: 5,
+        });
+      }
+    } catch (error: any) {
+      if (error.errorFields) {
+        message.error('请先填写完整配置');
+      } else {
+        message.error(error.response?.data?.detail || '题库验证失败');
+      }
+    } finally {
+      setTestingTiku(false);
     }
   };
 
@@ -431,17 +459,72 @@ export const ConfigPageFull = () => {
                     }}
                   </Form.Item>
 
+                  <Form.Item
+                    noStyle
+                    shouldUpdate={(prevValues, currentValues) => 
+                      prevValues.provider !== currentValues.provider
+                    }
+                  >
+                    {({ getFieldValue }) => {
+                      const provider = getFieldValue('provider');
+                      
+                      // 只有AI和SiliconFlow支持在线验证
+                      if (provider === 'AI' || provider === 'SiliconFlow') {
+                        return (
+                          <Alert
+                            message="配置验证"
+                            description="填写完配置后，可以点击下方按钮测试配置是否正确"
+                            type="info"
+                            showIcon
+                            style={{ marginBottom: 16 }}
+                          />
+                        );
+                      }
+                      return null;
+                    }}
+                  </Form.Item>
+
                   <Form.Item>
-                    <Button 
-                      type="primary" 
-                      htmlType="submit" 
-                      loading={loading} 
-                      size="large"
-                      icon={<SaveOutlined />}
-                      block
-                    >
-                      保存配置
-                    </Button>
+                    <Space style={{ width: '100%' }} direction="vertical">
+                      <Button 
+                        type="primary" 
+                        htmlType="submit" 
+                        loading={loading} 
+                        size="large"
+                        icon={<SaveOutlined />}
+                        block
+                      >
+                        保存配置
+                      </Button>
+                      
+                      <Form.Item
+                        noStyle
+                        shouldUpdate={(prevValues, currentValues) => 
+                          prevValues.provider !== currentValues.provider
+                        }
+                      >
+                        {({ getFieldValue }) => {
+                          const provider = getFieldValue('provider');
+                          
+                          // 只有AI和SiliconFlow支持测试
+                          if (provider === 'AI' || provider === 'SiliconFlow') {
+                            return (
+                              <Button 
+                                type="default" 
+                                onClick={testTikuConfig}
+                                loading={testingTiku} 
+                                size="large"
+                                block
+                                style={{ marginTop: 8 }}
+                              >
+                                🧪 测试{provider}配置
+                              </Button>
+                            );
+                          }
+                          return null;
+                        }}
+                      </Form.Item>
+                    </Space>
                   </Form.Item>
                 </Form>
               </Card>

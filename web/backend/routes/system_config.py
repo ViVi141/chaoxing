@@ -187,15 +187,21 @@ async def update_smtp_config(
     return {"message": "SMTP配置已更新"}
 
 
+class SMTPTestRequest(BaseModel):
+    """SMTP测试请求"""
+    to_email: Optional[str] = Field(None, description="接收测试邮件的邮箱（留空则发送到管理员邮箱）")
+
+
 @router.post("/smtp/test")
 async def test_smtp(
+    test_request: SMTPTestRequest = None,
     admin_user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db)
 ):
     """
     测试SMTP配置
     
-    发送测试邮件到管理员邮箱
+    发送测试邮件到指定邮箱或管理员邮箱
     """
     # 加载最新配置
     await apply_smtp_config_to_settings(db)
@@ -212,37 +218,59 @@ async def test_smtp(
             detail="SMTP配置不完整"
         )
     
+    # 确定收件邮箱
+    to_email = test_request.to_email if test_request and test_request.to_email else admin_user.email
+    
     try:
         from email_service import EmailService
         email_service = EmailService()
         
-        # 发送测试邮件到管理员邮箱
+        # 发送测试邮件
         success = email_service.send_email(
-            to_email=admin_user.email,
+            to_email=to_email,
             subject="【超星学习通】SMTP测试成功",
             html_content=f"""
-            <h2>✅ SMTP测试成功</h2>
-            <p>您的SMTP配置正确！</p>
-            <p>服务器: {settings.SMTP_HOST}:{settings.SMTP_PORT}</p>
-            <p>测试时间: {__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+            <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+                    <h2 style="color: #52c41a; border-bottom: 2px solid #52c41a; padding-bottom: 10px;">
+                        ✅ SMTP测试成功
+                    </h2>
+                    <div style="padding: 20px; background-color: #f9f9f9; border-radius: 5px; margin: 20px 0;">
+                        <p><strong>恭喜！</strong>您的SMTP配置正确，邮件服务工作正常。</p>
+                        <p><strong>服务器信息：</strong></p>
+                        <ul>
+                            <li>SMTP服务器: {settings.SMTP_HOST}</li>
+                            <li>端口: {settings.SMTP_PORT}</li>
+                            <li>发件人: {settings.SMTP_USERNAME}</li>
+                            <li>收件人: {to_email}</li>
+                        </ul>
+                        <p><strong>测试时间：</strong> {__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+                    </div>
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px;">
+                        <p>此邮件由超星学习通自动化系统发送，用于测试SMTP配置。</p>
+                    </div>
+                </div>
+            </body>
+            </html>
             """,
-            text_content=f"SMTP测试成功！服务器: {settings.SMTP_HOST}"
+            text_content=f"SMTP测试成功！服务器: {settings.SMTP_HOST}:{settings.SMTP_PORT}"
         )
         
         if success:
-            logger.info(f"SMTP测试邮件已发送至: {admin_user.email}")
+            logger.info(f"SMTP测试邮件已发送至: {to_email}")
             return {
-                "message": "测试邮件已发送，请检查邮箱",
-                "detail": f"邮件已发送至: {admin_user.email}"
+                "message": "测试邮件已发送成功",
+                "detail": f"邮件已发送至: {to_email}，请检查收件箱（可能在垃圾邮件中）"
             }
         else:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="邮件发送失败，请检查SMTP配置"
+                detail="邮件发送失败，请检查SMTP配置和网络连接"
             )
     
     except Exception as e:
-        logger.error(f"SMTP测试失败: {e}")
+        logger.error(f"SMTP测试失败: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"SMTP测试失败: {str(e)}"

@@ -34,11 +34,11 @@ from routes.migration import router as migration_router
 async def recover_interrupted_tasks():
     """恢复被中断的任务
     
-    在应用启动时检查数据库中状态为 running 的任务，
-    将它们标记为 failed，以便用户可以手动重试。
+    在应用启动时检查数据库中状态为 running 或 pending 的任务，
+    自动重新提交这些任务到Celery队列继续执行。
     """
     from sqlalchemy import select, update
-    from models import Task
+    from models import Task, User
     from database import AsyncSessionLocal
     
     try:
@@ -46,35 +46,67 @@ async def recover_interrupted_tasks():
         
         # 使用异步会话
         async with AsyncSessionLocal() as session:
-            # 查找所有 running 状态的任务
+            # 查找所有 running 或 pending 状态的任务（这些任务可能因系统崩溃而中断）
             result = await session.execute(
-                select(Task).where(Task.status == "running")
+                select(Task).where(Task.status.in_(["running", "pending"]))
             )
             interrupted_tasks = result.scalars().all()
             
             if interrupted_tasks:
-                logger.warning(f"发现 {len(interrupted_tasks)} 个被中断的任务")
+                logger.warning(f"发现 {len(interrupted_tasks)} 个被中断的任务，准备自动恢复")
                 
-                # 使用update语句批量更新
-                task_ids = [task.id for task in interrupted_tasks]
+                recovered_count = 0
+                failed_count = 0
                 
-                # 记录任务信息
                 for task in interrupted_tasks:
-                    logger.info(f"  - 任务 {task.id} (用户 {task.user_id}) 将被标记为失败")
+                    try:
+                        # 获取用户信息
+                        user_result = await session.execute(
+                            select(User).where(User.id == task.user_id)
+                        )
+                        user = user_result.scalar_one_or_none()
+                        
+                        if not user or not user.is_active:
+                            # 用户不存在或已禁用，标记任务为失败
+                            task.status = "failed"
+                            task.error_msg = "任务恢复失败：用户不存在或已被禁用"
+                            task.end_time = datetime.utcnow()
+                            failed_count += 1
+                            logger.warning(f"  - 任务 {task.id} (用户 {task.user_id}): 用户不可用，标记为失败")
+                            continue
+                        
+                        # 重置任务状态为pending，准备重新执行
+                        task.status = "pending"
+                        task.progress = 0
+                        task.celery_task_id = None  # 清除旧的Celery任务ID
+                        task.error_msg = "系统重启后自动恢复任务"
+                        task.start_time = None  # 清除开始时间，等待重新开始
+                        
+                        await session.commit()
+                        
+                        # 重新提交任务到Celery
+                        from tasks.study_tasks import start_study_task
+                        celery_task = start_study_task.delay(task.id)
+                        
+                        # 更新Celery任务ID
+                        task.celery_task_id = celery_task.id
+                        task.status = "running"
+                        task.start_time = datetime.utcnow()
+                        await session.commit()
+                        
+                        recovered_count += 1
+                        logger.info(f"  ✅ 任务 {task.id} (用户 {user.username}): 已自动恢复并重新提交")
+                        
+                    except Exception as task_error:
+                        # 单个任务恢复失败，标记为失败状态
+                        task.status = "failed"
+                        task.error_msg = f"任务恢复失败: {str(task_error)}"
+                        task.end_time = datetime.utcnow()
+                        await session.commit()
+                        failed_count += 1
+                        logger.error(f"  ❌ 任务 {task.id}: 恢复失败 - {task_error}")
                 
-                # 批量更新任务状态
-                await session.execute(
-                    update(Task)
-                    .where(Task.id.in_(task_ids))
-                    .values(
-                        status="failed",
-                        error_msg="任务被意外中断（服务器重启或崩溃）",
-                        end_time=datetime.utcnow()
-                    )
-                )
-                
-                await session.commit()
-                logger.info(f"✅ 已处理 {len(interrupted_tasks)} 个被中断的任务")
+                logger.info(f"✅ 任务恢复完成: 成功 {recovered_count} 个, 失败 {failed_count} 个")
             else:
                 logger.info("✅ 没有发现被中断的任务")
                 

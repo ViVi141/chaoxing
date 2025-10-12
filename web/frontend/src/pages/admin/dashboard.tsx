@@ -1,11 +1,12 @@
-import { Card, Row, Col, Statistic, Table, Tag, Typography, List, Progress } from 'antd';
+import { Card, Row, Col, Statistic, Table, Tag, Typography, List, Progress, Button, message, Popconfirm } from 'antd';
 import { 
   UserOutlined, 
   FileTextOutlined, 
   ClockCircleOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
-  WarningOutlined
+  WarningOutlined,
+  ReloadOutlined
 } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import { axiosInstance } from '../../providers/authProvider';
@@ -35,6 +36,7 @@ export const AdminDashboard = () => {
   const [recentUsers, setRecentUsers] = useState<any[]>([]);
   const [activeTasks, setActiveTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [recovering, setRecovering] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -57,6 +59,20 @@ export const AdminDashboard = () => {
       console.error('加载数据失败:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRecoverTasks = async () => {
+    try {
+      setRecovering(true);
+      const response = await axiosInstance.post('/admin/recover-tasks');
+      message.success(response.data.message || '任务恢复成功');
+      // 刷新数据
+      loadData();
+    } catch (error: any) {
+      message.error(error.response?.data?.detail || '任务恢复失败');
+    } finally {
+      setRecovering(false);
     }
   };
 
@@ -200,7 +216,28 @@ export const AdminDashboard = () => {
       </Card>
 
       {/* 活跃任务 */}
-      <Card title="运行中的任务" style={{ marginTop: 24 }} loading={loading}>
+      <Card 
+        title="运行中的任务" 
+        style={{ marginTop: 24 }} 
+        loading={loading}
+        extra={
+          <Popconfirm
+            title="恢复被中断的任务"
+            description="这将重新提交所有running或pending状态的任务。确定要继续吗？"
+            onConfirm={handleRecoverTasks}
+            okText="确定"
+            cancelText="取消"
+          >
+            <Button 
+              icon={<ReloadOutlined />} 
+              loading={recovering}
+              type="default"
+            >
+              恢复中断任务
+            </Button>
+          </Popconfirm>
+        }
+      >
         <Table
           dataSource={activeTasks}
           rowKey="id"
@@ -289,7 +326,7 @@ export const AdminDashboard = () => {
                 <a href="/admin/logs">查看日志</a>
               </List.Item>
               <List.Item>
-                <a href="/config">系统配置</a>
+                <a href="/admin/system-config">系统配置</a>
               </List.Item>
             </List>
           </Card>

@@ -9,6 +9,7 @@ export const SystemConfig = () => {
   const [testLoading, setTestLoading] = useState(false);
   const [templates, setTemplates] = useState<any[]>([]);
   const [currentConfig, setCurrentConfig] = useState<any>(null);
+  const [testEmail, setTestEmail] = useState<string>('');
 
   // 加载SMTP配置
   const loadSMTPConfig = async () => {
@@ -54,8 +55,9 @@ export const SystemConfig = () => {
   const testSMTP = async () => {
     try {
       setTestLoading(true);
-      const response = await axiosInstance.post('/system-config/smtp/test');
-      message.success(response.data.message || 'SMTP测试成功');
+      const payload = testEmail ? { to_email: testEmail } : {};
+      const response = await axiosInstance.post('/system-config/smtp/test', payload);
+      message.success(response.data.detail || response.data.message || 'SMTP测试成功');
     } catch (error: any) {
       message.error(error.response?.data?.detail || 'SMTP测试失败');
     } finally {
@@ -215,16 +217,38 @@ export const SystemConfig = () => {
                     >
                       保存配置
                     </Button>
-                    <Button
-                      icon={<ThunderboltOutlined />}
-                      onClick={testSMTP}
-                      loading={testLoading}
-                    >
-                      测试SMTP
-                    </Button>
                   </Space>
                 </Form.Item>
               </Form>
+
+              {/* SMTP测试区域 */}
+              <Card title="测试SMTP配置" size="small" style={{ marginTop: 16, backgroundColor: '#f5f5f5' }}>
+                <Alert
+                  message="测试说明"
+                  description="填写接收邮箱地址，留空则发送到当前管理员邮箱。请确保已保存SMTP配置后再测试。"
+                  type="info"
+                  showIcon
+                  style={{ marginBottom: 16 }}
+                />
+                <Space.Compact style={{ width: '100%' }}>
+                  <Input
+                    placeholder="接收邮箱（留空发送到管理员邮箱）"
+                    value={testEmail}
+                    onChange={(e) => setTestEmail(e.target.value)}
+                    type="email"
+                    size="large"
+                  />
+                  <Button
+                    type="primary"
+                    icon={<ThunderboltOutlined />}
+                    onClick={testSMTP}
+                    loading={testLoading}
+                    size="large"
+                  >
+                    发送测试邮件
+                  </Button>
+                </Space.Compact>
+              </Card>
             </Card>
 
             {/* 快速配置模板 */}

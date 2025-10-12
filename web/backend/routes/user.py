@@ -12,6 +12,7 @@ from schemas import (
     UserConfigResponse, UserConfigUpdate, UserUpdate,
     MessageResponse
 )
+import schemas
 from auth import get_current_active_user
 import sys
 from pathlib import Path
@@ -207,3 +208,126 @@ async def delete_account(
     
     return {"message": "账号已删除"}
 
+
+@router.post("/config/test-tiku", response_model=MessageResponse)
+async def test_tiku_config(
+    tiku_config: schemas.TikuConfig,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    测试题库配置
+    
+    验证AI题库或硅基流动的API配置是否正确
+    """
+    from api.answer import AI, SiliconFlow
+    
+    provider = tiku_config.provider
+    
+    if not provider:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="未指定题库提供商"
+        )
+    
+    # 仅支持AI和SiliconFlow的验证
+    if provider not in ['AI', 'SiliconFlow']:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"暂不支持验证{provider}题库，仅支持AI和SiliconFlow"
+        )
+    
+    try:
+        # 创建测试题目
+        test_question = {
+            'title': '中国的首都是哪里？',
+            'type': 'single',
+            'options': 'A. 北京\nB. 上海\nC. 广州\nD. 深圳'
+        }
+        
+        # 根据提供商创建题库实例
+        if provider == 'AI':
+            # 验证必填字段
+            if not tiku_config.endpoint or not tiku_config.key or not tiku_config.model:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="AI题库配置不完整，需要endpoint、key和model"
+                )
+            
+            tiku = AI()
+            config_dict = {
+                'endpoint': tiku_config.endpoint,
+                'key': tiku_config.key,
+                'model': tiku_config.model,
+                'min_interval_seconds': str(tiku_config.min_interval_seconds or 3),
+                'http_proxy': tiku_config.http_proxy or '',
+                'submit': 'false',
+                'cover_rate': '0.9',
+                'delay': '1.0',
+                'true_list': '正确,对,√,是',
+                'false_list': '错误,错,×,否,不对,不正确'
+            }
+            
+        elif provider == 'SiliconFlow':
+            # 验证必填字段
+            if not tiku_config.siliconflow_key:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="硅基流动配置不完整，需要siliconflow_key"
+                )
+            
+            tiku = SiliconFlow()
+            config_dict = {
+                'siliconflow_key': tiku_config.siliconflow_key,
+                'siliconflow_model': tiku_config.siliconflow_model or 'deepseek-ai/DeepSeek-R1',
+                'siliconflow_endpoint': tiku_config.siliconflow_endpoint or 'https://api.siliconflow.cn/v1/chat/completions',
+                'min_interval_seconds': str(tiku_config.min_interval_seconds or 3),
+                'submit': 'false',
+                'cover_rate': '0.9',
+                'delay': '1.0',
+                'true_list': '正确,对,√,是',
+                'false_list': '错误,错,×,否,不对,不正确'
+            }
+        
+        # 配置题库
+        tiku.config_set(config_dict)
+        tiku._init_tiku()
+        
+        # 执行测试查询
+        logger.info(f"用户{current_user.username}测试{provider}题库配置")
+        answer = tiku._query(test_question)
+        
+        if answer:
+            logger.info(f"{provider}题库测试成功，返回答案: {answer}")
+            return {
+                "message": f"✅ {provider}题库配置验证成功！",
+                "detail": f"测试问题：{test_question['title']}\n返回答案：{answer}"
+            }
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"题库返回空答案，请检查配置或API额度"
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        error_msg = str(e)
+        logger.error(f"{provider}题库测试失败: {error_msg}", exc_info=True)
+        
+        # 友好的错误提示
+        if "API key" in error_msg or "401" in error_msg:
+            detail = "API Key无效或已过期，请检查密钥是否正确"
+        elif "timeout" in error_msg.lower():
+            detail = "API请求超时，请检查网络连接或代理设置"
+        elif "404" in error_msg:
+            detail = "API端点不存在，请检查endpoint配置"
+        elif "model" in error_msg.lower():
+            detail = "模型不存在或不可用，请检查model配置"
+        else:
+            detail = f"测试失败: {error_msg[:200]}"
+        
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=detail
+        )
