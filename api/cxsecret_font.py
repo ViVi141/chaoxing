@@ -42,8 +42,24 @@ def resource_path(relative_path: str) -> str:
         # PyInstaller创建临时文件夹，定位路径
         base_path = sys._MEIPASS
     except Exception:
-        # 非打包环境，使用当前目录
-        base_path = os.path.abspath(".")
+        # 非打包环境，查找项目根目录
+        # 从当前文件位置向上查找，直到找到包含 resource 目录的路径
+        current_file = Path(__file__).resolve()
+        
+        # 尝试多个可能的路径
+        possible_paths = [
+            # 从 api/ 目录向上一级到项目根目录
+            current_file.parent.parent / relative_path,
+            # 当前目录（用于向后兼容）
+            Path(os.path.abspath(".")) / relative_path,
+        ]
+        
+        for path in possible_paths:
+            if path.exists():
+                return str(path)
+        
+        # 如果都找不到，使用第一个路径（会在后续抛出 FileNotFoundError）
+        base_path = str(current_file.parent.parent)
     
     return os.path.join(base_path, relative_path)
 

@@ -30,6 +30,9 @@ async def get_user_config(
     """
     获取用户配置
     """
+    # 预加载配置关系
+    await db.refresh(current_user, ['config'])
+    
     # 如果配置不存在，创建默认配置
     if not current_user.config:
         config = UserConfig(user_id=current_user.id)
@@ -56,6 +59,9 @@ async def update_user_config(
     - 题库配置
     - 通知配置
     """
+    # 预加载配置关系
+    await db.refresh(current_user, ['config'])
+    
     # 获取或创建配置
     if not current_user.config:
         config = UserConfig(user_id=current_user.id)
@@ -146,6 +152,9 @@ async def get_user_profile(
     """
     获取用户详细信息（包括统计数据）
     """
+    # 预加载配置关系
+    await db.refresh(current_user, ['config'])
+    
     # 获取任务统计
     from models import Task
     

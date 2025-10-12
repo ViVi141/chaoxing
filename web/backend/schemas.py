@@ -12,7 +12,7 @@ from pydantic import BaseModel, EmailStr, Field, validator
 class UserBase(BaseModel):
     """用户基础模型"""
     username: str = Field(..., min_length=3, max_length=80, description="用户名")
-    email: Optional[EmailStr] = Field(None, description="邮箱")
+    email: EmailStr = Field(..., description="邮箱（必填）")  # ✅ 改为必填
 
 
 class UserCreate(UserBase):
@@ -31,6 +31,7 @@ class UserResponse(UserBase):
     id: int
     role: str
     is_active: bool
+    email_verified: bool  # ✅ 新增
     created_at: datetime
     last_login: Optional[datetime] = None
     
@@ -183,4 +184,27 @@ class TaskProgressMessage(BaseModel):
     progress: int
     status: str
     message: Optional[str] = None
+
+
+# ============= 邮箱验证相关 =============
+
+class EmailVerificationRequest(BaseModel):
+    """邮箱验证请求"""
+    email: EmailStr = Field(..., description="邮箱地址")
+
+
+class PasswordResetRequest(BaseModel):
+    """密码重置请求"""
+    email: EmailStr = Field(..., description="邮箱地址")
+
+
+class PasswordResetConfirm(BaseModel):
+    """密码重置确认"""
+    token: str = Field(..., description="重置令牌")
+    new_password: str = Field(..., min_length=6, max_length=128, description="新密码")
+
+
+class VerifyEmailToken(BaseModel):
+    """验证邮箱令牌"""
+    token: str = Field(..., description="验证令牌")
 

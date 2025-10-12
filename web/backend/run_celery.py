@@ -5,17 +5,19 @@ Celery Worker启动入口
 确保正确的路径设置
 """
 import sys
+import os
 from pathlib import Path
 
-# 添加项目根目录到Python路径
-ROOT_DIR = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(ROOT_DIR))
+# 切换工作目录到web/backend（必须在导入前）
+BACKEND_DIR = Path(__file__).parent
+os.chdir(BACKEND_DIR)
 
-# 切换工作目录到web/backend
-import os
-os.chdir(Path(__file__).parent)
+# 添加项目根目录到Python路径（在工作目录之后）
+ROOT_DIR = BACKEND_DIR.parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.append(str(ROOT_DIR))
 
-# 设置环境变量，让celery知道app的位置
+# 设置环境变量
 os.environ.setdefault('PYTHONPATH', str(ROOT_DIR))
 
 if __name__ == "__main__":

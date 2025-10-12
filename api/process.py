@@ -25,7 +25,7 @@ def sec2time(seconds: int) -> str:
 
 
 def show_progress(task_name: str, start_position: int, duration: int, 
-                 total_length: int, speed: float) -> None:
+                 total_length: int, speed: float, log_callback=None) -> None:
     """
     显示任务进度条，模拟任务进度。
     
@@ -35,6 +35,7 @@ def show_progress(task_name: str, start_position: int, duration: int,
         duration: 任务持续时间（以秒为单位）
         total_length: 任务总长度（以秒为单位）
         speed: 任务执行速度
+        log_callback: 可选的日志回调函数
         
     Returns:
         None
@@ -52,11 +53,16 @@ def show_progress(task_name: str, start_position: int, duration: int,
         filled_length = int(percent_complete * bar_length // 100)
         progress_bar = ("#" * filled_length).ljust(bar_length, " ")
         
-        # 格式化输出进度信息
+        # 格式化输出进度信息（不包含\r）
         progress_text = (
-            f"\r当前任务: {task_name} |{progress_bar}| {percent_complete}%  "
+            f"当前任务: {task_name} |{progress_bar}| {percent_complete}%  "
             f"{sec2time(current_position)}/{sec2time(total_length)}"
         )
         
-        print(progress_text, end="", flush=True)
+        print(f"\r{progress_text}", end="", flush=True)
+        
+        # 调用log_callback（如果提供）
+        if log_callback:
+            log_callback("INFO", progress_text)
+        
         time.sleep(gc.THRESHOLD)

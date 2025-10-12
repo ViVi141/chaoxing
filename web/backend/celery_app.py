@@ -43,6 +43,15 @@ if settings.CELERY_BROKER_URL.startswith('filesystem://'):
     
     config_dict['broker_transport_options'] = settings.CELERY_BROKER_TRANSPORT_OPTIONS
 
+# 如果使用文件系统结果后端（简单模式）
+if settings.CELERY_RESULT_BACKEND.startswith('file://'):
+    # 从 file://./celery_results 中提取路径
+    result_dir = settings.CELERY_RESULT_BACKEND.replace('file://', '')
+    # 处理相对路径
+    if result_dir.startswith('./'):
+        result_dir = result_dir[2:]
+    os.makedirs(result_dir, exist_ok=True)
+
 # 应用配置
 app.conf.update(config_dict)
 

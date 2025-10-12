@@ -106,8 +106,14 @@ async def get_current_user(
     if payload is None:
         raise credentials_exception
     
-    user_id: int = payload.get("sub")
-    if user_id is None:
+    user_id_str = payload.get("sub")
+    if user_id_str is None:
+        raise credentials_exception
+    
+    # 将字符串ID转换为整数
+    try:
+        user_id = int(user_id_str)
+    except (ValueError, TypeError):
         raise credentials_exception
     
     # 查询用户
@@ -178,11 +184,12 @@ async def init_default_admin():
         admin = result.scalar_one_or_none()
         
         if not admin:
-            # 创建默认管理员
+            # ✅ 创建默认管理员（带邮箱）
             admin = User(
                 username=settings.DEFAULT_ADMIN_USERNAME,
+                email=settings.DEFAULT_ADMIN_EMAIL,
                 role="admin",
-                email=None
+                email_verified=True  # ✅ 管理员邮箱默认已验证
             )
             admin.set_password(settings.DEFAULT_ADMIN_PASSWORD)
             
@@ -193,6 +200,8 @@ async def init_default_admin():
             db.add(config)
             await db.commit()
             
-            logger.info(f"✓ 已创建默认管理员账号: {settings.DEFAULT_ADMIN_USERNAME}")
+            logger.info(f"✓ 已创建默认管理员账号")
+            logger.info(f"  用户名: {settings.DEFAULT_ADMIN_USERNAME}")
+            logger.info(f"  邮箱: {settings.DEFAULT_ADMIN_EMAIL}")
             logger.warning(f"⚠ 默认密码: {settings.DEFAULT_ADMIN_PASSWORD}")
             logger.warning("⚠ 请立即登录并修改密码！")

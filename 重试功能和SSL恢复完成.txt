@@ -1,0 +1,305 @@
+================================
+✅ 任务重试功能 + SSL验证恢复
+================================
+
+【本次更新】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ 1. 添加任务重试功能
+   - 新增 /api/tasks/{id}/retry 端点
+   - 支持重试失败和已取消的任务
+   - 自动重置任务状态和进度
+   
+✅ 2. 恢复SSL验证机制
+   - 移除所有 verify=False 设置
+   - 恢复正常的HTTPS SSL证书验证
+   - 适用于非中国大陆IP环境
+
+【修改文件】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. web/backend/routes/task.py
+   - 新增 retry_task 端点
+   
+2. api/base.py
+   - 恢复 SessionManager SSL验证
+   - 恢复 login 函数SSL验证
+   - 恢复 _validate_cookie_session SSL验证
+   - 移除 urllib3 警告抑制
+   - 保留重试机制和超时控制
+
+【任务重试功能】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+API端点:
+  POST /api/tasks/{task_id}/retry
+
+支持的任务状态:
+  ✅ failed (失败)
+  ✅ cancelled (已取消)
+  ❌ running (运行中 - 不能重试)
+  ❌ pending (待处理 - 不需要重试)
+  ❌ completed (已完成 - 不需要重试)
+
+重试时会重置:
+  - status → "running"
+  - progress → 0
+  - error_msg → null
+  - start_time → 当前时间
+  - end_time → null
+  - celery_task_id → 新的任务ID
+
+前端使用:
+  ```typescript
+  const handleRetry = async (taskId: number) => {
+    try {
+      await axiosInstance.post(`/tasks/${taskId}/retry`);
+      message.success('任务已重新启动');
+      refetch();
+    } catch (error) {
+      message.error('重试失败');
+    }
+  };
+  ```
+
+【SSL验证恢复】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+恢复内容:
+  ✅ 移除 urllib3.disable_warnings()
+  ✅ 移除 _session.verify = False
+  ✅ 移除 test_session.verify = False
+  ✅ 恢复标准HTTPS验证流程
+
+保留功能:
+  ✅ 3次重试机制
+  ✅ 指数退避策略
+  ✅ 10秒超时控制
+  ✅ 只重试连接和超时错误（不重试SSL错误）
+
+适用场景:
+  ✅ 非中国大陆IP访问
+  ✅ 正常的网络环境
+  ✅ SSL证书配置正确的服务器
+  ✅ 需要安全连接的环境
+
+【代码变更对比】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. SessionManager
+   
+   修复前:
+   ```python
+   self._session.verify = False  # 禁用SSL验证
+   ```
+   
+   修复后:
+   ```python
+   # 恢复默认SSL验证
+   self._session = requests.Session()
+   ```
+
+2. 登录函数
+   
+   修复前:
+   ```python
+   _session.verify = False
+   except (SSLError, ConnectionError) as e:
+   ```
+   
+   修复后:
+   ```python
+   # 正常SSL验证
+   except (ConnectionError, Timeout) as e:
+   ```
+
+3. Cookie验证
+   
+   修复前:
+   ```python
+   test_session.verify = False
+   ```
+   
+   修复后:
+   ```python
+   # 恢复默认SSL验证
+   test_session = requests.Session()
+   ```
+
+【测试步骤】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. 重启后端服务
+   cd web\backend
+   Ctrl+C 停止
+   ..\..\.venv\Scripts\python.exe app.py
+
+2. 测试任务重试
+   a) 创建一个任务
+   b) 让任务失败（如配置错误账号）
+   c) 修正配置
+   d) 点击"重试"按钮
+   e) 检查任务是否重新运行
+
+3. 测试SSL连接
+   a) 刷新前端页面
+   b) 配置超星账号
+   c) 获取课程列表
+   d) 检查是否正常连接
+
+【预期效果】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+任务重试:
+  ✅ 失败任务可以重试
+  ✅ 取消任务可以重试
+  ✅ 重试后进度重置为0
+  ✅ 重试后任务重新运行
+  ✅ 404错误已解决
+
+SSL连接:
+  ✅ 正常的SSL证书验证
+  ✅ 非中国大陆IP可访问
+  ✅ 更安全的HTTPS连接
+  ✅ 标准的网络通信
+
+【常见问题】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Q1: 如果在中国大陆仍遇到SSL错误怎么办？
+A1: 可能需要根据网络环境调整：
+    - 检查是否使用了代理
+    - 尝试使用VPN
+    - 或联系我重新禁用SSL验证
+
+Q2: 重试按钮在哪里？
+A2: 需要在前端添加重试按钮：
+    - 任务列表页面
+    - 任务详情页面
+    - 仅显示给失败/取消的任务
+
+Q3: 重试和重新启动有什么区别？
+A3: 
+    - 重试(retry): 自动重置所有状态
+    - 启动(start): 只适用于pending状态
+    - 重试更彻底，启动更保守
+
+Q4: 如果重试还是失败怎么办？
+A4: 检查以下内容：
+    - 超星账号密码是否正确
+    - 网络连接是否正常
+    - 后端日志中的详细错误
+    - Celery是否正常运行
+
+【前端集成建议】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+在任务列表页面添加重试按钮:
+
+```typescript
+// web/frontend/src/pages/tasks/list.tsx
+{record.status === 'failed' || record.status === 'cancelled' ? (
+  <Button
+    size="small"
+    icon={<ReloadOutlined />}
+    onClick={() => handleRetry(record.id)}
+  >
+    重试
+  </Button>
+) : null}
+```
+
+在任务详情页面添加重试按钮:
+
+```typescript
+// web/frontend/src/pages/tasks/show-full.tsx
+{(record?.status === 'failed' || record?.status === 'cancelled') && (
+  <Button
+    type="primary"
+    icon={<ReloadOutlined />}
+    loading={actionLoading}
+    onClick={() => handleAction('retry')}
+  >
+    重试任务
+  </Button>
+)}
+```
+
+【错误处理】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+重试API可能返回的错误:
+
+1. 404 Not Found
+   原因: 任务不存在
+   解决: 检查任务ID是否正确
+
+2. 400 Bad Request
+   原因1: 任务状态不允许重试
+   详情: "任务状态为running，无法重试"
+   解决: 等待任务完成或取消后重试
+   
+   原因2: 未配置超星账号
+   详情: "请先配置超星账号"
+   解决: 先在配置管理中配置账号
+
+3. 500 Internal Server Error
+   原因: 服务器内部错误
+   解决: 查看后端日志，检查Celery状态
+
+【安全说明】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+恢复SSL验证的好处:
+  ✅ 防止中间人攻击
+  ✅ 确保数据传输加密
+  ✅ 验证服务器身份
+  ✅ 符合安全最佳实践
+
+适用场景:
+  ✅ 生产环境
+  ✅ 公共网络
+  ✅ 敏感数据传输
+  ✅ 符合安全规范的环境
+
+注意事项:
+  ⚠️ 如果超星服务器SSL配置有问题
+  ⚠️ 可能需要根据实际情况调整
+  ⚠️ 中国大陆可能需要特殊处理
+
+【后续优化】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+可以考虑的改进:
+  1. 添加SSL验证配置选项
+  2. 根据IP位置自动切换SSL策略
+  3. 在前端显示重试次数
+  4. 记录重试历史
+  5. 智能重试策略（根据失败原因）
+
+【日志示例】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+重试成功:
+  2025-10-13 01:15:23 | INFO | 用户admin重试任务1
+  2025-10-13 01:15:23 | INFO | Celery任务启动: task_id=1
+  2025-10-13 01:15:24 | INFO | 任务开始执行
+
+重试失败（未配置）:
+  2025-10-13 01:16:45 | ERROR | 重试失败: 请先配置超星账号
+  
+重试失败（状态不允许）:
+  2025-10-13 01:17:12 | ERROR | 重试失败: 任务状态为running，无法重试
+
+================================
+✅ 功能已添加，SSL验证已恢复！
+================================
+
+立即生效步骤:
+1. 重启后端服务
+2. 刷新前端页面
+3. 测试任务重试功能
+4. 验证SSL正常连接
+
+如有问题，请查看后端日志！🎉
+

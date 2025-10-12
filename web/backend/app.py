@@ -19,12 +19,14 @@ from fastapi.responses import JSONResponse
 from database import engine, Base, init_db
 from auth import init_default_admin
 from config import settings
-from config_manager import load_and_apply_config
+# 移除config_manager - 不再需要动态配置
+# from config_manager import load_and_apply_config
 from api.logger import logger
 
 # 导入路由
-from routes import auth_router, user_router, task_router, admin_router, websocket_router
-from routes.setup import router as setup_router
+from routes import auth_router, user_router, task_router, admin_router, websocket_router, system_config_router, course_router
+# 移除安装向导路由 - 不再需要
+# from routes.setup import router as setup_router
 
 
 @asynccontextmanager
@@ -33,12 +35,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     # 启动时
     logger.info("🚀 应用启动中...")
     
-    # 加载并应用配置
-    try:
-        load_and_apply_config()
-        logger.info("✅ 配置已加载")
-    except Exception as e:
-        logger.warning(f"加载配置失败，使用默认配置: {e}")
+    # 确保 data 目录存在
+    from pathlib import Path
+    data_dir = Path("data")
+    data_dir.mkdir(parents=True, exist_ok=True)
+    logger.info(f"✅ 数据目录已就绪: {data_dir.absolute()}")
+    
+    # 配置已从 .env 加载（不再需要动态加载）
+    logger.info(f"✅ 配置已从 .env 加载")
+    logger.info(f"   数据库: {settings.DATABASE_URL}")
+    logger.info(f"   部署模式: {settings.DEPLOY_MODE}")
     
     # 创建数据库表
     async with engine.begin() as conn:
@@ -67,21 +73,23 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# 配置CORS
+# 配置CORS（允许所有本地开发端口）
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=["*"],  # 开发环境允许所有源
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 注册路由
-app.include_router(setup_router, tags=["安装向导"])
+# 注册路由（移除安装向导）
+# app.include_router(setup_router, tags=["安装向导"])  # 已移除
 app.include_router(auth_router, prefix="/api/auth", tags=["认证"])
 app.include_router(user_router, prefix="/api/user", tags=["用户"])
 app.include_router(task_router, prefix="/api/tasks", tags=["任务"])
 app.include_router(admin_router, prefix="/api/admin", tags=["管理员"])
+app.include_router(system_config_router, prefix="/api/system-config", tags=["系统配置"])
+app.include_router(course_router, prefix="/api/courses", tags=["课程"])
 app.include_router(websocket_router, prefix="/ws", tags=["WebSocket"])
 
 # 静态文件服务（前端构建文件）

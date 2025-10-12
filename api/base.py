@@ -100,6 +100,7 @@ class Chaoxing:
         self.tiku = tiku
         self.kwargs = kwargs
         self.rollback_times = 0
+        self.log_callback = None  # 用于 WebUI 的日志回调
 
     def login(self, login_with_cookies = False):
         if login_with_cookies:
@@ -128,7 +129,20 @@ class Chaoxing:
             "independentId": 0,
         }
         logger.trace("正在尝试登录...")
-        resp = _session.post(_url, headers=gc.HEADERS, data=_data)
+        
+        # 添加重试机制处理网络错误
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                resp = _session.post(_url, headers=gc.HEADERS, data=_data, timeout=10)
+                break
+            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+                if attempt < max_retries - 1:
+                    logger.warning(f"登录请求失败 (尝试 {attempt+1}/{max_retries}): {str(e)[:100]}")
+                    time.sleep(2 ** attempt)  # 指数退避
+                else:
+                    logger.error(f"登录请求失败，已达最大重试次数: {str(e)[:100]}")
+                    return {"status": False, "msg": f"网络连接失败: {str(e)[:100]}"}
         if resp and resp.json()["status"] == True:
             save_cookies(_session)
             SessionManager.update_cookies()
@@ -416,7 +430,7 @@ class Chaoxing:
                     if _isPassed['isPassed']:
                         _isFinished = True
                 # 播放进度显示
-                show_progress(_job["name"], _playingTime, _wait_time, _duration, _speed)
+                show_progress(_job["name"], _playingTime, _wait_time, _duration, _speed, self.log_callback)
                 _playingTime += _wait_time
             print("\r", end="", flush=True)
             logger.info(f"任务完成: {_job['name']}")

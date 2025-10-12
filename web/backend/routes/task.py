@@ -139,6 +139,9 @@ async def get_task(
             detail="任务不存在"
         )
     
+    # 预加载日志关系
+    await db.refresh(task, ['logs'])
+    
     return task.to_dict(include_logs=True)
 
 
@@ -275,6 +278,66 @@ async def pause_task(
     logger.info(f"用户{current_user.username}暂停任务{task_id}")
     
     return {"message": "任务已暂停"}
+
+
+@router.post("/{task_id}/retry", response_model=MessageResponse)
+async def retry_task(
+    task_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    重试失败的任务
+    
+    重置任务状态并重新提交到Celery队列
+    """
+    result = await db.execute(
+        select(Task).where(
+            Task.id == task_id,
+            Task.user_id == current_user.id
+        )
+    )
+    task = result.scalar_one_or_none()
+    
+    if not task:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="任务不存在"
+        )
+    
+    if task.status not in ["failed", "cancelled"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"任务状态为{task.status}，无法重试"
+        )
+    
+    # 检查用户配置
+    await db.refresh(current_user, ['config'])
+    if not current_user.config or not current_user.config.cx_username:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="请先配置超星账号"
+        )
+    
+    # 重置任务状态
+    task.status = "pending"
+    task.progress = 0
+    task.error_msg = None
+    task.start_time = None
+    task.end_time = None
+    
+    # 提交到Celery
+    from tasks.study_tasks import start_study_task
+    celery_task = start_study_task.delay(task.id, current_user.id)
+    task.celery_task_id = celery_task.id
+    task.status = "running"
+    task.start_time = datetime.utcnow()
+    
+    await db.commit()
+    
+    logger.info(f"用户{current_user.username}重试任务{task_id}")
+    
+    return {"message": "任务已重新启动", "detail": f"任务ID: {task.id}"}
 
 
 @router.post("/{task_id}/cancel", response_model=MessageResponse)

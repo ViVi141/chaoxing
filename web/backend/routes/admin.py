@@ -98,6 +98,9 @@ async def get_user_detail(
             detail="用户不存在"
         )
     
+    # 预加载配置关系
+    await db.refresh(user, ['config'])
+    
     return user.to_dict(include_config=True)
 
 

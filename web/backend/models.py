@@ -20,7 +20,8 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     username: Mapped[str] = mapped_column(String(80), unique=True, nullable=False, index=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
-    email: Mapped[Optional[str]] = mapped_column(String(120), unique=True, nullable=True)
+    email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False, index=True)  # ✅ 改为必填
+    email_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)  # ✅ 新增邮箱验证状态
     role: Mapped[str] = mapped_column(String(20), default='user', nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
@@ -46,6 +47,11 @@ class User(Base):
     def check_password(self, password: str) -> bool:
         """验证密码"""
         return check_password_hash(self.password_hash, password)
+    
+    @property
+    def is_admin(self) -> bool:
+        """是否为管理员"""
+        return self.role == 'admin'
 
     def to_dict(self, include_config: bool = False) -> dict:
         """转换为字典"""
@@ -53,6 +59,7 @@ class User(Base):
             'id': self.id,
             'username': self.username,
             'email': self.email,
+            'email_verified': self.email_verified,  # ✅ 新增
             'role': self.role,
             'is_active': self.is_active,
             'created_at': self.created_at.isoformat() if self.created_at else None,
@@ -267,3 +274,82 @@ class SystemLog(Base):
             'ip_address': self.ip_address,
             'created_at': self.created_at.isoformat() if self.created_at else None,
         }
+
+
+class EmailVerification(Base):
+    """邮箱验证令牌模型"""
+    __tablename__ = 'email_verifications'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
+    email: Mapped[str] = mapped_column(String(120), nullable=False)
+    token: Mapped[str] = mapped_column(String(64), unique=True, nullable=False, index=True)
+    token_type: Mapped[str] = mapped_column(String(20), nullable=False)  # verify_email, reset_password
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
+    is_used: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    def is_expired(self) -> bool:
+        """是否已过期"""
+        return datetime.utcnow() > self.expires_at
+
+    def to_dict(self) -> dict:
+        """转换为字典"""
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'email': self.email,
+            'token_type': self.token_type,
+            'expires_at': self.expires_at.isoformat() if self.expires_at else None,
+            'is_used': self.is_used,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class SystemConfig(Base):
+    """系统配置模型 - 管理员可在前端修改"""
+    __tablename__ = 'system_configs'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    config_key: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, index=True)
+    config_value: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    config_type: Mapped[str] = mapped_column(String(20), nullable=False)  # string, int, bool, float
+    description: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    is_sensitive: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)  # 敏感信息（如密码）
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_by: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+
+    def get_value(self):
+        """获取配置值（自动类型转换）"""
+        if self.config_value is None:
+            return None
+        
+        if self.config_type == 'int':
+            return int(self.config_value)
+        elif self.config_type == 'float':
+            return float(self.config_value)
+        elif self.config_type == 'bool':
+            return self.config_value.lower() in ('true', '1', 'yes', 'on')
+        else:
+            return self.config_value
+
+    def set_value(self, value):
+        """设置配置值（自动转换为字符串）"""
+        if value is None:
+            self.config_value = None
+        else:
+            self.config_value = str(value)
+
+    def to_dict(self, hide_sensitive: bool = True) -> dict:
+        """转换为字典"""
+        data = {
+            'id': self.id,
+            'config_key': self.config_key,
+            'config_value': self.config_value if not (hide_sensitive and self.is_sensitive) else '***',
+            'config_type': self.config_type,
+            'description': self.description,
+            'is_sensitive': self.is_sensitive,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+            'updated_by': self.updated_by
+        }
+        return data

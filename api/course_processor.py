@@ -58,6 +58,10 @@ class CourseProcessor:
         self.log_callback = log_callback
         self.auto_skip_notopen = False
         
+        # 将 log_callback 设置到 chaoxing 实例，以便 show_progress 可以使用
+        if self.chaoxing and self.log_callback:
+            self.chaoxing.log_callback = self.log_callback
+        
     def _log(self, level: str, message: str):
         """记录日志"""
         # 调用日志回调
