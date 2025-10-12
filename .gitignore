@@ -1,4 +1,6 @@
+# ================================
 # Python
+# ================================
 __pycache__/
 *.py[cod]
 *$py.class
@@ -23,7 +25,9 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# ================================
 # Virtual Environment
+# ================================
 venv/
 .venv/
 env/
@@ -31,7 +35,9 @@ ENV/
 env.bak/
 venv.bak/
 
+# ================================
 # IDE
+# ================================
 .vscode/settings.json
 .vscode/launch.json
 !.vscode/*.example
@@ -42,45 +48,174 @@ venv.bak/
 *~
 .DS_Store
 
-# 项目特定配置和敏感文件
+# ================================
+# 日志文件（重要：不提交到Git）
+# ================================
+logs/
+*.log
+*.log.*
+*.log.zip
+chaoxing*.log
+web/backend/logs/
+web/backend/*.log
+
+# ================================
+# 数据库文件（重要：不提交到Git）
+# ================================
+*.db
+*.sqlite
+*.sqlite3
+celeryresults.sqlite3
+web/backend/data/chaoxing.db
+web/backend/data/*.db
+
+# ================================
+# Celery相关（重要：临时文件）
+# ================================
+celerybeat-schedule
+celerybeat.pid
+web/backend/control/
+web/backend/data/celery_broker/
+web/backend/data/celery_results/
+celery-task-meta-*
+
+# ================================
+# 配置文件和敏感信息
+# ================================
 config.ini
 cookies.txt
 cache.json
 .config_key
-*.log
 web_config.json
 web/backend/web_config.json
+web/backend/cookies.txt
+.env
+.env.local
+.env.production
+.envrc
 
-# 日志文件夹
-logs/
-chaoxing.log
-chaoxing_*.log
+# 但保留示例文件
+!config_template.ini
+!web/env.example
+!.env.example
 
-# 测试和临时文件
+# ================================
+# 前端构建和依赖
+# ================================
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# 构建输出
+dist/
+dist-ssr/
+*.local
+
+# Vite临时文件
+web/frontend/node_modules/.vite/
+.vite/
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# 包管理器
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# 但保留根目录的package-lock.json（如果有项目级配置）
+!package-lock.json
+
+# ================================
+# 测试文件
+# ================================
 .pytest_cache/
 .coverage
 htmlcov/
 .tox/
 .hypothesis/
+coverage/
+*.cover
+.cache
+nosetests.xml
+coverage.xml
+
+# ================================
+# 临时文件
+# ================================
 *.tmp
+*.temp
 temp/
+tmp/
+.temp/
 
-# Celery
-celerybeat-schedule
-celerybeat.pid
-
-# 数据库
-*.db
-*.sqlite
-*.sqlite3
-celeryresults.sqlite3
-
+# ================================
 # 打包文件
+# ================================
 *.exe
 *.zip
 *.tar.gz
 *.rar
+*.7z
 
-# 其他
-.env
-.envrc
+# ================================
+# 操作系统
+# ================================
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+*~
+.directory
+
+# ================================
+# 文档临时文件（清理后的临时说明）
+# ================================
+*完成报告*.md
+*完成总结*.md
+*修复*.txt
+*说明*.txt
+*指南*.txt
+开始使用.txt
+快速开始*.txt
+登录说明.txt
+完成说明.txt
+导入错误*.txt
+任务创建*.txt
+课程列表*.txt
+邮件系统*.txt
+重试功能*.txt
+
+# 但保留正式文档
+!README.md
+!docs/
+!web/README.md
+!web/START_GUIDE.md
+!web/DEPLOYMENT_GUIDE.md
+
+# ================================
+# 项目特定临时文件
+# ================================
+API测试完成报告.md
+Celery异步修复*.txt
+SSL连接错误修复.txt
+SMTP配置指南.txt
+清理完成报告.md
+项目完整性检查报告.md
+项目结构.md
+FINAL_SUMMARY.md
+README_REFINE.md
+REFINE_*.md

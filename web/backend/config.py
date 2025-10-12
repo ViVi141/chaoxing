@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     DEPLOY_MODE: str = Field(default="simple", description="部署模式")
     
     # Celery配置
-    CELERY_BROKER_URL: str = Field(default="filesystem://", description="Celery Broker")
+    CELERY_BROKER_URL: str = Field(default="filesystem://localhost/", description="Celery Broker")
     CELERY_RESULT_BACKEND: str = Field(default="file://data/celery_results", description="Celery结果后端")
     CELERY_BROKER_TRANSPORT_OPTIONS: dict = Field(
         default_factory=lambda: {

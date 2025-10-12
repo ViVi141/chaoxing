@@ -41,6 +41,14 @@ export const TaskShowFull = () => {
   const [itemDetail, setItemDetail] = useState<string>('');
   const [infoModalVisible, setInfoModalVisible] = useState(false);
 
+  // 调试：打印record数据
+  useEffect(() => {
+    if (record) {
+      console.log('[TaskShow] Record data:', record);
+      console.log('[TaskShow] Logs count:', record.logs?.length || 0);
+    }
+  }, [record]);
+
   // ✅ WebSocket实时更新（完整实现）
   useEffect(() => {
     if (!record?.id) return;
@@ -95,10 +103,10 @@ export const TaskShowFull = () => {
           setRealTimeLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ❌ ${data.error_msg}`]);
         }
         
-        // 状态变化时刷新数据
+        // 状态变化时刷新数据（包括logs）
         if (data.status && data.status !== record.status) {
           setRealTimeLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] 状态变更: ${data.status}`]);
-          refetch(); // 刷新任务数据
+          refetch(); // 刷新任务数据，包括数据库日志
         }
         
         // 显示课程进度
@@ -107,6 +115,11 @@ export const TaskShowFull = () => {
             ...prev, 
             `[${new Date().toLocaleTimeString()}] 课程进度: ${data.completed_courses}/${data.total_courses}`
           ]);
+        }
+        
+        // ✅ 有进度更新时也刷新数据，获取最新日志
+        if (data.progress !== undefined || data.current_item) {
+          refetch();
         }
       }
     };
@@ -121,6 +134,17 @@ export const TaskShowFull = () => {
       websocketManager.send('unsubscribe_task', { task_id: record.id });
     };
   }, [record?.id, record?.status]);
+  
+  // ✅ 任务运行时定期刷新日志
+  useEffect(() => {
+    if (record?.status === 'running') {
+      const interval = setInterval(() => {
+        refetch(); // 每5秒刷新一次，获取最新日志
+      }, 5000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [record?.status]);
 
   const handleAction = async (action: string) => {
     try {
@@ -572,19 +596,54 @@ export const TaskShowFull = () => {
           </>
         )}
 
-        <div style={{ 
-          background: '#f5f5f5', 
-          padding: 16, 
-          borderRadius: 4,
-          maxHeight: 500,
-          overflow: 'auto',
-          fontFamily: 'Consolas, Monaco, monospace',
-          fontSize: 13,
-          lineHeight: 1.6,
-          whiteSpace: 'pre-wrap',
-        }}>
-          {record?.log || '暂无日志'}
-        </div>
+        {/* 显示数据库中的详细日志 */}
+        {record?.logs && record.logs.length > 0 ? (
+          <Timeline
+            style={{ 
+              maxHeight: 500,
+              overflow: 'auto',
+              padding: 16,
+              background: '#fafafa',
+              borderRadius: 4
+            }}
+          >
+            {record.logs.map((log: any) => (
+              <Timeline.Item 
+                key={log.id}
+                color={
+                  log.level === 'ERROR' ? 'red' : 
+                  log.level === 'WARNING' ? 'orange' : 
+                  log.level === 'INFO' ? 'blue' : 
+                  'gray'
+                }
+              >
+                <div style={{ fontFamily: 'Consolas, Monaco, monospace', fontSize: 13 }}>
+                  <Text type="secondary" style={{ marginRight: 8 }}>
+                    {new Date(log.created_at).toLocaleString('zh-CN')}
+                  </Text>
+                  <Tag color={
+                    log.level === 'ERROR' ? 'red' : 
+                    log.level === 'WARNING' ? 'orange' : 
+                    'blue'
+                  }>
+                    {log.level}
+                  </Tag>
+                  <Text>{log.message}</Text>
+                </div>
+              </Timeline.Item>
+            ))}
+          </Timeline>
+        ) : (
+          <div style={{ 
+            background: '#f5f5f5', 
+            padding: 16, 
+            borderRadius: 4,
+            textAlign: 'center',
+            color: '#999'
+          }}>
+            暂无日志（任务尚未启动或日志加载中）
+          </div>
+        )}
       </Card>
 
       {/* 任务结果 */}

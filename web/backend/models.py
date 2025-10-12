@@ -222,7 +222,9 @@ class Task(Base):
             'total_courses': self.total_courses,
         }
         if include_logs:
-            data['logs'] = [log.to_dict() for log in self.logs[:100]]  # 最多100条
+            # 按创建时间倒序排序，最新的日志在前面
+            sorted_logs = sorted(self.logs, key=lambda x: x.created_at, reverse=True)
+            data['logs'] = [log.to_dict() for log in sorted_logs[:200]]  # 最多200条
         return data
 
 

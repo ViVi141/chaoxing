@@ -10,7 +10,9 @@ export const LoadingFallback = () => {
         minHeight: '100vh',
       }}
     >
-      <Spin size="large" tip="加载中..." />
+      <Spin size="large" spinning={true} tip="加载中...">
+        <div style={{ minHeight: '200px' }} />
+      </Spin>
     </div>
   );
 };

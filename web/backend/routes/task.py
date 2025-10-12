@@ -8,6 +8,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from database import get_db
 from models import User, Task, TaskLog
@@ -123,10 +124,13 @@ async def get_task(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    获取任务详情
+    获取任务详情（包含日志）
     """
+    # 使用selectinload预加载日志关系
     result = await db.execute(
-        select(Task).where(
+        select(Task)
+        .options(selectinload(Task.logs))
+        .where(
             Task.id == task_id,
             Task.user_id == current_user.id
         )
@@ -139,8 +143,7 @@ async def get_task(
             detail="任务不存在"
         )
     
-    # 预加载日志关系
-    await db.refresh(task, ['logs'])
+    logger.debug(f"任务{task_id}包含{len(task.logs)}条日志")
     
     return task.to_dict(include_logs=True)
 
@@ -340,6 +343,60 @@ async def retry_task(
     return {"message": "任务已重新启动", "detail": f"任务ID: {task.id}"}
 
 
+@router.post("/{task_id}/resume", response_model=MessageResponse)
+async def resume_task(
+    task_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    恢复暂停的任务
+    
+    将暂停的任务重新提交到Celery队列执行
+    """
+    result = await db.execute(
+        select(Task).where(
+            Task.id == task_id,
+            Task.user_id == current_user.id
+        )
+    )
+    task = result.scalar_one_or_none()
+    
+    if not task:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="任务不存在"
+        )
+    
+    if task.status != "paused":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"任务状态为{task.status}，只能恢复暂停的任务"
+        )
+    
+    # 检查用户配置
+    await db.refresh(current_user, ['config'])
+    if not current_user.config or not current_user.config.cx_username:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="请先配置超星账号"
+        )
+    
+    # 提交到Celery
+    from tasks.study_tasks import start_study_task
+    celery_task = start_study_task.delay(task.id, current_user.id)
+    task.celery_task_id = celery_task.id
+    
+    task.status = "running"
+    # 不重置start_time，保留原来的开始时间
+    
+    await db.commit()
+    
+    logger.info(f"用户{current_user.username}恢复任务{task_id}")
+    
+    return {"message": "任务已恢复", "detail": f"任务ID: {task.id}"}
+
+
 @router.post("/{task_id}/cancel", response_model=MessageResponse)
 async def cancel_task(
     task_id: int,
@@ -370,9 +427,13 @@ async def cancel_task(
         )
     
     # 取消Celery任务
-    # if task.celery_task_id:
-    #     from celery_app import app as celery_app
-    #     celery_app.control.revoke(task.celery_task_id, terminate=True)
+    if task.celery_task_id:
+        try:
+            from celery_app import celery_app
+            celery_app.control.revoke(task.celery_task_id, terminate=True)
+            logger.info(f"已终止Celery任务: {task.celery_task_id}")
+        except Exception as e:
+            logger.warning(f"无法终止Celery任务 {task.celery_task_id}: {e}")
     
     task.status = "cancelled"
     task.end_time = datetime.utcnow()

@@ -33,6 +33,8 @@ config_dict = {
     'worker_prefetch_multiplier': 1,
     'worker_max_tasks_per_child': 1000,
     'result_expires': 3600,
+    # Celery 6.0兼容性配置
+    'broker_connection_retry_on_startup': True,
 }
 
 # 如果使用文件系统broker（简单模式）

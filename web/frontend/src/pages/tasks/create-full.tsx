@@ -167,9 +167,9 @@ export const TaskCreateFull = () => {
           />
 
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '40px 0' }}>
-              <Spin size="large" tip="正在获取课程列表..." />
-            </div>
+            <Spin spinning={loading} tip="正在获取课程列表...">
+              <div style={{ minHeight: '200px' }} />
+            </Spin>
           ) : courses.length === 0 ? (
             <Alert
               message="未获取到课程"

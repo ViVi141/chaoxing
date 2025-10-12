@@ -134,11 +134,47 @@ def update_task_progress(
                     # 基本进度
                     logger.info(f"[Task {task_id}] {current_item}: {item_progress}% | 总进度: {progress}%")
             
+            # ✅ 通过WebSocket实时推送进度更新到前端
+            try:
+                push_task_update_sync(task_id, progress_info)
+            except Exception as e:
+                logger.debug(f"WebSocket推送失败（非致命错误）: {e}")
+            
     except Exception as e:
         logger.error(f"更新任务进度失败: {e}")
         db.rollback()
     finally:
         db.close()
+
+
+def push_task_update_sync(task_id: int, data: dict):
+    """
+    同步方式推送WebSocket更新（在Celery worker中调用）
+    
+    由于Celery worker运行在同步环境中，我们需要创建新的事件循环来推送异步消息
+    """
+    import asyncio
+    from routes.websocket import manager
+    
+    try:
+        # 尝试获取当前事件循环
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # 如果循环正在运行，创建任务
+                asyncio.create_task(manager.send_task_update(task_id, data))
+            else:
+                # 如果循环未运行，直接运行
+                loop.run_until_complete(manager.send_task_update(task_id, data))
+        except RuntimeError:
+            # 如果没有事件循环，创建新的
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(manager.send_task_update(task_id, data))
+            loop.close()
+    except Exception as e:
+        # WebSocket推送失败不应影响主任务
+        logger.debug(f"WebSocket推送异常: {e}")
 
 
 class DetailedProgressCallback:

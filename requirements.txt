@@ -1,82 +1,85 @@
 # ================================
 # 超星学习通自动化完成任务点（增强版）
 # 统一依赖文件 - 包含命令行版和Web平台所有依赖
+# 更新日期: 2025-10-12
+# Python版本要求: 3.10-3.12
 # ================================
 
 # ============ 核心依赖（命令行版） ============
 # HTTP请求
-requests>=2.32.3
-httpx>=0.27.0
-urllib3>=2.0.0
+requests==2.32.3
+httpx==0.27.2
+urllib3==2.2.3
 
 # HTML解析
-beautifulsoup4>=4.13.3
-lxml>=5.3.1
+beautifulsoup4==4.12.3
+lxml==5.3.0
 
 # 加密和安全
-pyaes>=1.6.1
-cryptography>=41.0.0
+pyaes==1.6.1
+cryptography==43.0.3
 
 # 日志和工具
-loguru>=0.7.3
-argparse>=1.4.0
+loguru==0.7.2
+argparse==1.4.0
 
 # 任务队列（基础）
-celery>=5.4.0
+celery==5.4.0
 
 # 其他工具
-flask>=3.1.0
-fonttools>=4.56.0
-openai>=1.66.2
-ddddocr==1.5.6
+flask==3.0.3
+fonttools==4.54.1
+openai==1.51.2
+ddddocr==1.5.6  # 最新版本，支持Python 3.12
 
 # ============ Web平台依赖 ============
 # Web框架
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-gunicorn==21.2.0
+fastapi==0.115.0
+uvicorn[standard]==0.31.0
+gunicorn==23.0.0
 
 # Windows特定依赖（Celery文件系统队列需要）
-pywin32>=306; sys_platform == 'win32'
+pywin32==306; sys_platform == 'win32'
 
 # 数据库
-sqlalchemy[asyncio]==2.0.23
-alembic==1.12.1
-aiosqlite==0.19.0  # SQLite异步驱动（简单模式）
+sqlalchemy[asyncio]==2.0.35
+alembic==1.13.3
+aiosqlite==0.20.0  # SQLite异步驱动（简单模式）
 asyncpg==0.29.0    # PostgreSQL异步驱动（标准模式）
 psycopg2-binary==2.9.9  # PostgreSQL同步驱动（Celery任务需要）
 
 # 认证和安全
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
-python-multipart==0.0.6
+python-multipart==0.0.9
 
 # 数据验证
-pydantic==2.5.0
-pydantic-settings==2.1.0
-email-validator==2.1.0
+pydantic==2.9.2
+pydantic-settings==2.5.2
+email-validator==2.2.0
 
 # 任务队列（完整）
-redis==5.0.1  # 可选，仅标准模式需要
+redis==5.1.1  # 可选，仅标准模式需要
 
 # WebSocket
-websockets==12.0
-python-socketio==5.10.0
+websockets==13.1
+python-socketio==5.11.4
 
 # HTTP客户端（异步）
-aiohttp==3.9.0
+aiohttp==3.10.9
 
 # 配置和环境
-python-dotenv==1.0.0
+python-dotenv==1.0.1
 
 # 监控和性能（可选）
-prometheus-client==0.19.0
+prometheus-client==0.21.0
 
 # ============ 开发工具（可选） ============
-pytest==7.4.3
-pytest-asyncio==0.21.1
-black==23.11.0
-flake8==6.1.0
+pytest==8.3.3
+pytest-asyncio==0.24.0
+black==24.10.0
+flake8==7.1.1
+ruff==0.6.9  # 新增：更快的linter
 
 # ================================
 # 安装说明：

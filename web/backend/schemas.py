@@ -126,6 +126,7 @@ class TaskResponse(BaseModel):
     error_msg: Optional[str] = None
     completed_courses: int = 0
     total_courses: int = 0
+    logs: Optional[List[dict]] = None  # ✅ 添加日志字段
     
     class Config:
         from_attributes = True

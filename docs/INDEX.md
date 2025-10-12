@@ -1,98 +1,53 @@
-# :books: 文档索引
+# 📚 项目文档索引
 
-> 项目文档导航中心
-
----
-
-## :zap: 快速开始
-
-### 新用户必读
-1. :point_right: [QUICK_START.md](../QUICK_START.md) - **从这里开始！**
-2. [README.md](../README.md) - 了解项目概况
-3. [WEB_PLATFORM_COMPLETE.md](../WEB_PLATFORM_COMPLETE.md) - Web平台功能
-
-### 命令行版用户
-1. [README.md](../README.md) - 使用方法部分
-2. [config_template.ini](../config_template.ini) - 配置模板
-
-### Web平台用户
-1. [web/START_GUIDE.md](../web/START_GUIDE.md) - 快速启动
-2. [web/README.md](../web/README.md) - 功能介绍
-3. [web/DEPLOYMENT_GUIDE.md](../web/DEPLOYMENT_GUIDE.md) - 生产部署
+> 超星学习通自动化完成任务点（增强版）- 完整文档导航
 
 ---
 
-## :file_folder: 文档分类
+## 📖 快速开始
 
-### 使用文档
-| 文档 | 说明 | 优先级 |
-|------|------|--------|
-| [QUICK_START.md](../QUICK_START.md) | 快速启动指南 | ⭐⭐⭐⭐⭐ |
-| [README.md](../README.md) | 项目主文档 | ⭐⭐⭐⭐⭐ |
-| [web/README.md](../web/README.md) | Web平台文档 | ⭐⭐⭐⭐ |
-| [web/START_GUIDE.md](../web/START_GUIDE.md) | Web快速启动 | ⭐⭐⭐⭐ |
-| [web/frontend/README.md](../web/frontend/README.md) | 前端文档 | ⭐⭐⭐ |
-
-### 技术文档
-| 文档 | 说明 | 优先级 |
-|------|------|--------|
-| [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) | 项目结构详解 | ⭐⭐⭐⭐ |
-| [FILES_LIST.md](../FILES_LIST.md) | 完整文件清单 | ⭐⭐⭐ |
-| [web/DEPLOYMENT_GUIDE.md](../web/DEPLOYMENT_GUIDE.md) | 生产部署指南 | ⭐⭐⭐⭐ |
-
-### 项目信息
-| 文档 | 说明 | 优先级 |
-|------|------|--------|
-| [SUMMARY.md](SUMMARY.md) | 项目总览 | ⭐⭐⭐⭐ |
-| [CHANGELOG.md](CHANGELOG.md) | 更新日志 | ⭐⭐⭐ |
-| [CREDITS.md](CREDITS.md) | 贡献与致谢 | ⭐⭐⭐ |
-| [PROJECT_COMPLETE.md](../PROJECT_COMPLETE.md) | 项目完成报告 | ⭐⭐⭐ |
-| [WEB_PLATFORM_COMPLETE.md](../WEB_PLATFORM_COMPLETE.md) | Web完成报告 | ⭐⭐⭐ |
+- [README.md](../README.md) - 项目主页和快速开始
+- [快速安装指南](QUICK_START.md) - 5分钟快速上手
 
 ---
 
-## :dart: 根据需求选择文档
+## 🏗️ 架构文档
 
-### 我要快速体验
-→ [QUICK_START.md](../QUICK_START.md)
-
-### 我要了解功能
-→ [README.md](../README.md) + [SUMMARY.md](SUMMARY.md)
-
-### 我要部署生产环境
-→ [web/DEPLOYMENT_GUIDE.md](../web/DEPLOYMENT_GUIDE.md)
-
-### 我要了解代码结构
-→ [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)
-
-### 我要查看所有文件
-→ [FILES_LIST.md](../FILES_LIST.md)
-
-### 我要了解技术栈
-→ [WEB_PLATFORM_COMPLETE.md](../WEB_PLATFORM_COMPLETE.md)
-
-### 我要了解版本历史
-→ [CHANGELOG.md](CHANGELOG.md)
-
-### 我要了解贡献者
-→ [CREDITS.md](CREDITS.md)
+- [项目架构](ARCHITECTURE.md) - 系统架构和技术栈
+- [数据库设计](DATABASE.md) - 数据库表结构和关系
+- [API文档](API.md) - 后端API接口说明
 
 ---
 
-## :link: 项目链接
+## 🚀 部署文档
 
-- **原项目**: https://github.com/Samueli924/chaoxing
-- **增强版本**: https://github.com/ViVi141/chaoxing
-- **Issues**: https://github.com/ViVi141/chaoxing/issues
-
----
-
-## :email: 联系方式
-
-- **开发者**: ViVi141
-- **邮箱**: 747384120@qq.com
+- [本地部署](../web/START_GUIDE.md) - 本地开发环境搭建
+- [Docker部署](../web/DOCKER_DEPLOYMENT.md) - 容器化部署
+- [生产部署](../web/DEPLOYMENT_GUIDE.md) - 生产环境部署指南
 
 ---
 
-**最后更新**: 2025-10-12
+## 🔧 配置文档
+
+- [环境配置](CONFIGURATION.md) - 所有配置项说明
+- [安全配置](SECURITY.md) - 安全相关配置
+
+---
+
+## 📝 开发文档
+
+- [开发指南](DEVELOPMENT.md) - 本地开发和贡献指南
+- [代码规范](CODE_STYLE.md) - 代码风格和最佳实践
+
+---
+
+## 📜 其他
+
+- [更新日志](CHANGELOG.md) - 版本更新记录
+- [常见问题](FAQ.md) - 常见问题解答
+- [许可证](../LICENSE) - GPL-3.0协议
+
+---
+
+**最后更新：** 2025-10-12
 

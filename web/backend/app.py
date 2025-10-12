@@ -4,6 +4,7 @@ FastAPI主应用
 """
 import sys
 from pathlib import Path
+from datetime import datetime
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -29,6 +30,57 @@ from routes import auth_router, user_router, task_router, admin_router, websocke
 # from routes.setup import router as setup_router
 
 
+async def recover_interrupted_tasks():
+    """恢复被中断的任务
+    
+    在应用启动时检查数据库中状态为 running 的任务，
+    将它们标记为 failed，以便用户可以手动重试。
+    """
+    from sqlalchemy import select, update
+    from models import Task
+    from database import AsyncSessionLocal
+    
+    try:
+        logger.info("🔍 检查被中断的任务...")
+        
+        # 使用异步会话
+        async with AsyncSessionLocal() as session:
+            # 查找所有 running 状态的任务
+            result = await session.execute(
+                select(Task).where(Task.status == "running")
+            )
+            interrupted_tasks = result.scalars().all()
+            
+            if interrupted_tasks:
+                logger.warning(f"发现 {len(interrupted_tasks)} 个被中断的任务")
+                
+                # 使用update语句批量更新
+                task_ids = [task.id for task in interrupted_tasks]
+                
+                # 记录任务信息
+                for task in interrupted_tasks:
+                    logger.info(f"  - 任务 {task.id} (用户 {task.user_id}) 将被标记为失败")
+                
+                # 批量更新任务状态
+                await session.execute(
+                    update(Task)
+                    .where(Task.id.in_(task_ids))
+                    .values(
+                        status="failed",
+                        error_msg="任务被意外中断（服务器重启或崩溃）",
+                        end_time=datetime.utcnow()
+                    )
+                )
+                
+                await session.commit()
+                logger.info(f"✅ 已处理 {len(interrupted_tasks)} 个被中断的任务")
+            else:
+                logger.info("✅ 没有发现被中断的任务")
+                
+    except Exception as e:
+        logger.error(f"❌ 恢复被中断任务时出错: {e}", exc_info=True)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator:
     """应用生命周期管理"""
@@ -52,6 +104,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     
     # 初始化默认管理员
     await init_default_admin()
+    
+    # 恢复被中断的任务
+    await recover_interrupted_tasks()
     
     logger.info("✅ 应用启动完成")
     
