@@ -1,0 +1,82 @@
+# 简单模式Docker Compose配置
+# 无需PostgreSQL和Redis，使用SQLite和文件队列
+version: '3.8'
+
+services:
+  # 后端API服务
+  backend:
+    build:
+      context: ..
+      dockerfile: web/backend/Dockerfile
+    container_name: chaoxing_backend_simple
+    command: uvicorn app:app --host 0.0.0.0 --port 8000
+    environment:
+      DEPLOY_MODE: simple
+      DATABASE_URL: sqlite+aiosqlite:///./chaoxing_web.db
+      CELERY_BROKER_URL: filesystem://
+      CELERY_RESULT_BACKEND: file://./celery_results
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-me}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-jwt-secret-key}
+      DEBUG: ${DEBUG:-False}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - ./backend:/app
+      - backend_data:/app/data
+      - backend_logs:/app/logs
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    networks:
+      - chaoxing_network
+
+  # Celery Worker（异步任务处理）
+  celery:
+    build:
+      context: ..
+      dockerfile: web/backend/Dockerfile
+    container_name: chaoxing_celery_simple
+    command: celery -A celery_app worker --loglevel=info --concurrency=2 --pool=solo
+    environment:
+      DEPLOY_MODE: simple
+      DATABASE_URL: sqlite+aiosqlite:///./chaoxing_web.db
+      CELERY_BROKER_URL: filesystem://
+      CELERY_RESULT_BACKEND: file://./celery_results
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-me}
+    volumes:
+      - ./backend:/app
+      - backend_data:/app/data
+      - celery_logs:/app/logs
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - chaoxing_network
+
+  # 前端服务
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+    container_name: chaoxing_frontend_simple
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - chaoxing_network
+
+volumes:
+  backend_data:
+    driver: local
+  backend_logs:
+    driver: local
+  celery_logs:
+    driver: local
+
+networks:
+  chaoxing_network:
+    driver: bridge
+

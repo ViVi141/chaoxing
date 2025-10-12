@@ -13,6 +13,9 @@ from api.base import Chaoxing, Account
 from api.exceptions import LoginError, InputFormatError, MaxRollBackExceeded
 from api.answer import Tiku
 from api.notification import Notification
+from api.config_validator import ConfigValidator
+from api.secure_config import SecureConfig
+from api.course_processor import CourseProcessor, RollBackManager
 
 # 关闭警告
 disable_warnings(exceptions.InsecureRequestWarning)
@@ -82,7 +85,11 @@ def load_config_from_file(config_path):
             common_config["course_list"] = [item.strip() for item in common_config["course_list"].split(",") if item.strip()]
         # 处理speed，将字符串转换为浮点数
         if "speed" in common_config:
-            common_config["speed"] = float(common_config["speed"])
+            try:
+                common_config["speed"] = float(common_config["speed"])
+            except (ValueError, TypeError):
+                logger.warning(f"speed配置无效，使用默认值1.0")
+                common_config["speed"] = 1.0
         # 处理notopen_action，设置默认值为retry
         if "notopen_action" not in common_config:
             common_config["notopen_action"] = "retry"
@@ -91,7 +98,21 @@ def load_config_from_file(config_path):
         if "username" in common_config and common_config["username"] is not None:
             common_config["username"] = common_config["username"].strip()
         if "password" in common_config and common_config["password"] is not None:
-            common_config["password"] = common_config["password"].strip()
+            password = common_config["password"].strip()
+            # 检查密码是否加密
+            password_encrypted = str_to_bool(common_config.get("password_encrypted", "false"))
+            if password_encrypted:
+                logger.debug("检测到加密密码，正在解密...")
+                secure_config = SecureConfig()
+                decrypted_password = secure_config.decrypt_password(password)
+                if decrypted_password:
+                    common_config["password"] = decrypted_password
+                    logger.debug("密码解密成功")
+                else:
+                    logger.error("密码解密失败，请检查配置")
+                    common_config["password"] = None
+            else:
+                common_config["password"] = password
     
     # 检查并读取tiku节
     if config.has_section("tiku"):
@@ -99,7 +120,14 @@ def load_config_from_file(config_path):
         # 处理数值类型转换
         for key in ["delay", "cover_rate"]:
             if key in tiku_config:
-                tiku_config[key] = float(tiku_config[key])
+                try:
+                    tiku_config[key] = float(tiku_config[key])
+                except (ValueError, TypeError):
+                    logger.warning(f"tiku配置{key}无效，使用默认值")
+                    if key == "delay":
+                        tiku_config[key] = 1.0
+                    elif key == "cover_rate":
+                        tiku_config[key] = 0.8
 
     # 检查并读取notification节
     if config.has_section("notification"):
@@ -369,6 +397,19 @@ def main():
         # 初始化配置
         common_config, tiku_config, notification_config = init_config()
         
+        # 配置验证
+        validator = ConfigValidator()
+        is_valid, errors = validator.validate_all_config(
+            common_config, tiku_config, notification_config
+        )
+        if not is_valid:
+            logger.error("配置文件验证失败:")
+            for error in errors:
+                logger.error(f"  - {error}")
+            logger.error("请修正配置文件后重试")
+            sys.exit(1)
+        logger.info("配置文件验证通过")
+        
         # 强制播放按照配置文件调节
         speed = min(2.0, max(1.0, common_config.get("speed", 1.0)))
         notopen_action = common_config.get("notopen_action", "retry")
@@ -395,11 +436,17 @@ def main():
         
         # 开始学习
         logger.info(f"课程列表过滤完毕, 当前课程任务数量: {len(course_task)}")
-        for course in course_task:
-            process_course(chaoxing, course, notopen_action, speed)
+        
+        # 使用CourseProcessor进行学习（新方式）
+        processor = CourseProcessor(
+            chaoxing=chaoxing,
+            speed=speed,
+            notopen_action=notopen_action
+        )
+        result = processor.process_courses(course_task)
         
         logger.info("所有课程学习任务已完成")
-        notification.send("chaoxing : 所有课程学习任务已完成")
+        notification.send(f"chaoxing : 所有课程学习任务已完成 (成功:{result['completed']}/{result['total']})")
         
     except SystemExit as e:
         if e.code != 0:
