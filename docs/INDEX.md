@@ -42,6 +42,7 @@
 - [Release下载指南](../RELEASE_DOWNLOAD.md) - 快速选择版本 🌟
 - [Release选择指南](RELEASE_GUIDE.md) - 详细对比和选择建议 🆕
 - [快速部署](QUICK_DEPLOY.md) - 各平台部署教程
+- [宝塔/1Panel部署](BAOTA_1PANEL_DEPLOY.md) - 国内服务器管理面板部署 🇨🇳 🆕
 - [Docker部署指南](DOCKER_SETUP.md) - Docker完整文档 🐳
 - [Kubernetes部署](../k8s/README.md) - K8s生产环境部署 ☸️ 🆕
 - [守护进程部署](DAEMON.md) - 6种守护进程方案 🆕

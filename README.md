@@ -113,6 +113,27 @@ docker compose up -d
 
 ---
 
+### 方式4：宝塔面板/1Panel部署（国内用户推荐）
+
+**完全兼容！前端已构建，无需Node.js！**
+
+#### 宝塔面板
+```bash
+1. 下载Release包（750KB）
+2. 使用Python项目管理器部署后端
+3. 前端用Nginx直接托管dist目录
+```
+
+#### 1Panel
+```bash
+1. 导入docker-compose.yml（推荐）
+2. 或使用Python运行环境
+```
+
+详见：[宝塔/1Panel部署指南](docs/BAOTA_1PANEL_DEPLOY.md)
+
+---
+
 ## 📦 安装要求
 
 - **Python**: 3.10 / 3.11 / 3.12
