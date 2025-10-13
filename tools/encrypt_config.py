@@ -19,7 +19,7 @@ def main():
     print("超星学习通配置文件加密工具")
     print("=" * 60)
     print()
-    
+
     # 获取配置文件路径
     if len(sys.argv) > 1:
         config_path = sys.argv[1]
@@ -27,18 +27,18 @@ def main():
         config_path = input("请输入配置文件路径（默认: config.ini）: ").strip()
         if not config_path:
             config_path = "config.ini"
-    
+
     # 检查文件是否存在
     if not Path(config_path).exists():
         print(f"错误: 配置文件不存在: {config_path}")
         sys.exit(1)
-    
+
     print(f"正在处理配置文件: {config_path}")
     print()
-    
+
     # 执行加密
     success = migrate_config_to_encrypted(config_path)
-    
+
     print()
     if success:
         print("✓ 配置文件密码加密成功！")
@@ -52,11 +52,10 @@ def main():
         print("✗ 配置文件密码加密失败！")
         print("请查看日志了解详细错误信息")
         sys.exit(1)
-    
+
     print()
     print("=" * 60)
 
 
 if __name__ == "__main__":
     main()
-

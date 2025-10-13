@@ -34,6 +34,7 @@ def get_random_seconds():
 
 class SessionManager:
     _instance = None
+
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
@@ -52,7 +53,9 @@ class SessionManager:
         return cls()
 
     @classmethod
-    def get_session(cls, is_video: bool = False, is_audio: bool = False) -> requests.Session:
+    def get_session(
+        cls, is_video: bool = False, is_audio: bool = False
+    ) -> requests.Session:
         instance = cls.get_instance()
         instance._session.headers.clear()
         instance._session.headers.update(gc.HEADERS)
@@ -94,7 +97,7 @@ class Chaoxing:
         def is_failure(result):
             return result != Chaoxing.StudyResult.SUCCESS
 
-    def __init__(self, account: Account = None, tiku: Tiku = None,**kwargs):
+    def __init__(self, account: Account = None, tiku: Tiku = None, **kwargs):
         self.account = account
         self.cipher = AESCipher()
         self.tiku = tiku
@@ -102,16 +105,21 @@ class Chaoxing:
         self.rollback_times = 0
         self.log_callback = None  # 用于 WebUI 的日志回调
 
-    def login(self, login_with_cookies = False):
+    def login(self, login_with_cookies=False):
         if login_with_cookies:
             logger.info("Logging in with cookies")
             SessionManager.update_cookies()
-            logger.debug(f"Logged in with cookies: {SessionManager.get_instance()._session.cookies}")
+            logger.debug(
+                f"Logged in with cookies: {SessionManager.get_instance()._session.cookies}"
+            )
             if not self._validate_cookie_session():
                 logger.warning("Cookie 登录校验失败，尝试使用账号密码重新登录")
                 if self.account and self.account.username and self.account.password:
                     return self.login(login_with_cookies=False)
-                return {"status": False, "msg": "cookies 已失效，请更新 cookies 或提供账号密码"}
+                return {
+                    "status": False,
+                    "msg": "cookies 已失效，请更新 cookies 或提供账号密码",
+                }
             logger.info("登录成功...")
             return {"status": True, "msg": "登录成功"}
 
@@ -129,17 +137,22 @@ class Chaoxing:
             "independentId": 0,
         }
         logger.trace("正在尝试登录...")
-        
+
         # 添加重试机制处理网络错误
         max_retries = 3
         for attempt in range(max_retries):
             try:
                 resp = _session.post(_url, headers=gc.HEADERS, data=_data, timeout=10)
                 break
-            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+            except (
+                requests.exceptions.ConnectionError,
+                requests.exceptions.Timeout,
+            ) as e:
                 if attempt < max_retries - 1:
-                    logger.warning(f"登录请求失败 (尝试 {attempt+1}/{max_retries}): {str(e)[:100]}")
-                    time.sleep(2 ** attempt)  # 指数退避
+                    logger.warning(
+                        f"登录请求失败 (尝试 {attempt+1}/{max_retries}): {str(e)[:100]}"
+                    )
+                    time.sleep(2**attempt)  # 指数退避
                 else:
                     logger.error(f"登录请求失败，已达最大重试次数: {str(e)[:100]}")
                     return {"status": False, "msg": f"网络连接失败: {str(e)[:100]}"}
@@ -163,7 +176,12 @@ class Chaoxing:
         try:
             resp = test_session.post(
                 "https://mooc2-ans.chaoxing.com/mooc2-ans/visit/courselistdata",
-                data={"courseType": 1, "courseFolderId": 0, "query": "", "superstarClass": 0},
+                data={
+                    "courseType": 1,
+                    "courseFolderId": 0,
+                    "query": "",
+                    "superstarClass": 0,
+                },
                 timeout=8,
             )
         except RequestException as exc:
@@ -426,11 +444,27 @@ class Chaoxing:
                 _wait_time = get_random_seconds()
                 if _playingTime + _wait_time >= int(_duration):
                     _wait_time = int(_duration) - _playingTime
-                    _isPassed, state = self.video_progress_log(_session, _course, _job, _job_info, _dtoken, _duration, _duration, _type)
-                    if _isPassed['isPassed']:
+                    _isPassed, state = self.video_progress_log(
+                        _session,
+                        _course,
+                        _job,
+                        _job_info,
+                        _dtoken,
+                        _duration,
+                        _duration,
+                        _type,
+                    )
+                    if _isPassed["isPassed"]:
                         _isFinished = True
                 # 播放进度显示
-                show_progress(_job["name"], _playingTime, _wait_time, _duration, _speed, self.log_callback)
+                show_progress(
+                    _job["name"],
+                    _playingTime,
+                    _wait_time,
+                    _duration,
+                    _speed,
+                    self.log_callback,
+                )
                 _playingTime += _wait_time
             print("\r", end="", flush=True)
             logger.info(f"任务完成: {_job['name']}")
@@ -493,33 +527,37 @@ class Chaoxing:
 
                 available_options = len(_op_list)
                 select_count = 0
-        
+
                 # 根据可用选项数量调整可能选择的选项数
                 if available_options <= 1:
                     select_count = available_options
                 else:
                     max_possible = min(4, available_options)
                     min_possible = min(2, available_options)
-            
+
                     weights_map = {
                         2: [1.0],
                         3: [0.3, 0.7],
                         4: [0.1, 0.5, 0.4],
                         5: [0.1, 0.4, 0.3, 0.2],
                     }
-            
+
                     weights = weights_map.get(max_possible, [0.3, 0.4, 0.3])
                     possible_counts = list(range(min_possible, max_possible + 1))
-            
-                    weights = weights[:len(possible_counts)]
-            
+
+                    weights = weights[: len(possible_counts)]
+
                     weights_sum = sum(weights)
                     if weights_sum > 0:
-                        weights = [w/weights_sum for w in weights]
-                
-                    select_count = random.choices(possible_counts, weights=weights, k=1)[0]
+                        weights = [w / weights_sum for w in weights]
 
-                selected_options = random.sample(_op_list, select_count) if select_count > 0 else []
+                    select_count = random.choices(
+                        possible_counts, weights=weights, k=1
+                    )[0]
+
+                selected_options = (
+                    random.sample(_op_list, select_count) if select_count > 0 else []
+                )
 
                 for option in selected_options:
                     answer += option[:1]  # 取首字为答案，例如A或B
@@ -589,7 +627,7 @@ class Chaoxing:
             if isinstance(res, str):
                 res = [res]
             for c in res:
-                cleaned_res.append(re.sub(r'^[A-Za-z]|[.,!?;:，。！？；：]', '', c))
+                cleaned_res.append(re.sub(r"^[A-Za-z]|[.,!?;:，。！？；：]", "", c))
 
             return cleaned_res
 
@@ -604,24 +642,30 @@ class Chaoxing:
                     while retries < max_retries:
                         try:
                             _resp = func(*args, **kwargs)
-                            
+
                             # 未创建完成该测验则不进行答题，目前遇到的情况是未创建完成等同于没题目
-                            if '教师未创建完成该测验' in _resp.text:
+                            if "教师未创建完成该测验" in _resp.text:
                                 raise PermissionError("教师未创建完成该测验")
 
                             questions = decode_questions_info(_resp.text)
-                    
+
                             if _resp.status_code == 200 and questions.get("questions"):
                                 return (_resp, questions)
-                    
-                            logger.warning(f"无效响应 (Code: {getattr(_resp, 'status_code', 'Unknown')}), 重试中... ({retries+1}/{max_retries})")
-                
+
+                            logger.warning(
+                                f"无效响应 (Code: {getattr(_resp, 'status_code', 'Unknown')}), 重试中... ({retries+1}/{max_retries})"
+                            )
+
                         except requests.exceptions.RequestException as e:
-                            logger.warning(f"请求失败: {str(e)[:50]}, 重试中... ({retries+1}/{max_retries})")
+                            logger.warning(
+                                f"请求失败: {str(e)[:50]}, 重试中... ({retries+1}/{max_retries})"
+                            )
                         retries += 1
-                        time.sleep(delay * (2 ** retries))
+                        time.sleep(delay * (2**retries))
                     raise MaxRetryExceeded(f"超过最大重试次数 ({max_retries})")
+
                 return wrapper
+
             return decorator
 
         # 学习通这里根据参数差异能重定向至两个不同接口, 需要定向至https://mooc1.chaoxing.com/mooc-ans/workHandle/handle
@@ -632,24 +676,24 @@ class Chaoxing:
         @with_retry(max_retries=3, delay=1)
         def fetch_response():
             return _session.get(
-                    _url,
-                    params={
-                        "api": "1",
-                        "workId": _job["jobid"].replace("work-", ""),
-                        "jobid": _job["jobid"],
-                        "originJobId": _job["jobid"],
-                        "needRedirect": "true",
-                        "skipHeader": "true",
-                        "knowledgeid": str(_job_info["knowledgeid"]),
-                        "ktoken": _job_info["ktoken"],
-                        "cpi": _job_info["cpi"],
-                        "ut": "s",
-                        "clazzId": _course["clazzId"],
-                        "type": "",
-                        "enc": _job["enc"],
-                        "mooc2": "1",
-                        "courseid": _course["courseId"],
-                    }
+                _url,
+                params={
+                    "api": "1",
+                    "workId": _job["jobid"].replace("work-", ""),
+                    "jobid": _job["jobid"],
+                    "originJobId": _job["jobid"],
+                    "needRedirect": "true",
+                    "skipHeader": "true",
+                    "knowledgeid": str(_job_info["knowledgeid"]),
+                    "ktoken": _job_info["ktoken"],
+                    "cpi": _job_info["cpi"],
+                    "ut": "s",
+                    "clazzId": _course["clazzId"],
+                    "type": "",
+                    "enc": _job["enc"],
+                    "mooc2": "1",
+                    "courseid": _course["courseId"],
+                },
             )
 
         final_resp = {}
@@ -660,7 +704,7 @@ class Chaoxing:
         except Exception as e:
             logger.error(f"请求失败: {e}")
             return self.StudyResult.ERROR
-        
+
         _ORIGIN_HTML_CONTENT = final_resp.text  # 用于配合输出网页源码, 帮助修复#391错误
 
         # 搜题
@@ -669,7 +713,7 @@ class Chaoxing:
         for q in questions["questions"]:
             logger.debug(f"当前题目信息 -> {q}")
             # 添加搜题延迟 #428 - 默认0s延迟
-            query_delay = self.kwargs.get("query_delay",0)
+            query_delay = self.kwargs.get("query_delay", 0)
             time.sleep(query_delay)
             res = self.tiku.query(q)
             answer = ""
@@ -686,9 +730,9 @@ class Chaoxing:
                     if res_list is not None and options_list is not None:
                         for _a in clean_res(res_list):
                             for o in options_list:
-                                if (
-                                        is_subsequence(_a, o)  # 去掉各种符号和前面ABCD的答案应当是选项的子序列
-                                ):
+                                if is_subsequence(
+                                    _a, o
+                                ):  # 去掉各种符号和前面ABCD的答案应当是选项的子序列
                                     answer += o[:1]
                         # 对答案进行排序, 否则会提交失败
                         answer = "".join(sorted(answer))
@@ -705,9 +749,9 @@ class Chaoxing:
                 elif q["type"] == "judgement":
                     answer = "true" if self.tiku.judgement_select(res) else "false"
                 elif q["type"] == "completion":
-                    if isinstance(res,list):
+                    if isinstance(res, list):
                         answer = "".join(answer)
-                    elif isinstance(res,str):
+                    elif isinstance(res, str):
                         answer = res
                 else:
                     # 其他类型直接使用答案 （目前仅知有简答题，待补充处理）
@@ -729,19 +773,26 @@ class Chaoxing:
         # 提交模式  现在与题库绑定,留空直接提交, 1保存但不提交
         if self.tiku.get_submit_params() == "1":
             questions["pyFlag"] = "1"
-        elif cover_rate >= self.tiku.COVER_RATE*100 or self.rollback_times >= 1:
+        elif cover_rate >= self.tiku.COVER_RATE * 100 or self.rollback_times >= 1:
             questions["pyFlag"] = ""
         else:
             questions["pyFlag"] = "1"
-            logger.info(f"章节检测题库覆盖率低于{self.tiku.COVER_RATE*100:.0f}%，不予提交")
+            logger.info(
+                f"章节检测题库覆盖率低于{self.tiku.COVER_RATE*100:.0f}%，不予提交"
+            )
         # 组建提交表单
         if questions["pyFlag"] == "1":
             for q in questions["questions"]:
                 questions.update(
                     {
-                        f'answer{q["id"]}':
-                            q["answerField"][f'answer{q["id"]}'] if q[f'answerSource{q["id"]}'] == "cover" else '',
-                        f'answertype{q["id"]}': q["answerField"][f'answertype{q["id"]}'],
+                        f'answer{q["id"]}': (
+                            q["answerField"][f'answer{q["id"]}']
+                            if q[f'answerSource{q["id"]}'] == "cover"
+                            else ""
+                        ),
+                        f'answertype{q["id"]}': q["answerField"][
+                            f'answertype{q["id"]}'
+                        ],
                     }
                 )
         else:
@@ -749,7 +800,9 @@ class Chaoxing:
                 questions.update(
                     {
                         f'answer{q["id"]}': q["answerField"][f'answer{q["id"]}'],
-                        f'answertype{q["id"]}': q["answerField"][f'answertype{q["id"]}'],
+                        f'answertype{q["id"]}': q["answerField"][
+                            f'answertype{q["id"]}'
+                        ],
                     }
                 )
 
@@ -778,12 +831,18 @@ class Chaoxing:
         if res.status_code == 200:
             res_json = res.json()
             if res_json["status"]:
-                logger.info(f'{"提交" if questions["pyFlag"] == "" else "保存"}答题成功 -> {res_json["msg"]}')
+                logger.info(
+                    f'{"提交" if questions["pyFlag"] == "" else "保存"}答题成功 -> {res_json["msg"]}'
+                )
             else:
-                logger.error(f'{"提交" if questions["pyFlag"] == "" else "保存"}答题失败 -> {res_json["msg"]}')
+                logger.error(
+                    f'{"提交" if questions["pyFlag"] == "" else "保存"}答题失败 -> {res_json["msg"]}'
+                )
                 return self.StudyResult.ERROR
         else:
-            logger.error(f'{"提交" if questions["pyFlag"] == "" else "保存"}答题失败 -> {res.text}')
+            logger.error(
+                f'{"提交" if questions["pyFlag"] == "" else "保存"}答题失败 -> {res.text}'
+            )
             return self.StudyResult.ERROR
         return self.StudyResult.SUCCESS
 
@@ -818,7 +877,7 @@ class Chaoxing:
             params={
                 "courseId": _course["courseId"],
                 "clazzid": _course["clazzId"],
-                "chapterId": _chapterId['id'],
+                "chapterId": _chapterId["id"],
                 "cpi": 0,
                 "verificationcode": "",
                 "mooc2": 1,
@@ -827,9 +886,10 @@ class Chaoxing:
             },
         )
         if _resp.status_code != 200:
-            logger.error(f"空页面任务失败 -> [{_resp.status_code}]{_chapterId['title']}")
+            logger.error(
+                f"空页面任务失败 -> [{_resp.status_code}]{_chapterId['title']}"
+            )
             return self.StudyResult.ERROR
         else:
             logger.info(f"空页面任务完成 -> {_chapterId['title']}")
             return self.StudyResult.SUCCESS
-        

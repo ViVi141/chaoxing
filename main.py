@@ -55,9 +55,12 @@ def parse_args():
         help="启用调试模式, 输出DEBUG级别日志",
     )
     parser.add_argument(
-        "-a", "--notopen-action", type=str, default="retry", 
+        "-a",
+        "--notopen-action",
+        type=str,
+        default="retry",
         choices=["retry", "ask", "continue"],
-        help="遇到关闭任务点时的行为: retry-重试, ask-询问, continue-继续"
+        help="遇到关闭任务点时的行为: retry-重试, ask-询问, continue-继续",
     )
 
     # 在解析之前捕获 -h 的行为
@@ -72,17 +75,21 @@ def load_config_from_file(config_path):
     """从配置文件加载设置"""
     config = configparser.ConfigParser()
     config.read(config_path, encoding="utf8")
-    
+
     common_config = {}
     tiku_config = {}
     notification_config = {}
-    
+
     # 检查并读取common节
     if config.has_section("common"):
         common_config = dict(config.items("common"))
         # 处理course_list，将字符串转换为列表
         if "course_list" in common_config and common_config["course_list"]:
-            common_config["course_list"] = [item.strip() for item in common_config["course_list"].split(",") if item.strip()]
+            common_config["course_list"] = [
+                item.strip()
+                for item in common_config["course_list"].split(",")
+                if item.strip()
+            ]
         # 处理speed，将字符串转换为浮点数
         if "speed" in common_config:
             try:
@@ -100,7 +107,9 @@ def load_config_from_file(config_path):
         if "password" in common_config and common_config["password"] is not None:
             password = common_config["password"].strip()
             # 检查密码是否加密
-            password_encrypted = str_to_bool(common_config.get("password_encrypted", "false"))
+            password_encrypted = str_to_bool(
+                common_config.get("password_encrypted", "false")
+            )
             if password_encrypted:
                 logger.debug("检测到加密密码，正在解密...")
                 secure_config = SecureConfig()
@@ -113,7 +122,7 @@ def load_config_from_file(config_path):
                     common_config["password"] = None
             else:
                 common_config["password"] = password
-    
+
     # 检查并读取tiku节
     if config.has_section("tiku"):
         tiku_config = dict(config.items("tiku"))
@@ -132,7 +141,7 @@ def load_config_from_file(config_path):
     # 检查并读取notification节
     if config.has_section("notification"):
         notification_config = dict(config.items("notification"))
-    
+
     return common_config, tiku_config, notification_config
 
 
@@ -142,9 +151,13 @@ def build_config_from_args(args):
         "use_cookies": args.use_cookies,
         "username": args.username,
         "password": args.password,
-        "course_list": [item.strip() for item in args.list.split(",") if item.strip()] if args.list else None,
+        "course_list": (
+            [item.strip() for item in args.list.split(",") if item.strip()]
+            if args.list
+            else None
+        ),
         "speed": args.speed if args.speed else 1.0,
-        "notopen_action": args.notopen_action if args.notopen_action else "retry"
+        "notopen_action": args.notopen_action if args.notopen_action else "retry",
     }
     return common_config, {}, {}
 
@@ -152,7 +165,7 @@ def build_config_from_args(args):
 def init_config():
     """初始化配置"""
     args = parse_args()
-    
+
     if args.config:
         return load_config_from_file(args.config)
     else:
@@ -164,26 +177,26 @@ def init_chaoxing(common_config, tiku_config):
     username = common_config.get("username", "")
     password = common_config.get("password", "")
     use_cookies = common_config.get("use_cookies", False)
-    
+
     # 如果没有提供用户名密码，从命令行获取
     if (not username or not password) and not use_cookies:
         username = input("请输入你的手机号, 按回车确认\n手机号:")
         password = input("请输入你的密码, 按回车确认\n密码:")
-    
+
     account = Account(username, password)
-    
+
     # 设置题库
     tiku = Tiku()
     tiku.config_set(tiku_config)  # 载入配置
     tiku = tiku.get_tiku_from_config()  # 载入题库
     tiku.init_tiku()  # 初始化题库
-    
+
     # 获取查询延迟设置
     query_delay = tiku_config.get("delay", 0)
-    
+
     # 实例化超星API
     chaoxing = Chaoxing(account=account, tiku=tiku, query_delay=query_delay)
-    
+
     return chaoxing
 
 
@@ -207,11 +220,11 @@ def filter_courses(all_course, course_list):
     for course in all_course:
         if course["courseId"] in course_list:
             course_task.append(course)
-    
+
     # 如果没有指定课程，则学习所有课程
     if not course_task:
         course_task = all_course
-    
+
     return course_task
 
 
@@ -220,7 +233,7 @@ def main():
     try:
         # 初始化配置
         common_config, tiku_config, notification_config = init_config()
-        
+
         # 配置验证
         validator = ConfigValidator()
         is_valid, errors = validator.validate_all_config(
@@ -233,45 +246,47 @@ def main():
             logger.error("请修正配置文件后重试")
             sys.exit(1)
         logger.info("配置文件验证通过")
-        
+
         # 强制播放按照配置文件调节
         speed = min(2.0, max(1.0, common_config.get("speed", 1.0)))
         notopen_action = common_config.get("notopen_action", "retry")
-        
+
         # 初始化超星实例
         chaoxing = init_chaoxing(common_config, tiku_config)
-        
+
         # 设置外部通知
         notification = Notification()
         notification.config_set(notification_config)
         notification = notification.get_notification_from_config()
         notification.init_notification()
-        
+
         # 检查当前登录状态
-        _login_state = chaoxing.login(login_with_cookies=common_config.get("use_cookies", False))
+        _login_state = chaoxing.login(
+            login_with_cookies=common_config.get("use_cookies", False)
+        )
         if not _login_state["status"]:
             raise LoginError(_login_state["msg"])
-        
+
         # 获取所有的课程列表
         all_course = chaoxing.get_course_list()
-        
+
         # 过滤要学习的课程
         course_task = filter_courses(all_course, common_config.get("course_list"))
-        
+
         # 开始学习
         logger.info(f"课程列表过滤完毕, 当前课程任务数量: {len(course_task)}")
-        
+
         # 使用CourseProcessor进行学习（新方式）
         processor = CourseProcessor(
-            chaoxing=chaoxing,
-            speed=speed,
-            notopen_action=notopen_action
+            chaoxing=chaoxing, speed=speed, notopen_action=notopen_action
         )
         result = processor.process_courses(course_task)
-        
+
         logger.info("所有课程学习任务已完成")
-        notification.send(f"chaoxing : 所有课程学习任务已完成 (成功:{result['completed']}/{result['total']})")
-        
+        notification.send(
+            f"chaoxing : 所有课程学习任务已完成 (成功:{result['completed']}/{result['total']})"
+        )
+
     except SystemExit as e:
         if e.code != 0:
             logger.error(f"错误: 程序异常退出, 返回码: {e.code}")
@@ -282,7 +297,9 @@ def main():
         logger.error(f"错误: {type(e).__name__}: {e}")
         logger.error(traceback.format_exc())
         try:
-            notification.send(f"chaoxing : 出现错误 {type(e).__name__}: {e}\n{traceback.format_exc()}")
+            notification.send(
+                f"chaoxing : 出现错误 {type(e).__name__}: {e}\n{traceback.format_exc()}"
+            )
         except Exception:
             pass  # 如果通知发送失败，忽略异常
         raise e

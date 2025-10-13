@@ -17,11 +17,13 @@ from api.logger import logger
 # 关闭警告
 disable_warnings(exceptions.InsecureRequestWarning)
 
+
 class CacheDAO:
     """
     @Author: SocialSisterYi
     @Reference: https://github.com/SocialSisterYi/xuexiaoyi-to-xuexitong-tampermonkey-proxy
     """
+
     DEFAULT_CACHE_FILE = "cache.json"
 
     def __init__(self, file: str = DEFAULT_CACHE_FILE):
@@ -55,11 +57,12 @@ class CacheDAO:
 
 class Tiku:
     CONFIG_PATH = "config.ini"  # 默认配置文件路径
-    DISABLE = False     # 停用标志
-    SUBMIT = False      # 提交标志
-    COVER_RATE = 0.8    # 覆盖率
+    DISABLE = False  # 停用标志
+    SUBMIT = False  # 提交标志
+    COVER_RATE = 0.8  # 覆盖率
     true_list = []
     false_list = []
+
     def __init__(self) -> None:
         self._name = None
         self._api = None
@@ -68,7 +71,7 @@ class Tiku:
     @property
     def name(self):
         return self._name
-    
+
     @name.setter
     def name(self, value):
         self._name = value
@@ -76,7 +79,7 @@ class Tiku:
     @property
     def api(self):
         return self._api
-    
+
     @api.setter
     def api(self, value):
         self._api = value
@@ -86,7 +89,7 @@ class Tiku:
         return self._token
 
     @token.setter
-    def token(self,value):
+    def token(self, value):
         self._token = value
 
     def init_tiku(self):
@@ -96,35 +99,45 @@ class Tiku:
             self.config_set(self._get_conf())
         if not self.DISABLE:
             # 设置提交模式（兼容布尔值和字符串）
-            submit_value = self._conf.get('submit', False)
+            submit_value = self._conf.get("submit", False)
             if isinstance(submit_value, bool):
                 self.SUBMIT = submit_value
             elif isinstance(submit_value, str):
-                self.SUBMIT = submit_value.lower() in ('true', '1', 'yes', 'on')
+                self.SUBMIT = submit_value.lower() in ("true", "1", "yes", "on")
             else:
                 self.SUBMIT = False
-            
+
             # 设置覆盖率
-            cover_rate_value = self._conf.get('cover_rate', 0.9)
+            cover_rate_value = self._conf.get("cover_rate", 0.9)
             self.COVER_RATE = float(cover_rate_value) if cover_rate_value else 0.9
-            
+
             # 设置判断题选项
-            true_list_value = self._conf.get('true_list', '正确,对,√,是')
-            false_list_value = self._conf.get('false_list', '错误,错,×,否,不对,不正确')
-            self.true_list = true_list_value.split(',') if isinstance(true_list_value, str) else true_list_value
-            self.false_list = false_list_value.split(',') if isinstance(false_list_value, str) else false_list_value
-            
+            true_list_value = self._conf.get("true_list", "正确,对,√,是")
+            false_list_value = self._conf.get("false_list", "错误,错,×,否,不对,不正确")
+            self.true_list = (
+                true_list_value.split(",")
+                if isinstance(true_list_value, str)
+                else true_list_value
+            )
+            self.false_list = (
+                false_list_value.split(",")
+                if isinstance(false_list_value, str)
+                else false_list_value
+            )
+
             # 调用自定义题库初始化
             self._init_tiku()
-            
+
             # 日志记录配置
-            logger.info(f"题库配置: 提交模式={'开启' if self.SUBMIT else '关闭'}, 覆盖率={self.COVER_RATE}")
-        
+            logger.info(
+                f"题库配置: 提交模式={'开启' if self.SUBMIT else '关闭'}, 覆盖率={self.COVER_RATE}"
+            )
+
     def _init_tiku(self):
         # 仅用于题库初始化, 例如配置token, 交由自定义题库完成
         pass
 
-    def config_set(self,config):
+    def config_set(self, config):
         self._conf = config
 
     def _get_conf(self):
@@ -134,24 +147,25 @@ class Tiku:
         try:
             config = configparser.ConfigParser()
             config.read(self.CONFIG_PATH, encoding="utf8")
-            return config['tiku']
+            return config["tiku"]
         except (KeyError, FileNotFoundError):
             logger.info("未找到tiku配置, 已忽略题库功能")
             self.DISABLE = True
             return None
-    def query(self,q_info:dict):
+
+    def query(self, q_info: dict):
         if self.DISABLE:
             return None
 
         # 预处理, 去除【单选题】这样与标题无关的字段
         logger.debug(f"原始标题：{q_info['title']}")
-        q_info['title'] = sub(r'^\d+', '', q_info['title'])
-        q_info['title'] = sub(r'（\d+\.\d+分）$', '', q_info['title'])
+        q_info["title"] = sub(r"^\d+", "", q_info["title"])
+        q_info["title"] = sub(r"（\d+\.\d+分）$", "", q_info["title"])
         logger.debug(f"处理后标题：{q_info['title']}")
 
         # 先过缓存
         cache_dao = CacheDAO()
-        answer = cache_dao.get_cache(q_info['title'])
+        answer = cache_dao.get_cache(q_info["title"])
         if answer:
             logger.info(f"从缓存中获取答案：{q_info['title']} -> {answer}")
             return answer.strip()
@@ -159,18 +173,18 @@ class Tiku:
             answer = self._query(q_info)
             if answer:
                 answer = answer.strip()
-                cache_dao.add_cache(q_info['title'], answer)
+                cache_dao.add_cache(q_info["title"], answer)
                 logger.info(f"从{self.name}获取答案：{q_info['title']} -> {answer}")
-                if check_answer(answer, q_info['type'], self):
+                if check_answer(answer, q_info["type"], self):
                     return answer
                 else:
                     logger.info(f"从{self.name}获取到的答案类型与题目类型不符，已舍弃")
                     return None
-                    
+
             logger.error(f"从{self.name}获取答案失败：{q_info['title']}")
         return None
-    
-    def _query(self,q_info:dict):
+
+    def _query(self, q_info: dict):
         """
         查询接口, 交由自定义题库实现
         """
@@ -186,7 +200,7 @@ class Tiku:
         if self.DISABLE:
             return self
         try:
-            cls_name = self._conf['provider']
+            cls_name = self._conf["provider"]
             if not cls_name:
                 raise KeyError
         except KeyError:
@@ -212,9 +226,11 @@ class Tiku:
             return False
         else:
             # 无法判断, 随机选择
-            logger.error(f'无法判断答案 -> {answer} 对应的是正确还是错误, 请自行判断并加入配置文件重启脚本, 本次将会随机选择选项')
-            return random.choice([True,False])
-    
+            logger.error(
+                f"无法判断答案 -> {answer} 对应的是正确还是错误, 请自行判断并加入配置文件重启脚本, 本次将会随机选择选项"
+            )
+            return random.choice([True, False])
+
     def get_submit_params(self):
         """
         这是一个专用方法, 用于根据当前设置的提交模式, 响应对应的答题提交API中的pyFlag值
@@ -225,153 +241,187 @@ class Tiku:
         else:
             return "1"
 
+
 # 按照以下模板实现更多题库
+
 
 class TikuYanxi(Tiku):
     # 言溪题库实现
     def __init__(self) -> None:
         super().__init__()
-        self.name = '言溪题库'
-        self.api = 'https://tk.enncy.cn/query'
+        self.name = "言溪题库"
+        self.api = "https://tk.enncy.cn/query"
         self._token = None
-        self._token_index = 0   # token队列计数器
-        self._times = 100   # 查询次数剩余, 初始化为100, 查询后校对修正
+        self._token_index = 0  # token队列计数器
+        self._times = 100  # 查询次数剩余, 初始化为100, 查询后校对修正
 
-    def _query(self,q_info:dict):
+    def _query(self, q_info: dict):
         res = requests.get(
             self.api,
             params={
-                'question':q_info['title'],
-                'token': self._token,
+                "question": q_info["title"],
+                "token": self._token,
                 # 'type':q_info['type'], #修复478题目类型与答案类型不符（不想写后处理了）
                 # 没用，就算有type和options，言溪题库还是可能返回类型不符，问了客服，type仅用于收集
             },
-            verify=False
+            verify=False,
         )
         if res.status_code == 200:
             res_json = res.json()
-            if not res_json['code']:
+            if not res_json["code"]:
                 # 如果是因为TOKEN次数到期, 则更换token
-                if self._times == 0 or '次数不足' in res_json['data']['answer']:
-                    logger.info(f'TOKEN查询次数不足, 将会更换并重新搜题')
+                if self._times == 0 or "次数不足" in res_json["data"]["answer"]:
+                    logger.info(f"TOKEN查询次数不足, 将会更换并重新搜题")
                     self._token_index += 1
                     self.load_token()
                     # 重新查询
                     return self._query(q_info)
-                logger.error(f'{self.name}查询失败:\n\t剩余查询数{res_json["data"].get("times",f"{self._times}(仅参考)")}:\n\t消息:{res_json["message"]}')
+                logger.error(
+                    f'{self.name}查询失败:\n\t剩余查询数{res_json["data"].get("times",f"{self._times}(仅参考)")}:\n\t消息:{res_json["message"]}'
+                )
                 return None
-            self._times = res_json["data"].get("times",self._times)
-            return res_json['data']['answer'].strip()
+            self._times = res_json["data"].get("times", self._times)
+            return res_json["data"]["answer"].strip()
         else:
-            logger.error(f'{self.name}查询失败:\n{res.text}')
+            logger.error(f"{self.name}查询失败:\n{res.text}")
         return None
-    
-    def load_token(self): 
-        token_list = self._conf['tokens'].split(',')
+
+    def load_token(self):
+        token_list = self._conf["tokens"].split(",")
         if self._token_index == len(token_list):
             # TOKEN 用完
-            logger.error('TOKEN用完, 请自行更换再重启脚本')
-            raise PermissionError(f'{self.name} TOKEN 已用完, 请更换')
+            logger.error("TOKEN用完, 请自行更换再重启脚本")
+            raise PermissionError(f"{self.name} TOKEN 已用完, 请更换")
         self._token = token_list[self._token_index]
 
     def _init_tiku(self):
         self.load_token()
 
+
 class TikuLike(Tiku):
     # Like知识库实现
     def __init__(self) -> None:
         super().__init__()
-        self.name = 'Like知识库'
-        self.ver = '1.0.8' #对应官网API版本
-        self.query_api = 'https://api.datam.site/search'
-        self.balance_api = 'https://api.datam.site/balance'
-        self.homepage = 'https://www.datam.site'
+        self.name = "Like知识库"
+        self.ver = "1.0.8"  # 对应官网API版本
+        self.query_api = "https://api.datam.site/search"
+        self.balance_api = "https://api.datam.site/balance"
+        self.homepage = "https://www.datam.site"
         self._model = None
         self._token = None
         self._times = -1
         self._search = False
         self._count = 0
 
-    def _query(self,q_info:dict):
-        q_info_map = {"single":"【单选题】","multiple":"【多选题】","completion":"【填空题】","judgement":"【判断题】"}
-        api_params_map = {0:"others",1:"choose",2:"fills",3:"judge"}
-        q_info_prefix = q_info_map.get(q_info['type'],"【其他类型题目】")
-        option_map = {"A": 0, "B": 1, "C": 2, "D": 3, "E": 4, "F": 5, "G": 6, "H": 7, 'a': 0, "b": 1, "c": 2, "d": 3,
-                      "e": 4, "f": 5, "g": 6, "h": 7}
-        options = ', '.join(q_info['options']) if isinstance(q_info['options'], list) else q_info['options']
+    def _query(self, q_info: dict):
+        q_info_map = {
+            "single": "【单选题】",
+            "multiple": "【多选题】",
+            "completion": "【填空题】",
+            "judgement": "【判断题】",
+        }
+        api_params_map = {0: "others", 1: "choose", 2: "fills", 3: "judge"}
+        q_info_prefix = q_info_map.get(q_info["type"], "【其他类型题目】")
+        option_map = {
+            "A": 0,
+            "B": 1,
+            "C": 2,
+            "D": 3,
+            "E": 4,
+            "F": 5,
+            "G": 6,
+            "H": 7,
+            "a": 0,
+            "b": 1,
+            "c": 2,
+            "d": 3,
+            "e": 4,
+            "f": 5,
+            "g": 6,
+            "h": 7,
+        }
+        options = (
+            ", ".join(q_info["options"])
+            if isinstance(q_info["options"], list)
+            else q_info["options"]
+        )
         question = f"{q_info_prefix}{q_info['title']}\n{options}"
         ret = ""
         ans = ""
         res = requests.post(
             self.query_api,
             json={
-                'query': question,
-                'token': self._token,
-                'model': self._model if self._model else '',
-                'search': self._search
+                "query": question,
+                "token": self._token,
+                "model": self._model if self._model else "",
+                "search": self._search,
             },
-            verify=False
+            verify=False,
         )
 
         if res.status_code == 200:
             res_json = res.json()
-            q_type = res_json['data'].get('type', 0)
+            q_type = res_json["data"].get("type", 0)
             params = api_params_map.get(q_type, "")
-            tans = res_json['data'].get(params, "")
+            tans = res_json["data"].get(params, "")
             ans = ""
             match q_type:
                 case 1:
                     for i in tans:
-                        ans = ans + q_info['options'][option_map[i]] + '\n'
+                        ans = ans + q_info["options"][option_map[i]] + "\n"
                 case 2:
                     for i in tans:
-                        ans = ans + i + '\n'
+                        ans = ans + i + "\n"
                 case 3:
                     ans = "正确" if tans == 1 else "错误"
                 case 0:
                     ans = tans
         else:
-            logger.error(f'{self.name}查询失败:\n{res.text}')
+            logger.error(f"{self.name}查询失败:\n{res.text}")
             return None
 
         ret += str(ans)
 
         self._times -= 1
 
-        #10次查询后更新实际次数
-        self._count = (self._count+1) % 10
+        # 10次查询后更新实际次数
+        self._count = (self._count + 1) % 10
 
         if self._count == 0:
             self.update_times()
-        
+
         return ret
-    
+
     def update_times(self):
         res = requests.post(
             self.balance_api,
             json={
-                'token': self._token,
+                "token": self._token,
             },
-            verify=False
+            verify=False,
         )
         if res.status_code == 200:
             res_json = res.json()
-            self._times = res_json["data"].get("balance",self._times)
+            self._times = res_json["data"].get("balance", self._times)
             logger.info(f"当前LIKE知识库Token剩余查询次数为: {self._times}")
         else:
-            logger.error('TOKEN出现错误，请检查后再试')
+            logger.error("TOKEN出现错误，请检查后再试")
 
-    def load_token(self): 
-        token = self._conf['tokens'].split(',')[-1] if ',' in self._conf['tokens'] else self._conf['tokens']
+    def load_token(self):
+        token = (
+            self._conf["tokens"].split(",")[-1]
+            if "," in self._conf["tokens"]
+            else self._conf["tokens"]
+        )
         self._token = token
 
     def load_config(self):
-        self._search = self._conf['likeapi_search']
-        self._model = self._conf['likeapi_model']
+        self._search = self._conf["likeapi_search"]
+        self._model = self._conf["likeapi_model"]
         var_params = {"likeapi_search": self._search, "likeapi_model": self._model}
         config_params = {"likeapi_search": False, "likeapi_model": None}
 
-        for k,v in config_params.items():
+        for k, v in config_params.items():
             if k in self._conf:
                 var_params[k] = self._conf[k]
             else:
@@ -382,148 +432,146 @@ class TikuLike(Tiku):
         self.load_config()
         self.update_times()
 
+
 class TikuAdapter(Tiku):
     # TikuAdapter题库实现 https://github.com/DokiDoki1103/tikuAdapter
     def __init__(self) -> None:
         super().__init__()
-        self.name = 'TikuAdapter题库'
-        self.api = ''
+        self.name = "TikuAdapter题库"
+        self.api = ""
 
     def _query(self, q_info: dict):
         # 判断题目类型
-        if q_info['type'] == "single":
+        if q_info["type"] == "single":
             type = 0
-        elif q_info['type'] == 'multiple':
+        elif q_info["type"] == "multiple":
             type = 1
-        elif q_info['type'] == 'completion':
+        elif q_info["type"] == "completion":
             type = 2
-        elif q_info['type'] == 'judgement':
+        elif q_info["type"] == "judgement":
             type = 3
         else:
             type = 4
 
-        options = q_info['options']
+        options = q_info["options"]
         res = requests.post(
             self.api,
             json={
-                'question': q_info['title'],
-                'options': [sub(r'^[A-Za-z]\.?、?\s?', '', option) for option in options.split('\n')],
-                'type': type
+                "question": q_info["title"],
+                "options": [
+                    sub(r"^[A-Za-z]\.?、?\s?", "", option)
+                    for option in options.split("\n")
+                ],
+                "type": type,
             },
-            verify=False
+            verify=False,
         )
         if res.status_code == 200:
             res_json = res.json()
             # if bool(res_json['plat']):
             # plat无论搜没搜到答案都返回0
             # 这个参数是tikuadapter用来设定自定义的平台类型
-            if not len(res_json['answer']['bestAnswer']):
+            if not len(res_json["answer"]["bestAnswer"]):
                 logger.error("查询失败, 返回：" + res.text)
                 return None
             sep = "\n"
-            return sep.join(res_json['answer']['bestAnswer']).strip()
+            return sep.join(res_json["answer"]["bestAnswer"]).strip()
         # else:
         #   logger.error(f'{self.name}查询失败:\n{res.text}')
         return None
 
     def _init_tiku(self):
         # self.load_token()
-        self.api = self._conf['url']
+        self.api = self._conf["url"]
+
 
 class AI(Tiku):
     # AI大模型答题实现
     def __init__(self) -> None:
         super().__init__()
-        self.name = 'AI大模型答题'
+        self.name = "AI大模型答题"
         self.last_request_time = None
 
     def _query(self, q_info: dict):
         def remove_md_json_wrapper(md_str):
             # 使用正则表达式匹配Markdown代码块并提取内容
-            pattern = r'^\s*```(?:json)?\s*(.*?)\s*```\s*$'
+            pattern = r"^\s*```(?:json)?\s*(.*?)\s*```\s*$"
             match = re.search(pattern, md_str, re.DOTALL)
             return match.group(1).strip() if match else md_str.strip()
-        
+
         if self.http_proxy:
             proxy = self.http_proxy
             httpx_client = httpx.Client(proxy=proxy)
-            client = OpenAI(http_client=httpx_client, base_url = self.endpoint,api_key = self.key)
+            client = OpenAI(
+                http_client=httpx_client, base_url=self.endpoint, api_key=self.key
+            )
         else:
-            client = OpenAI(base_url = self.endpoint,api_key = self.key)
+            client = OpenAI(base_url=self.endpoint, api_key=self.key)
         # 去除选项字母，防止大模型直接输出字母而非内容
-        options_list = q_info['options'].split('\n')
+        options_list = q_info["options"].split("\n")
         cleaned_options = [re.sub(r"^[A-Z]\s*", "", option) for option in options_list]
         options = "\n".join(cleaned_options)
         # 判断题目类型
-        if q_info['type'] == "single":
+        if q_info["type"] == "single":
             completion = client.chat.completions.create(
-                model = self.model,
+                model=self.model,
                 messages=[
                     {
-                        "role": "system", 
-                        "content": "本题为单选题，你只能选择一个选项，请根据题目和选项回答问题，以json格式输出正确的选项内容，示例回答：{\"Answer\": [\"答案\"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。如果你使用了互联网搜索，也请不要返回搜索的结果和参考资料"
+                        "role": "system",
+                        "content": '本题为单选题，你只能选择一个选项，请根据题目和选项回答问题，以json格式输出正确的选项内容，示例回答：{"Answer": ["答案"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。如果你使用了互联网搜索，也请不要返回搜索的结果和参考资料',
                     },
                     {
                         "role": "user",
-                        "content": f"题目：{q_info['title']}\n选项：{options}"
-                    }
-                ]
+                        "content": f"题目：{q_info['title']}\n选项：{options}",
+                    },
+                ],
             )
-        elif q_info['type'] == 'multiple':
+        elif q_info["type"] == "multiple":
             completion = client.chat.completions.create(
-                model = self.model,
+                model=self.model,
                 messages=[
                     {
-                        "role": "system", 
-                        "content": "本题为多选题，你必须选择两个或以上选项，请根据题目和选项回答问题，以json格式输出正确的选项内容，示例回答：{\"Answer\": [\"答案1\",\n\"答案2\",\n\"答案3\"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。如果你使用了互联网搜索，也请不要返回搜索的结果和参考资料"
+                        "role": "system",
+                        "content": '本题为多选题，你必须选择两个或以上选项，请根据题目和选项回答问题，以json格式输出正确的选项内容，示例回答：{"Answer": ["答案1",\n"答案2",\n"答案3"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。如果你使用了互联网搜索，也请不要返回搜索的结果和参考资料',
                     },
                     {
                         "role": "user",
-                        "content": f"题目：{q_info['title']}\n选项：{options}"
-                    }
-                ]
+                        "content": f"题目：{q_info['title']}\n选项：{options}",
+                    },
+                ],
             )
-        elif q_info['type'] == 'completion':
+        elif q_info["type"] == "completion":
             completion = client.chat.completions.create(
-                model = self.model,
+                model=self.model,
                 messages=[
                     {
-                        "role": "system", 
-                        "content": "本题为填空题，你必须根据语境和相关知识填入合适的内容，请根据题目回答问题，以json格式输出正确的答案，示例回答：{\"Answer\": [\"答案\"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。如果你使用了互联网搜索，也请不要返回搜索的结果和参考资料"
+                        "role": "system",
+                        "content": '本题为填空题，你必须根据语境和相关知识填入合适的内容，请根据题目回答问题，以json格式输出正确的答案，示例回答：{"Answer": ["答案"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。如果你使用了互联网搜索，也请不要返回搜索的结果和参考资料',
                     },
-                    {
-                        "role": "user",
-                        "content": f"题目：{q_info['title']}"
-                    }
-                ]
+                    {"role": "user", "content": f"题目：{q_info['title']}"},
+                ],
             )
-        elif q_info['type'] == 'judgement':
+        elif q_info["type"] == "judgement":
             completion = client.chat.completions.create(
-                model = self.model,
+                model=self.model,
                 messages=[
                     {
-                        "role": "system", 
-                        "content": "本题为判断题，你只能回答正确或者错误，请根据题目回答问题，以json格式输出正确的答案，示例回答：{\"Answer\": [\"正确\"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。如果你使用了互联网搜索，也请不要返回搜索的结果和参考资料"
+                        "role": "system",
+                        "content": '本题为判断题，你只能回答正确或者错误，请根据题目回答问题，以json格式输出正确的答案，示例回答：{"Answer": ["正确"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。如果你使用了互联网搜索，也请不要返回搜索的结果和参考资料',
                     },
-                    {
-                        "role": "user",
-                        "content": f"题目：{q_info['title']}"
-                    }
-                ]
+                    {"role": "user", "content": f"题目：{q_info['title']}"},
+                ],
             )
         else:
             completion = client.chat.completions.create(
-                model = self.model,
+                model=self.model,
                 messages=[
                     {
-                        "role": "system", 
-                        "content": "本题为简答题，你必须根据语境和相关知识填入合适的内容，请根据题目回答问题，以json格式输出正确的答案，示例回答：{\"Answer\": [\"这是我的答案\"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。如果你使用了互联网搜索，也请不要返回搜索的结果和参考资料"
+                        "role": "system",
+                        "content": '本题为简答题，你必须根据语境和相关知识填入合适的内容，请根据题目回答问题，以json格式输出正确的答案，示例回答：{"Answer": ["这是我的答案"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。如果你使用了互联网搜索，也请不要返回搜索的结果和参考资料',
                     },
-                    {
-                        "role": "user",
-                        "content": f"题目：{q_info['title']}"
-                    }
-                ]
+                    {"role": "user", "content": f"题目：{q_info['title']}"},
+                ],
             )
 
         try:
@@ -534,70 +582,70 @@ class AI(Tiku):
                     logger.debug(f"API请求间隔过短, 等待 {sleep_time} 秒")
                     time.sleep(sleep_time)
             self.last_request_time = time.time()
-            response = json.loads(remove_md_json_wrapper(completion.choices[0].message.content))
+            response = json.loads(
+                remove_md_json_wrapper(completion.choices[0].message.content)
+            )
             sep = "\n"
-            return sep.join(response['Answer']).strip()
+            return sep.join(response["Answer"]).strip()
         except:
             logger.error("无法解析大模型输出内容")
             return None
 
     def _init_tiku(self):
-        self.endpoint = self._conf['endpoint']
-        self.key = self._conf['key']
-        self.model = self._conf['model']
-        self.http_proxy = self._conf['http_proxy']
-        self.min_interval_seconds = int(self._conf['min_interval_seconds'])
+        self.endpoint = self._conf["endpoint"]
+        self.key = self._conf["key"]
+        self.model = self._conf["model"]
+        self.http_proxy = self._conf["http_proxy"]
+        self.min_interval_seconds = int(self._conf["min_interval_seconds"])
+
+
 class SiliconFlow(Tiku):
     """硅基流动大模型答题实现"""
+
     def __init__(self):
         super().__init__()
-        self.name = '硅基流动大模型'
+        self.name = "硅基流动大模型"
         self.last_request_time = None
 
     def _query(self, q_info: dict):
         def remove_md_json_wrapper(md_str):
             # 解析可能存在的JSON包装
-            pattern = r'^\s*```(?:json)?\s*(.*?)\s*```\s*$'
+            pattern = r"^\s*```(?:json)?\s*(.*?)\s*```\s*$"
             match = re.search(pattern, md_str, re.DOTALL)
             return match.group(1).strip() if match else md_str.strip()
 
         # 构造请求头
         headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
         # 构造系统提示词
         system_prompt = ""
-        if q_info['type'] == "single":
-            system_prompt = "本题为单选题，请根据题目和选项选择唯一正确答案，输出的是选项的具体内容，而不是内容前的ABCD，并以JSON格式输出：示例回答：{\"Answer\": [\"正确选项内容\"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。如果你使用了互联网搜索，也请不要返回搜索的结果和参考资料"
-        elif q_info['type'] == 'multiple':
-            system_prompt = "本题为多选题，请选择所有正确选项，输出的是选项的具体内容，而不是内容前的ABCD，以JSON格式输出：示例回答：{\"Answer\": [\"选项1\",\"选项2\"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。如果你使用了互联网搜索，也请不要返回搜索的结果和参考资料"
-        elif q_info['type'] == 'completion':
-            system_prompt = "本题为填空题，请直接给出填空内容，以JSON格式输出：示例回答：{\"Answer\": [\"答案文本\"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。如果你使用了互联网搜索，也请不要返回搜索的结果和参考资料"
-        elif q_info['type'] == 'judgement':
+        if q_info["type"] == "single":
+            system_prompt = '本题为单选题，请根据题目和选项选择唯一正确答案，输出的是选项的具体内容，而不是内容前的ABCD，并以JSON格式输出：示例回答：{"Answer": ["正确选项内容"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。如果你使用了互联网搜索，也请不要返回搜索的结果和参考资料'
+        elif q_info["type"] == "multiple":
+            system_prompt = '本题为多选题，请选择所有正确选项，输出的是选项的具体内容，而不是内容前的ABCD，以JSON格式输出：示例回答：{"Answer": ["选项1","选项2"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。如果你使用了互联网搜索，也请不要返回搜索的结果和参考资料'
+        elif q_info["type"] == "completion":
+            system_prompt = '本题为填空题，请直接给出填空内容，以JSON格式输出：示例回答：{"Answer": ["答案文本"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。如果你使用了互联网搜索，也请不要返回搜索的结果和参考资料'
+        elif q_info["type"] == "judgement":
             system_prompt = "本题为判断题，请回答'正确'或'错误'，以JSON格式输出：示例回答：{\"Answer\": [\"正确\"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。如果你使用了互联网搜索，也请不要返回搜索的结果和参考资料"
 
         # 构造请求体
         payload = {
             "model": self.model_name,
             "messages": [
-                {
-                    "role": "system",
-                    "content": system_prompt
-                },
+                {"role": "system", "content": system_prompt},
                 {
                     "role": "user",
-                    "content": f"题目：{q_info['title']}\n选项：{q_info['options']}"
-                }
+                    "content": f"题目：{q_info['title']}\n选项：{q_info['options']}",
+                },
             ],
             "stream": False,
-
             "max_tokens": 4096,
-
             "temperature": 0.7,
             "top_p": 0.7,
-            "response_format": {"type": "text"}
+            "response_format": {"type": "text"},
         }
 
         # 处理请求间隔
@@ -608,91 +656,93 @@ class SiliconFlow(Tiku):
 
         try:
             response = requests.post(
-                self.api_endpoint,
-                headers=headers,
-                json=payload,
-                timeout=30
+                self.api_endpoint, headers=headers, json=payload, timeout=30
             )
             self.last_request_time = time.time()
-            
+
             if response.status_code == 200:
                 result = response.json()
-                content = result['choices'][0]['message']['content']
+                content = result["choices"][0]["message"]["content"]
                 parsed = json.loads(remove_md_json_wrapper(content))
-                return "\n".join(parsed['Answer']).strip()
+                return "\n".join(parsed["Answer"]).strip()
             else:
                 logger.error(f"API请求失败：{response.status_code} {response.text}")
                 return None
-                
+
         except Exception as e:
             logger.error(f"硅基流动API异常：{e}")
             return None
 
     def _init_tiku(self):
         # 从配置文件读取参数
-        self.api_endpoint = self._conf.get('siliconflow_endpoint', 'https://api.siliconflow.cn/v1/chat/completions')
-        self.api_key = self._conf['siliconflow_key']
+        self.api_endpoint = self._conf.get(
+            "siliconflow_endpoint", "https://api.siliconflow.cn/v1/chat/completions"
+        )
+        self.api_key = self._conf["siliconflow_key"]
 
-        self.model_name = self._conf.get('siliconflow_model', 'deepseek-ai/DeepSeek-V3')
+        self.model_name = self._conf.get("siliconflow_model", "deepseek-ai/DeepSeek-V3")
 
-
-        self.min_interval = int(self._conf.get('min_interval_seconds', 3))
+        self.min_interval = int(self._conf.get("min_interval_seconds", 3))
 
 
 class DeepSeek(Tiku):
     """DeepSeek官方API题库实现"""
-    
+
     def __init__(self) -> None:
         super().__init__()
-        self.name = 'DeepSeek题库'
+        self.name = "DeepSeek题库"
         self.last_request_time = None
 
     def _query(self, q_info: dict):
         """使用DeepSeek API查询答案"""
+
         def remove_md_json_wrapper(md_str):
             # 使用正则表达式匹配Markdown代码块并提取内容
-            pattern = r'^\s*```(?:json)?\s*(.*?)\s*```\s*$'
+            pattern = r"^\s*```(?:json)?\s*(.*?)\s*```\s*$"
             match = re.search(pattern, md_str, re.DOTALL)
             return match.group(1).strip() if match else md_str.strip()
 
         # 构建请求头
         headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
         # 根据题目类型构建不同的系统提示
         type_prompts = {
-            "single": "本题为单选题，你只能选择一个选项，请根据题目和选项回答问题，以json格式输出正确的选项内容，示例回答：{\"Answer\": [\"答案\"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。",
-            "multiple": "本题为多选题，你必须选择两个或以上选项，请根据题目和选项回答问题，以json格式输出正确的选项内容，示例回答：{\"Answer\": [\"答案1\",\n\"答案2\"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。",
-            "completion": "本题为填空题，请根据题目回答，以json格式输出答案内容，示例回答：{\"Answer\": [\"答案1\", \"答案2\"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。",
-            "judgement": "本题为判断题，请根据题目判断对错，以json格式输出\"正确\"或\"错误\"，示例回答：{\"Answer\": [\"正确\"]}或{\"Answer\": [\"错误\"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。"
+            "single": '本题为单选题，你只能选择一个选项，请根据题目和选项回答问题，以json格式输出正确的选项内容，示例回答：{"Answer": ["答案"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。',
+            "multiple": '本题为多选题，你必须选择两个或以上选项，请根据题目和选项回答问题，以json格式输出正确的选项内容，示例回答：{"Answer": ["答案1",\n"答案2"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。',
+            "completion": '本题为填空题，请根据题目回答，以json格式输出答案内容，示例回答：{"Answer": ["答案1", "答案2"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。',
+            "judgement": '本题为判断题，请根据题目判断对错，以json格式输出"正确"或"错误"，示例回答：{"Answer": ["正确"]}或{"Answer": ["错误"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。',
         }
-        
-        system_prompt = type_prompts.get(q_info['type'], type_prompts['single'])
-        
+
+        system_prompt = type_prompts.get(q_info["type"], type_prompts["single"])
+
         # 去除选项字母
-        options_list = q_info['options'].split('\n') if isinstance(q_info['options'], str) else []
+        options_list = (
+            q_info["options"].split("\n") if isinstance(q_info["options"], str) else []
+        )
         cleaned_options = [re.sub(r"^[A-Z]\s*", "", option) for option in options_list]
         options = "\n".join(cleaned_options)
-        
+
         # 构建请求payload
         payload = {
             "model": self.model_name,
             "messages": [
-                {
-                    "role": "system",
-                    "content": system_prompt
-                },
+                {"role": "system", "content": system_prompt},
                 {
                     "role": "user",
-                    "content": f"题目：{q_info['title']}\n选项：{options}" if options else f"题目：{q_info['title']}"
-                }
+                    "content": (
+                        f"题目：{q_info['title']}\n选项：{options}"
+                        if options
+                        else f"题目：{q_info['title']}"
+                    ),
+                },
             ],
             "stream": False,
             "max_tokens": 2048,
             "temperature": 0.1,
-            "top_p": 0.7
+            "top_p": 0.7,
         }
 
         # 处理请求间隔
@@ -710,35 +760,36 @@ class DeepSeek(Tiku):
                     headers=headers,
                     json=payload,
                     timeout=30,
-                    proxies=proxies
+                    proxies=proxies,
                 )
             else:
                 response = requests.post(
-                    self.api_endpoint,
-                    headers=headers,
-                    json=payload,
-                    timeout=30
+                    self.api_endpoint, headers=headers, json=payload, timeout=30
                 )
-            
+
             self.last_request_time = time.time()
-            
+
             if response.status_code == 200:
                 result = response.json()
-                content = result['choices'][0]['message']['content']
+                content = result["choices"][0]["message"]["content"]
                 parsed = json.loads(remove_md_json_wrapper(content))
-                return "\n".join(parsed['Answer']).strip()
+                return "\n".join(parsed["Answer"]).strip()
             else:
-                logger.error(f"DeepSeek API请求失败：{response.status_code} {response.text}")
+                logger.error(
+                    f"DeepSeek API请求失败：{response.status_code} {response.text}"
+                )
                 return None
-                
+
         except Exception as e:
             logger.error(f"DeepSeek API异常：{e}")
             return None
 
     def _init_tiku(self):
         # 从配置文件读取参数
-        self.api_endpoint = self._conf.get('deepseek_endpoint', 'https://api.deepseek.com/v1/chat/completions')
-        self.api_key = self._conf['deepseek_key']
-        self.model_name = self._conf.get('deepseek_model', 'deepseek-chat')
-        self.min_interval = int(self._conf.get('min_interval_seconds', 3))
-        self.http_proxy = self._conf.get('http_proxy', '')
+        self.api_endpoint = self._conf.get(
+            "deepseek_endpoint", "https://api.deepseek.com/v1/chat/completions"
+        )
+        self.api_key = self._conf["deepseek_key"]
+        self.model_name = self._conf.get("deepseek_model", "deepseek-chat")
+        self.min_interval = int(self._conf.get("min_interval_seconds", 3))
+        self.http_proxy = self._conf.get("http_proxy", "")

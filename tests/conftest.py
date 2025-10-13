@@ -37,23 +37,19 @@ async def async_db_engine():
     """异步数据库引擎（测试用）"""
     # 使用内存SQLite数据库
     DATABASE_URL = "sqlite+aiosqlite:///:memory:"
-    
-    engine = create_async_engine(
-        DATABASE_URL,
-        echo=False,
-        future=True
-    )
-    
+
+    engine = create_async_engine(DATABASE_URL, echo=False, future=True)
+
     # 创建所有表
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     yield engine
-    
+
     # 清理
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
-    
+
     await engine.dispose()
 
 
@@ -61,11 +57,9 @@ async def async_db_engine():
 async def async_db_session(async_db_engine) -> AsyncGenerator[AsyncSession, None]:
     """异步数据库会话"""
     async_session = async_sessionmaker(
-        async_db_engine,
-        class_=AsyncSession,
-        expire_on_commit=False
+        async_db_engine, class_=AsyncSession, expire_on_commit=False
     )
-    
+
     async with async_session() as session:
         yield session
 
@@ -74,12 +68,12 @@ async def async_db_session(async_db_engine) -> AsyncGenerator[AsyncSession, None
 def sync_db_engine():
     """同步数据库引擎（测试用）"""
     DATABASE_URL = "sqlite:///:memory:"
-    
+
     engine = create_engine(DATABASE_URL, echo=False)
     Base.metadata.create_all(engine)
-    
+
     yield engine
-    
+
     Base.metadata.drop_all(engine)
     engine.dispose()
 
@@ -89,7 +83,7 @@ def sync_db_session(sync_db_engine) -> Generator[Session, None, None]:
     """同步数据库会话"""
     SessionLocal = sessionmaker(bind=sync_db_engine)
     session = SessionLocal()
-    
+
     try:
         yield session
     finally:
@@ -104,7 +98,7 @@ def test_user_data():
         "email": "test@example.com",
         "password": "Test123456!",
         "role": "user",
-        "is_active": True
+        "is_active": True,
     }
 
 
@@ -116,7 +110,7 @@ def test_admin_data():
         "email": "admin@example.com",
         "password": "Admin123456!",
         "role": "admin",
-        "is_active": True
+        "is_active": True,
     }
 
 
@@ -127,14 +121,14 @@ async def test_user(async_db_session: AsyncSession, test_user_data):
         username=test_user_data["username"],
         email=test_user_data["email"],
         role=test_user_data["role"],
-        is_active=test_user_data["is_active"]
+        is_active=test_user_data["is_active"],
     )
     user.set_password(test_user_data["password"])
-    
+
     async_db_session.add(user)
     await async_db_session.commit()
     await async_db_session.refresh(user)
-    
+
     return user
 
 
@@ -145,25 +139,21 @@ async def test_admin(async_db_session: AsyncSession, test_admin_data):
         username=test_admin_data["username"],
         email=test_admin_data["email"],
         role=test_admin_data["role"],
-        is_active=test_admin_data["is_active"]
+        is_active=test_admin_data["is_active"],
     )
     admin.set_password(test_admin_data["password"])
-    
+
     async_db_session.add(admin)
     await async_db_session.commit()
     await async_db_session.refresh(admin)
-    
+
     return admin
 
 
 @pytest.fixture
 def mock_tiku_response():
     """模拟题库响应"""
-    return {
-        "success": True,
-        "answer": "A",
-        "confidence": 0.95
-    }
+    return {"success": True, "answer": "A", "confidence": 0.95}
 
 
 @pytest.fixture
@@ -174,7 +164,7 @@ def mock_course_data():
         "clazzId": "67890",
         "cpi": "111111",
         "title": "测试课程",
-        "has_finished": False
+        "has_finished": False,
     }
 
 
@@ -194,10 +184,9 @@ def setup_test_env():
     os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
     os.environ["SECRET_KEY"] = "test-secret-key-for-testing-only"
     os.environ["DEBUG"] = "True"
-    
+
     yield
-    
+
     # 清理
     for key in ["TESTING", "DATABASE_URL", "SECRET_KEY", "DEBUG"]:
         os.environ.pop(key, None)
-

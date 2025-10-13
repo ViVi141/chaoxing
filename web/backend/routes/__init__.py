@@ -17,6 +17,5 @@ __all__ = [
     "admin_router",
     "websocket_router",
     "system_config_router",
-    "course_router"
+    "course_router",
 ]
-

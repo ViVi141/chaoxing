@@ -43,11 +43,8 @@ class CxCaptcha:
         s (requests.Session): 用于管理会话的请求对象。
     """
 
-    host = 'https://mooc1.chaoxing.com'
-    api = {
-        'get': '/processVerifyPng.ac',
-        'submit': '/html/processVerify.ac'
-    }
+    host = "https://mooc1.chaoxing.com"
+    api = {"get": "/processVerifyPng.ac", "submit": "/html/processVerify.ac"}
 
     def __init__(self, user_agent: str, cookies: str, ocr: Optional[DdddOcr] = None):
         """
@@ -62,11 +59,13 @@ class CxCaptcha:
         self.user_agent = user_agent
         self.cookies = cookies
         self.s = session()
-        self.s.headers.update({
-            'User-Agent': self.user_agent,
-            'Cookie': self.cookies,
-            'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
-        })
+        self.s.headers.update(
+            {
+                "User-Agent": self.user_agent,
+                "Cookie": self.cookies,
+                "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+            }
+        )
         self.s.verify = False
 
         self.ocr = ocr if ocr else ocr_init()
@@ -78,11 +77,11 @@ class CxCaptcha:
         Returns:
             Optional[bytes]: 返回验证码图片的二进制数据，如果获取失败则返回 None。
         """
-        api = self.host + self.api['get']
+        api = self.host + self.api["get"]
         random_t = randint(0, 2147483647)
 
-        res = self.s.get(api, params={'t': random_t})
-        if res.status_code == 200 and res.headers['Content-Type'] == 'image/png':
+        res = self.s.get(api, params={"t": random_t})
+        if res.status_code == 200 and res.headers["Content-Type"] == "image/png":
             return res.content
         else:
             # 提供的Cookies或UA存在问题，导致未能正常获取验证码内容
@@ -98,11 +97,8 @@ class CxCaptcha:
         Returns:
             bool: 如果提交成功并重定向，则返回 True；否则返回 False。
         """
-        api = self.host + self.api['submit']
-        params = {
-            'ucode': cap_token,
-            'app': 0
-        }
+        api = self.host + self.api["submit"]
+        params = {"ucode": cap_token, "app": 0}
         res = self.s.get(api, params=params)
         if res.status_code == 302:
             return True

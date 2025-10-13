@@ -8,15 +8,17 @@ from sqlalchemy.orm import sessionmaker, Session
 from config import settings
 
 # 将异步数据库URL转换为同步URL
-sync_database_url = settings.DATABASE_URL.replace('+aiosqlite', '').replace('+asyncpg', '+psycopg2')
+sync_database_url = settings.DATABASE_URL.replace("+aiosqlite", "").replace(
+    "+asyncpg", "+psycopg2"
+)
 
 # 创建同步引擎
-if settings.DEPLOY_MODE == 'simple':
+if settings.DEPLOY_MODE == "simple":
     # SQLite
     sync_engine = create_engine(
         sync_database_url,
         echo=settings.DEBUG,
-        connect_args={"check_same_thread": False}
+        connect_args={"check_same_thread": False},
     )
 else:
     # PostgreSQL
@@ -25,15 +27,12 @@ else:
         echo=settings.DEBUG,
         pool_pre_ping=True,
         pool_size=10,
-        max_overflow=20
+        max_overflow=20,
     )
 
 # 创建同步会话工厂
 SyncSessionLocal = sessionmaker(
-    bind=sync_engine,
-    autocommit=False,
-    autoflush=False,
-    expire_on_commit=False
+    bind=sync_engine, autocommit=False, autoflush=False, expire_on_commit=False
 )
 
 
@@ -45,4 +44,3 @@ def get_sync_db() -> Session:
     except Exception:
         db.close()
         raise
-

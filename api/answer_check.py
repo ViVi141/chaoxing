@@ -29,17 +29,25 @@ def check_completion(answer):
         return False
 
 
-def check_answer(answer, type, tiku):  # 只会写小杯代码，这里用个tiku感觉怪怪的，但先这么写着
-    if type == 'single':
-        if check_single(answer) and check_judgement(answer, tiku.true_list, tiku.false_list) == -1:
+def check_answer(
+    answer, type, tiku
+):  # 只会写小杯代码，这里用个tiku感觉怪怪的，但先这么写着
+    if type == "single":
+        if (
+            check_single(answer)
+            and check_judgement(answer, tiku.true_list, tiku.false_list) == -1
+        ):
             return True
-    elif type == 'multiple':
-        if check_multiple(answer) and check_judgement(answer, tiku.true_list, tiku.false_list) == -1:
+    elif type == "multiple":
+        if (
+            check_multiple(answer)
+            and check_judgement(answer, tiku.true_list, tiku.false_list) == -1
+        ):
             return True
-    elif type == 'completion':
+    elif type == "completion":
         if check_completion(answer):
             return True
-    elif type == 'judgement':
+    elif type == "judgement":
         if check_judgement(answer, tiku.true_list, tiku.false_list) != -1:
             return True
     else:  # 未知类型不匹配
@@ -75,9 +83,7 @@ def cut(answer):
     ]  # 多选答案切割符
     res = []
     for char in cut_char:
-        res = [
-            opt for opt in answer.split(char) if opt.strip()
-        ]  # Filter empty strings
+        res = [opt for opt in answer.split(char) if opt.strip()]  # Filter empty strings
         if len(res) > 0:
             return res
     return None
