@@ -142,7 +142,6 @@ jobs:
           
           # 复制核心文件
           cp -r api release-package/
-          cp -r web release-package/
           cp -r docs release-package/
           cp -r tools release-package/
           cp -r scripts release-package/
@@ -153,6 +152,14 @@ jobs:
           cp config_template.ini release-package/
           cp pytest.ini release-package/
           cp pyproject.toml release-package/
+          
+          # 复制web目录（排除frontend源码，只保留backend）
+          mkdir -p release-package/web
+          cp -r web/backend release-package/web/
+          # 如果有其他web子目录（nginx等），也复制
+          [ -d "web/nginx" ] && cp -r web/nginx release-package/web/ || true
+          [ -f "web/docker-compose.yml" ] && cp web/docker-compose.yml release-package/web/ || true
+          [ -f "web/docker-compose.simple.yml" ] && cp web/docker-compose.simple.yml release-package/web/ || true
           
           # 复制平台特定脚本
           if [ "${{ matrix.platform }}" = "windows-x64" ]; then
@@ -184,6 +191,11 @@ jobs:
           # 验证前端文件
           echo "=== Frontend files ==="
           ls -lah release-package/web/frontend/dist/ || echo "No dist directory!"
+          
+          # 验证完整包大小
+          echo "=== Package size ==="
+          du -sh release-package/
+          du -sh release-package/*
           
           # 创建版本信息
           echo "Version: ${GITHUB_REF_NAME:-latest}" > release-package/VERSION.txt
