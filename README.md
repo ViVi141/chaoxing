@@ -1,10 +1,10 @@
 # 超星学习通自动化完成任务点（增强版）
 
 <p align="center">
-  <a href="https://github.com/ViVi141/chaoxing"><img src="https://img.shields.io/badge/version-2.3.0-blue" alt="Version" /></a>
+  <a href="https://github.com/ViVi141/chaoxing"><img src="https://img.shields.io/badge/version-2.4.0-blue" alt="Version" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-green" alt="License" /></a>
-  <img src="https://img.shields.io/docker/pulls/vivi141/chaoxing" alt="Docker Pulls" />
-  <img src="https://img.shields.io/docker/image-size/vivi141/chaoxing/latest" alt="Docker Size" />
+  <a href="https://github.com/ViVi141/chaoxing/pkgs/container/chaoxing"><img src="https://img.shields.io/badge/docker-ghcr.io-2496ED?logo=docker" alt="Docker" /></a>
+  <img src="https://img.shields.io/badge/size-750KB-blue" alt="Release Size" />
   <img src="https://img.shields.io/badge/Tests-14_passing-brightgreen" alt="Tests" />
 </p>
 
@@ -12,12 +12,12 @@
   <img src="https://img.shields.io/badge/Refine-v5-orange" alt="Refine v5" />
   <img src="https://img.shields.io/badge/React_Router-v7-blue" alt="React Router v7" />
   <img src="https://img.shields.io/badge/Vite-v7-purple" alt="Vite v7" />
-  <img src="https://img.shields.io/badge/Docker-Multi_Arch-2496ED?logo=docker" alt="Multi-Arch" />
+  <img src="https://img.shields.io/badge/Platforms-Win_Mac_Linux_K8s-success" alt="Multi-Platform" />
 </p>
 
 > 基于[Samueli924/chaoxing](https://github.com/Samueli924/chaoxing)的增强版本，提供命令行和Web两种使用方式
 > 
-> 🆕 **v2.3.0更新**: 测试框架 + CI/CD + API限流 + 数据备份 + 守护进程完整方案
+> 🆕 **v2.4.0更新**: 全平台Release + 零配置启动 + Web界面数据库迁移 + 宝塔/1Panel支持
 
 ---
 
