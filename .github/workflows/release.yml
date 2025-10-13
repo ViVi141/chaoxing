@@ -137,6 +137,12 @@ jobs:
           ls -lah artifacts/
           find artifacts/ -type f
           
+          # 调试：查看源码目录大小
+          echo "=== Source directories ==="
+          du -sh api/ web/ docs/ tools/ scripts/
+          ls -lah api/ | head -20
+          ls -lah web/backend/ | head -20
+          
           # 创建发布目录
           mkdir -p release-package
           
