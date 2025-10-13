@@ -234,12 +234,40 @@ wget https://raw.githubusercontent.com/ViVi141/chaoxing/main/web/docker-compose.
 2. 点击"编辑"
 3. 添加环境变量：
 
-POSTGRES_PASSWORD=your_secure_password
-REDIS_PASSWORD=your_redis_password
-SECRET_KEY=your_secret_key_32_chars
-JWT_SECRET_KEY=your_jwt_secret_32_chars
+# 数据库配置
+POSTGRES_PASSWORD=your_secure_postgres_password
+DATABASE_URL=postgresql+asyncpg://chaoxing_user:your_secure_postgres_password@postgres:5432/chaoxing_db
+
+# Redis配置
+REDIS_PASSWORD=your_secure_redis_password
+REDIS_URL=redis://:your_secure_redis_password@redis:6379/0
+CELERY_BROKER_URL=redis://:your_secure_redis_password@redis:6379/0
+CELERY_RESULT_BACKEND=redis://:your_secure_redis_password@redis:6379/0
+
+# 应用密钥（使用强密钥生成工具）
+SECRET_KEY=your_secret_key_at_least_32_characters_long
+JWT_SECRET_KEY=your_jwt_secret_key_at_least_32_chars
+
+# 可选配置
+DEBUG=False
+LOG_LEVEL=INFO
 
 4. 保存
+
+💡 提示：密钥生成方法见下方
+```
+
+#### 生成安全密钥
+
+```bash
+# 方式1：Python
+python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+
+# 方式2：OpenSSL
+openssl rand -base64 32
+
+# 方式3：在线工具
+# https://generate-secret.vercel.app/32
 ```
 
 #### 步骤4：启动
@@ -506,10 +534,28 @@ chmod +x 一键安装.sh
 # 用户：chaoxing_user
 
 # === 5. 配置环境变量 ===
-cat > web/backend/.env << 'EOF'
-DATABASE_URL=postgresql+asyncpg://chaoxing_user:密码@localhost:5432/chaoxing_db
-SECRET_KEY=$(python -c "import secrets; print(secrets.token_urlsafe(32))")
-JWT_SECRET_KEY=$(python -c "import secrets; print(secrets.token_urlsafe(32))")
+# 生成密钥
+SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+JWT_SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+
+cat > web/backend/.env << EOF
+# 数据库连接（使用宝塔创建的数据库）
+DATABASE_URL=postgresql+asyncpg://chaoxing_user:你的数据库密码@localhost:5432/chaoxing_db
+
+# 如果使用SQLite（简单模式）
+# DATABASE_URL=sqlite:///./data/chaoxing.db
+
+# 应用密钥
+SECRET_KEY=${SECRET_KEY}
+JWT_SECRET_KEY=${JWT_SECRET_KEY}
+
+# Redis配置（可选）
+# REDIS_URL=redis://:your_redis_password@localhost:6379/0
+# CELERY_BROKER_URL=redis://:your_redis_password@localhost:6379/0
+
+# 其他配置
+DEBUG=False
+LOG_LEVEL=INFO
 EOF
 
 # === 6. 数据库迁移 ===
@@ -547,11 +593,28 @@ cd /opt/chaoxing
 wget https://raw.githubusercontent.com/ViVi141/chaoxing/main/web/docker-compose.yml
 
 # === 3. 创建环境变量 ===
-cat > .env << 'EOF'
-POSTGRES_PASSWORD=your_postgres_pass
-REDIS_PASSWORD=your_redis_pass
-SECRET_KEY=your_secret_key_32_chars
-JWT_SECRET_KEY=your_jwt_secret_32_chars
+# 生成安全密钥
+SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+JWT_SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+
+cat > .env << EOF
+# 数据库配置
+POSTGRES_PASSWORD=your_secure_postgres_password
+DATABASE_URL=postgresql+asyncpg://chaoxing_user:your_secure_postgres_password@postgres:5432/chaoxing_db
+
+# Redis配置
+REDIS_PASSWORD=your_secure_redis_password
+REDIS_URL=redis://:your_secure_redis_password@redis:6379/0
+CELERY_BROKER_URL=redis://:your_secure_redis_password@redis:6379/0
+CELERY_RESULT_BACKEND=redis://:your_secure_redis_password@redis:6379/0
+
+# 应用密钥
+SECRET_KEY=${SECRET_KEY}
+JWT_SECRET_KEY=${JWT_SECRET_KEY}
+
+# 其他配置
+DEBUG=False
+LOG_LEVEL=INFO
 EOF
 
 # === 4. 1Panel导入 ===
