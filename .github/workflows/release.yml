@@ -132,6 +132,11 @@ jobs:
       - name: 创建平台特定包
         shell: bash
         run: |
+          # 调试：查看artifacts结构
+          echo "=== Artifacts structure ==="
+          ls -lah artifacts/
+          find artifacts/ -type f
+          
           # 创建发布目录
           mkdir -p release-package
           
@@ -165,9 +170,20 @@ jobs:
           
           cp DAEMON_QUICK_REF.md release-package/
           
-          # 解压前端构建产物
-          mkdir -p release-package/web/frontend/dist
-          tar -xzf artifacts/frontend-dist.tar.gz -C release-package/web/frontend/
+          # 解压前端构建产物（修复路径）
+          mkdir -p release-package/web/frontend
+          if [ -f "artifacts/frontend-dist.tar.gz" ]; then
+            tar -xzf artifacts/frontend-dist.tar.gz -C release-package/web/frontend/
+          elif [ -f "artifacts/frontend-dist/frontend-dist.tar.gz" ]; then
+            tar -xzf artifacts/frontend-dist/frontend-dist.tar.gz -C release-package/web/frontend/
+          else
+            echo "ERROR: frontend-dist.tar.gz not found!"
+            exit 1
+          fi
+          
+          # 验证前端文件
+          echo "=== Frontend files ==="
+          ls -lah release-package/web/frontend/dist/ || echo "No dist directory!"
           
           # 创建版本信息
           echo "Version: ${GITHUB_REF_NAME:-latest}" > release-package/VERSION.txt
