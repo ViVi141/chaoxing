@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, Form, Input, InputNumber, Switch, Button, message, Tabs, Alert, Space, Descriptions } from 'antd';
+import { Card, Form, Input, InputNumber, Switch, Button, message, Tabs, Alert, Space, Descriptions, Tag } from 'antd';
 import { SaveOutlined, ReloadOutlined, MailOutlined, SettingOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { axiosInstance } from '../../providers/authProvider';
 
@@ -10,6 +10,9 @@ export const SystemConfig = () => {
   const [templates, setTemplates] = useState<any[]>([]);
   const [currentConfig, setCurrentConfig] = useState<any>(null);
   const [testEmail, setTestEmail] = useState<string>('');
+  const [systemParams, setSystemParams] = useState<any>(null);
+  const [editableConfigs, setEditableConfigs] = useState<any>(null);
+  const [editingConfig, setEditingConfig] = useState<{[key: string]: any}>({});
 
   // 加载SMTP配置
   const loadSMTPConfig = async () => {
@@ -32,9 +35,60 @@ export const SystemConfig = () => {
     }
   };
 
+  // 加载系统参数
+  const loadSystemParams = async () => {
+    try {
+      const response = await axiosInstance.get('/system-config/system-params');
+      setSystemParams(response.data);
+    } catch (error: any) {
+      console.error('加载系统参数失败:', error);
+    }
+  };
+
+  // 加载可编辑配置
+  const loadEditableConfigs = async () => {
+    try {
+      const response = await axiosInstance.get('/system-config/editable-configs');
+      setEditableConfigs(response.data.configs);
+    } catch (error: any) {
+      console.error('加载可编辑配置失败:', error);
+    }
+  };
+
+  // 更新单个配置
+  const updateConfig = async (key: string, value: any) => {
+    try {
+      setLoading(true);
+      await axiosInstance.put('/system-config/editable-config', { key, value });
+      message.success(`配置 ${key} 已更新`);
+      loadEditableConfigs();
+      setEditingConfig({});
+    } catch (error: any) {
+      message.error(error.response?.data?.detail || '更新失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 初始化可编辑配置
+  const initEditableConfigs = async () => {
+    try {
+      setLoading(true);
+      const response = await axiosInstance.post('/system-config/init-editable-configs');
+      message.success(response.data.message);
+      loadEditableConfigs();
+    } catch (error: any) {
+      message.error('初始化失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadSMTPConfig();
     loadTemplates();
+    loadSystemParams();
+    loadEditableConfigs();
   }, []);
 
   // 保存SMTP配置
@@ -115,6 +169,112 @@ export const SystemConfig = () => {
         <Tabs 
           defaultActiveKey="smtp"
           items={[
+            {
+              key: 'editable',
+              label: (
+                <span>
+                  <ThunderboltOutlined />
+                  在线配置
+                </span>
+              ),
+              children: (
+                <Card>
+                  <Alert
+                    message="在线配置管理"
+                    description="这些配置可以在线修改并立即生效，无需重启服务。"
+                    type="success"
+                    showIcon
+                    style={{ marginBottom: 24 }}
+                  />
+
+                  {!editableConfigs && (
+                    <Button onClick={initEditableConfigs} type="primary" icon={<SettingOutlined />}>
+                      初始化配置
+                    </Button>
+                  )}
+
+                  {editableConfigs && (
+                    <>
+                      <Descriptions bordered column={1} size="small">
+                        {Object.entries(editableConfigs).map(([key, config]: [string, any]) => (
+                          <Descriptions.Item
+                            key={key}
+                            label={
+                              <div>
+                                <strong>{config.description}</strong>
+                                <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
+                                  {key}
+                                </div>
+                              </div>
+                            }
+                          >
+                            <Space>
+                              {editingConfig[key] !== undefined ? (
+                                <>
+                                  <InputNumber
+                                    value={editingConfig[key]}
+                                    onChange={(value) => setEditingConfig({ ...editingConfig, [key]: value })}
+                                    min={config.min}
+                                    max={config.max}
+                                    style={{ width: 150 }}
+                                  />
+                                  <Button
+                                    type="primary"
+                                    size="small"
+                                    onClick={() => updateConfig(key, editingConfig[key])}
+                                    loading={loading}
+                                  >
+                                    保存
+                                  </Button>
+                                  <Button
+                                    size="small"
+                                    onClick={() => {
+                                      const newEditing = { ...editingConfig };
+                                      delete newEditing[key];
+                                      setEditingConfig(newEditing);
+                                    }}
+                                  >
+                                    取消
+                                  </Button>
+                                </>
+                              ) : (
+                                <>
+                                  <strong style={{ color: '#1890ff' }}>{config.value}</strong>
+                                  <span style={{ color: '#999', fontSize: 12 }}>
+                                    (默认: {config.default}, 范围: {config.min}-{config.max})
+                                  </span>
+                                  <Button
+                                    type="link"
+                                    size="small"
+                                    onClick={() => setEditingConfig({ ...editingConfig, [key]: config.value })}
+                                  >
+                                    修改
+                                  </Button>
+                                </>
+                              )}
+                            </Space>
+                          </Descriptions.Item>
+                        ))}
+                      </Descriptions>
+
+                      <Alert
+                        message="配置说明"
+                        description={
+                          <ul style={{ marginBottom: 0, paddingLeft: 20 }}>
+                            <li>修改后立即生效，无需重启服务</li>
+                            <li>所有用户的新任务将使用新配置</li>
+                            <li>已创建的任务不受影响</li>
+                          </ul>
+                        }
+                        type="info"
+                        showIcon
+                        style={{ marginTop: 16 }}
+                      />
+                    </>
+                  )}
+                </Card>
+              ),
+            },
             {
               key: 'smtp',
               label: (
@@ -344,11 +504,61 @@ export const SystemConfig = () => {
                       {window.location.protocol}//{window.location.hostname}:5000
                     </Descriptions.Item>
                     <Descriptions.Item label="配置版本">
-                      v2.2.2
+                      v2.2.3
                     </Descriptions.Item>
                   </Descriptions>
 
-                  <Card title="配置选项" size="small" style={{ marginBottom: 16 }}>
+                  {systemParams && (
+                    <Card title="系统参数（只读）" size="small" style={{ marginBottom: 16 }}>
+                      <Alert
+                        message="参数说明"
+                        description="这些参数从.env配置文件读取，无法在线修改。如需修改，请编辑.env文件并重启服务。"
+                        type="warning"
+                        showIcon
+                        style={{ marginBottom: 16 }}
+                      />
+                      
+                      <Descriptions bordered column={2} size="small">
+                        <Descriptions.Item label="应用名称" span={2}>
+                          {systemParams.app?.name}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="版本">
+                          {systemParams.app?.version}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="调试模式">
+                          {systemParams.app?.debug ? '✅ 开启' : '⭕ 关闭'}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="部署模式">
+                          <Tag color={systemParams.deploy?.mode === 'simple' ? 'blue' : 'green'}>
+                            {systemParams.deploy?.mode === 'simple' ? '简单模式 (SQLite)' : '标准模式 (PostgreSQL)'}
+                          </Tag>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="监听端口">
+                          {systemParams.app?.host}:{systemParams.app?.port}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="每用户最大并发任务">
+                          {systemParams.task?.max_concurrent_tasks_per_user}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="任务超时时间">
+                          {systemParams.task?.task_timeout} 秒 ({Math.floor(systemParams.task?.task_timeout / 60)}分钟)
+                        </Descriptions.Item>
+                        <Descriptions.Item label="默认分页大小">
+                          {systemParams.pagination?.default_page_size}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="最大分页大小">
+                          {systemParams.pagination?.max_page_size}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="JWT过期时间">
+                          {systemParams.security?.jwt_expire_minutes} 分钟
+                        </Descriptions.Item>
+                        <Descriptions.Item label="邮箱验证过期">
+                          {systemParams.security?.email_verification_expire_minutes} 分钟
+                        </Descriptions.Item>
+                      </Descriptions>
+                    </Card>
+                  )}
+
+                  <Card title="功能列表" size="small" style={{ marginBottom: 16 }}>
                     <Space direction="vertical" style={{ width: '100%' }}>
                       <div>
                         <strong>✅ SMTP邮件配置</strong>

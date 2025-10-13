@@ -95,13 +95,30 @@ class Tiku:
         if not self._conf:
             self.config_set(self._get_conf())
         if not self.DISABLE:
-            # 设置提交模式
-            self.SUBMIT = True if self._conf['submit'] == 'true' else False
-            self.COVER_RATE = float(self._conf['cover_rate'])
-            self.true_list = self._conf['true_list'].split(',')
-            self.false_list = self._conf['false_list'].split(',')
+            # 设置提交模式（兼容布尔值和字符串）
+            submit_value = self._conf.get('submit', False)
+            if isinstance(submit_value, bool):
+                self.SUBMIT = submit_value
+            elif isinstance(submit_value, str):
+                self.SUBMIT = submit_value.lower() in ('true', '1', 'yes', 'on')
+            else:
+                self.SUBMIT = False
+            
+            # 设置覆盖率
+            cover_rate_value = self._conf.get('cover_rate', 0.9)
+            self.COVER_RATE = float(cover_rate_value) if cover_rate_value else 0.9
+            
+            # 设置判断题选项
+            true_list_value = self._conf.get('true_list', '正确,对,√,是')
+            false_list_value = self._conf.get('false_list', '错误,错,×,否,不对,不正确')
+            self.true_list = true_list_value.split(',') if isinstance(true_list_value, str) else true_list_value
+            self.false_list = false_list_value.split(',') if isinstance(false_list_value, str) else false_list_value
+            
             # 调用自定义题库初始化
             self._init_tiku()
+            
+            # 日志记录配置
+            logger.info(f"题库配置: 提交模式={'开启' if self.SUBMIT else '关闭'}, 覆盖率={self.COVER_RATE}")
         
     def _init_tiku(self):
         # 仅用于题库初始化, 例如配置token, 交由自定义题库完成

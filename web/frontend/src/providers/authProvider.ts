@@ -1,7 +1,8 @@
 import { AuthProvider } from '@refinedev/core';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000/api';
+// 从环境变量读取API URL，支持生产环境配置
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 const axiosInstance = axios.create({
   baseURL: API_URL,

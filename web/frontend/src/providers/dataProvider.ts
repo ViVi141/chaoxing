@@ -1,6 +1,8 @@
 import { DataProvider } from '@refinedev/core';
 import { axiosInstance } from './authProvider';
 
+// API URL已在authProvider中配置，这里直接使用axiosInstance
+
 export const dataProvider: DataProvider = {
   getList: async ({ resource, pagination, filters, sorters }) => {
     const page = (pagination as any)?.page || (pagination as any)?.current || 1;

@@ -2,7 +2,7 @@
 """
 数据库模型定义（SQLAlchemy 2.0异步版本）
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 import json
 
@@ -24,7 +24,7 @@ class User(Base):
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)  # ✅ 新增邮箱验证状态
     role: Mapped[str] = mapped_column(String(20), default='user', nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     last_login: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     # 关系
@@ -91,7 +91,7 @@ class UserConfig(Base):
     tiku_config: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     notification_config: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # 关系
     user: Mapped["User"] = relationship("User", back_populates="config")
@@ -174,7 +174,7 @@ class Task(Base):
     celery_task_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, unique=True)
 
     # 时间
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     start_time: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     end_time: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
@@ -237,7 +237,7 @@ class TaskLog(Base):
 
     level: Mapped[str] = mapped_column(String(20), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False, index=True)
 
     # 关系
     task: Mapped["Task"] = relationship("Task", back_populates="logs")
@@ -263,7 +263,7 @@ class SystemLog(Base):
     message: Mapped[str] = mapped_column(Text, nullable=False)
     user_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
     ip_address: Mapped[Optional[str]] = mapped_column(String(45), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False, index=True)
 
     def to_dict(self) -> dict:
         """转换为字典"""
@@ -289,11 +289,11 @@ class EmailVerification(Base):
     token_type: Mapped[str] = mapped_column(String(20), nullable=False)  # verify_email, reset_password
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
     is_used: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     def is_expired(self) -> bool:
         """是否已过期"""
-        return datetime.utcnow() > self.expires_at
+        return lambda: datetime.now(timezone.utc)() > self.expires_at
 
     def to_dict(self) -> dict:
         """转换为字典"""
@@ -318,7 +318,7 @@ class SystemConfig(Base):
     config_type: Mapped[str] = mapped_column(String(20), nullable=False)  # string, int, bool, float
     description: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     is_sensitive: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)  # 敏感信息（如密码）
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     updated_by: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
 
     def get_value(self):

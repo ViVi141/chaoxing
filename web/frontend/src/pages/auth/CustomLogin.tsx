@@ -113,6 +113,20 @@ export const CustomLogin = () => {
               用户名：<strong>admin</strong> · 密码：<strong>Admin@123</strong>
             </Text>
           </div>
+
+          <div style={{ textAlign: 'center', marginTop: 8 }}>
+            <Text type="secondary" style={{ fontSize: 11 }}>
+              🎁 开源免费项目 · GPL-3.0 · 
+              <a 
+                href="https://github.com/ViVi141/chaoxing" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{ marginLeft: 4, color: '#667eea' }}
+              >
+                GitHub
+              </a>
+            </Text>
+          </div>
         </Space>
       </Card>
     </div>

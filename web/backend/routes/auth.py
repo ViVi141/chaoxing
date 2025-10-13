@@ -2,7 +2,7 @@
 """
 认证相关路由
 """
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -161,7 +161,7 @@ async def login(
     
     # 更新最后登录时间
     from datetime import datetime
-    user.last_login = datetime.utcnow()
+    user.last_login = datetime.now(timezone.utc)
     await db.commit()
     
     # 生成令牌（sub必须是字符串）

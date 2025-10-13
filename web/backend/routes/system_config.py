@@ -12,6 +12,7 @@ from database import get_db
 from models import User, SystemConfig
 from auth import require_admin
 from config import settings
+from config_manager import config_manager
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
@@ -404,6 +405,142 @@ async def init_default_configs(
         "created": created_count,
         "updated": updated_count
     }
+
+
+@router.get("/system-params")
+async def get_system_params(
+    admin_user: User = Depends(require_admin)
+):
+    """
+    获取系统参数（只读，从.env读取）
+    
+    这些参数不能通过API修改，需要修改.env文件并重启服务
+    """
+    return {
+        "app": {
+            "name": settings.APP_NAME,
+            "version": settings.VERSION,
+            "debug": settings.DEBUG,
+            "host": settings.HOST,
+            "port": settings.PORT,
+        },
+        "deploy": {
+            "mode": settings.DEPLOY_MODE,
+        },
+        "task": {
+            "max_concurrent_tasks_per_user": settings.MAX_CONCURRENT_TASKS_PER_USER,
+            "task_timeout": settings.TASK_TIMEOUT,
+        },
+        "pagination": {
+            "default_page_size": settings.PAGE_SIZE,
+            "max_page_size": settings.MAX_PAGE_SIZE,
+        },
+        "security": {
+            "jwt_expire_minutes": settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES,
+            "email_verification_expire_minutes": settings.EMAIL_VERIFICATION_EXPIRE_MINUTES,
+            "password_reset_expire_minutes": settings.PASSWORD_RESET_EXPIRE_MINUTES,
+        },
+        "database": {
+            "url": "***已配置***" if settings.DATABASE_URL else "未配置",
+        },
+        "cors": {
+            "origins": settings.get_cors_origins(),
+        }
+    }
+
+
+@router.get("/editable-configs")
+async def get_editable_configs(
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    """
+    获取所有可在线编辑的配置项
+    
+    管理员专用
+    """
+    try:
+        configs = await config_manager.get_all_editable_configs(db)
+        return {
+            "configs": configs,
+            "readonly_configs": config_manager.READONLY_CONFIGS
+        }
+    except Exception as e:
+        logger.error(f"获取可编辑配置失败: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取配置失败: {str(e)}"
+        )
+
+
+class ConfigUpdateRequest(BaseModel):
+    """配置更新请求"""
+    key: str
+    value: Any
+
+
+@router.put("/editable-config")
+async def update_editable_config(
+    request: ConfigUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    """
+    更新单个可编辑配置项
+    
+    管理员专用
+    """
+    try:
+        config = await config_manager.set_config(
+            db,
+            request.key,
+            request.value,
+            user_id=admin_user.id
+        )
+        
+        return {
+            "message": f"配置 {request.key} 已更新",
+            "config": {
+                "key": config.config_key,
+                "value": config.get_value(),
+                "description": config.description
+            }
+        }
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"更新配置失败: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"更新配置失败: {str(e)}"
+        )
+
+
+@router.post("/init-editable-configs")
+async def init_editable_configs(
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    """
+    初始化可编辑配置的默认值
+    
+    管理员专用
+    """
+    try:
+        count = await config_manager.init_default_configs(db, admin_user.id)
+        return {
+            "message": f"已初始化 {count} 个配置项",
+            "count": count
+        }
+    except Exception as e:
+        logger.error(f"初始化配置失败: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"初始化配置失败: {str(e)}"
+        )
 
 
 @router.get("/smtp-templates")

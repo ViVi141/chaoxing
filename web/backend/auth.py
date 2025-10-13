@@ -2,7 +2,7 @@
 """
 认证和授权（FastAPI + JWT）
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import Depends, HTTPException, status
@@ -41,13 +41,13 @@ class AuthService:
         to_encode = data.copy()
         
         if expires_delta:
-            expire = datetime.utcnow() + expires_delta
+            expire = datetime.now(timezone.utc) + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(
+            expire = datetime.now(timezone.utc) + timedelta(
                 minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES
             )
         
-        to_encode.update({"exp": expire, "iat": datetime.utcnow()})
+        to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc)})
         
         encoded_jwt = jwt.encode(
             to_encode,
@@ -203,5 +203,5 @@ async def init_default_admin():
             logger.info(f"✓ 已创建默认管理员账号")
             logger.info(f"  用户名: {settings.DEFAULT_ADMIN_USERNAME}")
             logger.info(f"  邮箱: {settings.DEFAULT_ADMIN_EMAIL}")
-            logger.warning(f"⚠ 默认密码: {settings.DEFAULT_ADMIN_PASSWORD}")
+            logger.warning("⚠ 使用默认密码，请查看.env文件中的DEFAULT_ADMIN_PASSWORD")
             logger.warning("⚠ 请立即登录并修改密码！")

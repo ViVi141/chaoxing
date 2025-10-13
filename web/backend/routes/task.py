@@ -3,7 +3,7 @@
 任务管理路由
 """
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy import select, desc
@@ -18,6 +18,7 @@ from schemas import (
 )
 from auth import get_current_active_user
 from config import settings
+from config_manager import config_manager
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
@@ -82,7 +83,13 @@ async def create_task(
     - **name**: 任务名称
     - **course_ids**: 课程ID列表（可选，为空则学习所有课程）
     """
-    # 检查并发任务数限制
+    # 检查并发任务数限制（优先使用数据库配置）
+    max_tasks = await config_manager.get_config(
+        db,
+        'max_concurrent_tasks_per_user',
+        settings.MAX_CONCURRENT_TASKS_PER_USER
+    )
+    
     result = await db.execute(
         select(Task).where(
             Task.user_id == current_user.id,
@@ -91,10 +98,10 @@ async def create_task(
     )
     active_tasks = result.scalars().all()
     
-    if len(active_tasks) >= settings.MAX_CONCURRENT_TASKS_PER_USER:
+    if len(active_tasks) >= max_tasks:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"同时运行的任务数已达上限({settings.MAX_CONCURRENT_TASKS_PER_USER})"
+            detail=f"同时运行的任务数已达上限({max_tasks})"
         )
     
     # 创建任务
@@ -232,7 +239,7 @@ async def start_task(
     task.celery_task_id = celery_task.id
     
     task.status = "running"
-    task.start_time = datetime.utcnow()
+    task.start_time = datetime.now(timezone.utc)
     
     await db.commit()
     
@@ -271,9 +278,13 @@ async def pause_task(
         )
     
     # 取消Celery任务
-    # if task.celery_task_id:
-    #     from celery_app import app as celery_app
-    #     celery_app.control.revoke(task.celery_task_id, terminate=True)
+    if task.celery_task_id:
+        try:
+            from celery_app import app as celery_app
+            celery_app.control.revoke(task.celery_task_id, terminate=True)
+            logger.info(f"已终止Celery任务: {task.celery_task_id}")
+        except Exception as e:
+            logger.warning(f"无法终止Celery任务 {task.celery_task_id}: {e}")
     
     task.status = "paused"
     await db.commit()
@@ -334,7 +345,7 @@ async def retry_task(
     celery_task = start_study_task.delay(task.id, current_user.id)
     task.celery_task_id = celery_task.id
     task.status = "running"
-    task.start_time = datetime.utcnow()
+    task.start_time = datetime.now(timezone.utc)
     
     await db.commit()
     
@@ -436,7 +447,7 @@ async def cancel_task(
             logger.warning(f"无法终止Celery任务 {task.celery_task_id}: {e}")
     
     task.status = "cancelled"
-    task.end_time = datetime.utcnow()
+    task.end_time = datetime.now(timezone.utc)
     await db.commit()
     
     logger.info(f"用户{current_user.username}取消任务{task_id}")

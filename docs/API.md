@@ -1,8 +1,10 @@
 # 📡 API接口文档
 
-> 所有API接口说明（v2.1.0）
+> 所有API接口说明（v2.2.3）
 
 **Base URL:** `http://localhost:8000/api`
+
+**更新日期**: 2025-01-13
 
 ---
 
@@ -179,6 +181,148 @@
 
 ### GET /admin/statistics
 系统统计数据
+
+### POST /admin/recover-tasks
+手动恢复被中断的任务
+
+---
+
+## 系统配置接口 (v2.2.3 新增)
+
+**权限要求：** 管理员
+
+### GET /system-config/smtp
+获取SMTP配置
+
+### PUT /system-config/smtp
+更新SMTP配置
+
+### POST /system-config/smtp/test
+测试SMTP配置（支持自定义收件邮箱）
+
+**请求：**
+```json
+{
+  "to_email": "test@example.com"  // 可选
+}
+```
+
+### GET /system-config/system-params
+获取系统参数（只读，从.env读取）
+
+**响应：**
+```json
+{
+  "app": {
+    "name": "超星学习通多用户管理平台",
+    "version": "2.2.3",
+    "debug": false,
+    "host": "0.0.0.0",
+    "port": 8000
+  },
+  "deploy": {
+    "mode": "simple"
+  },
+  "task": {
+    "max_concurrent_tasks_per_user": 3,
+    "task_timeout": 7200
+  },
+  "pagination": {
+    "default_page_size": 20,
+    "max_page_size": 100
+  },
+  "security": {
+    "jwt_expire_minutes": 1440,
+    "email_verification_expire_minutes": 30,
+    "password_reset_expire_minutes": 30
+  }
+}
+```
+
+### GET /system-config/editable-configs
+获取所有可在线编辑的配置项
+
+**响应：**
+```json
+{
+  "configs": {
+    "max_concurrent_tasks_per_user": {
+      "value": 3,
+      "type": "int",
+      "default": 3,
+      "description": "每用户最大并发任务数",
+      "min": 1,
+      "max": 10
+    },
+    ...
+  },
+  "readonly_configs": {
+    "app_name": "超星学习通多用户管理平台",
+    "version": "2.2.3",
+    ...
+  }
+}
+```
+
+### PUT /system-config/editable-config
+更新单个可编辑配置项
+
+**请求：**
+```json
+{
+  "key": "max_concurrent_tasks_per_user",
+  "value": 5
+}
+```
+
+**响应：**
+```json
+{
+  "message": "配置 max_concurrent_tasks_per_user 已更新",
+  "config": {
+    "key": "max_concurrent_tasks_per_user",
+    "value": 5,
+    "description": "每用户最大并发任务数"
+  }
+}
+```
+
+### POST /system-config/init-editable-configs
+初始化可编辑配置的默认值
+
+### GET /system-config/smtp-templates
+获取SMTP配置模板（Gmail、QQ、163等）
+
+---
+
+## 用户配置接口 (v2.2.2 新增)
+
+### POST /user/config/test-tiku
+验证题库配置（AI/DeepSeek/SiliconFlow）
+
+**请求：**
+```json
+{
+  "provider": "DeepSeek",
+  "config": {
+    "deepseek_key": "sk-xxx",
+    "deepseek_model": "deepseek-chat",
+    "deepseek_endpoint": "https://api.deepseek.com/v1/chat/completions"
+  }
+}
+```
+
+**响应：**
+```json
+{
+  "success": true,
+  "message": "✅ DeepSeek配置验证成功！模型响应正常。",
+  "details": {
+    "model": "deepseek-chat",
+    "response_time": "1.23s"
+  }
+}
+```
 
 ---
 

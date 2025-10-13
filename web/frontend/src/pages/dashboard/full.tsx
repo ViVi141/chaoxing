@@ -1,11 +1,12 @@
 import { useGetIdentity } from '@refinedev/core';
-import { Card, Row, Col, Statistic, Typography, List, Avatar, Tag, Progress, Empty, Spin, Space } from 'antd';
+import { Card, Row, Col, Statistic, Typography, List, Avatar, Tag, Progress, Empty, Spin, Space, Alert } from 'antd';
 import { 
   UserOutlined, 
   FileTextOutlined, 
   CheckCircleOutlined,
   CloseCircleOutlined,
-  SyncOutlined
+  SyncOutlined,
+  GiftOutlined
 } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import { axiosInstance } from '../../providers/authProvider';
@@ -228,6 +229,47 @@ export const DashboardPageFull = () => {
           )}
         </List>
       </Card>
+
+      {/* 友情提示 - 彩蛋 */}
+      {identity?.role !== 'admin' && (
+        <Alert
+          message={
+            <Space>
+              <GiftOutlined style={{ color: '#52c41a' }} />
+              <span>友情提示</span>
+            </Space>
+          }
+          description={
+            <div style={{ fontSize: 13, lineHeight: 1.6 }}>
+              <p style={{ marginBottom: 8 }}>
+                💡 <strong>本项目是开源免费软件</strong>（GPL-3.0协议），任何人都可以自由使用。
+              </p>
+              <p style={{ marginBottom: 8 }}>
+                ⚠️ 如果有人向您收取使用费用或强制要求付款，<strong>这不符合本项目的开源精神</strong>。
+              </p>
+              <p style={{ marginBottom: 0 }}>
+                ✨ 您有权利免费使用本服务。如有疑问，请访问项目开源地址：
+                <a 
+                  href="https://github.com/ViVi141/chaoxing" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style={{ marginLeft: 4 }}
+                >
+                  GitHub仓库
+                </a>
+              </p>
+            </div>
+          }
+          type="info"
+          showIcon
+          closable
+          style={{ 
+            marginTop: 24,
+            background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
+            border: '1px solid #bae6fd'
+          }}
+        />
+      )}
     </div>
   );
 };

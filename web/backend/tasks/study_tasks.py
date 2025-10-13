@@ -4,7 +4,7 @@
 """
 import sys
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Callable
 
 # 添加项目根目录到路径
@@ -53,7 +53,7 @@ def update_task_progress(
     item_current_time: Optional[int] = None,  # 当前时间（秒）
     item_total_time: Optional[int] = None,    # 总时长（秒）
     item_detail: Optional[str] = None         # 额外详情
-):
+) -> bool:
     """
     更新任务进度（同步版本）
     
@@ -67,19 +67,27 @@ def update_task_progress(
         item_current_time: 当前时间（秒，用于视频/音频）
         item_total_time: 总时长（秒，用于视频/音频）
         item_detail: 额外详情（如页数等）
+    
+    Returns:
+        bool: 任务是否应该继续执行（False表示任务已被暂停/取消）
     """
     db = get_sync_db()
     try:
         task = db.query(Task).filter(Task.id == task_id).first()
         
         if task:
+            # ✅ 检查任务是否被暂停或取消
+            if task.status in ["paused", "cancelled"]:
+                logger.info(f"任务{task_id}状态为{task.status}，停止更新进度")
+                return False
+            
             task.progress = progress
             if status:
                 task.status = status
             if error_msg:
                 task.error_msg = error_msg
             if status == "completed":
-                task.end_time = datetime.utcnow()
+                task.end_time = datetime.now(timezone.utc)
             
             db.commit()
             
@@ -140,9 +148,12 @@ def update_task_progress(
             except Exception as e:
                 logger.debug(f"WebSocket推送失败（非致命错误）: {e}")
             
+            return True  # 任务可以继续
+            
     except Exception as e:
         logger.error(f"更新任务进度失败: {e}")
         db.rollback()
+        return True  # 即使出错也允许继续（防止意外中断）
     finally:
         db.close()
 
@@ -335,7 +346,8 @@ def execute_study_task(task_id: int, user_id: int):
         
         # 记录开始
         log_task_message(task_id, "INFO", "🚀 任务开始执行")
-        update_task_progress(task_id, 5, "running")
+        if not update_task_progress(task_id, 5, "running"):
+            return  # 任务已被暂停/取消
         
         # 初始化超星API
         account = Account(_username=config.cx_username, _password=cx_password)
@@ -354,7 +366,8 @@ def execute_study_task(task_id: int, user_id: int):
         chaoxing = Chaoxing(account=account, tiku=tiku, query_delay=query_delay)
         
         log_task_message(task_id, "INFO", "🔐 正在登录超星...")
-        update_task_progress(task_id, 10)
+        if not update_task_progress(task_id, 10):
+            return  # 任务已被暂停/取消
         
         # 登录
         login_result = chaoxing.login(login_with_cookies=config.use_cookies)
@@ -364,7 +377,8 @@ def execute_study_task(task_id: int, user_id: int):
             return
         
         log_task_message(task_id, "INFO", "✅ 登录成功")
-        update_task_progress(task_id, 20)
+        if not update_task_progress(task_id, 20):
+            return  # 任务已被暂停/取消
         
         # 获取课程列表
         log_task_message(task_id, "INFO", "📚 获取课程列表...")
@@ -392,7 +406,8 @@ def execute_study_task(task_id: int, user_id: int):
             db.close()
         
         log_task_message(task_id, "INFO", f"📖 找到 {len(course_task)} 门课程")
-        update_task_progress(task_id, 30)
+        if not update_task_progress(task_id, 30):
+            return  # 任务已被暂停/取消
         
         # 获取配置参数
         speed = config.video_speed if hasattr(config, 'video_speed') else 1.0
@@ -404,6 +419,17 @@ def execute_study_task(task_id: int, user_id: int):
         errors = []
         
         for idx, course in enumerate(course_task):
+            # ✅ 检查任务状态（是否被暂停或取消）
+            db = get_sync_db()
+            try:
+                current_task = db.query(Task).filter(Task.id == task_id).first()
+                if current_task and current_task.status in ["paused", "cancelled"]:
+                    log_task_message(task_id, "WARNING", f"⚠️ 任务被{current_task.status}，停止执行")
+                    logger.info(f"任务{task_id}检测到状态为{current_task.status}，主动退出")
+                    return  # 主动退出任务
+            finally:
+                db.close()
+            
             log_task_message(task_id, "INFO", f"📚 开始学习课程 ({idx+1}/{len(course_task)}): {course['title']}")
             
             # 创建详细进度回调

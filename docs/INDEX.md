@@ -1,67 +1,28 @@
-# 📚 项目文档索引
+# 📚 文档索引
 
-> 超星学习通自动化完成任务点（增强版）- 完整文档导航
-
----
-
-## 📖 快速开始
-
-- [README.md](../README.md) - 项目主页和快速开始
-- [快速安装指南](QUICK_START.md) - 5分钟快速上手
-- [新增功能说明](NEW_FEATURES.md) - 题库和通知功能详解 ⚡
+**v2.2.3** | 2025-10-13
 
 ---
 
-## 🏗️ 架构文档
+## 📖 必读文档
 
-- [项目架构](ARCHITECTURE.md) - 系统架构和技术栈
-- [数据库设计](DATABASE.md) - 数据库表结构和关系
-- [API文档](API.md) - 后端API接口说明
+- [快速开始](QUICK_START.md) - 5分钟部署
+- [新增功能](NEW_FEATURES.md) - v2.2.3功能
+- [更新日志](CHANGELOG.md) - 版本历史
+- [常见问题](FAQ.md) - FAQ
 
----
+## 🔧 进阶文档
 
-## 🚀 部署文档
+- [API文档](API.md) - 接口说明
+- [配置指南](CONFIGURATION.md) - 配置详解
+- [数据库迁移](DATABASE_MIGRATION.md) - SQLite→PostgreSQL
+- [架构说明](ARCHITECTURE.md) - 系统架构
+- [安全指南](SECURITY.md) - 安全配置
 
-- [本地部署](../web/START_GUIDE.md) - 本地开发环境搭建
-- [Docker部署](../web/DOCKER_DEPLOYMENT.md) - 容器化部署
-- [生产部署](../web/DEPLOYMENT_GUIDE.md) - 生产环境部署指南
-- [数据库迁移](DATABASE_MIGRATION.md) - SQLite迁移到PostgreSQL指南
+## 🔗 链接
 
----
-
-## 🔧 配置文档
-
-- [环境配置](CONFIGURATION.md) - 所有配置项说明
-- [安全配置](SECURITY.md) - 安全相关配置
+[GitHub](https://github.com/ViVi141/chaoxing) | [原始项目](https://github.com/Samueli924/chaoxing)
 
 ---
 
-## 📝 开发文档
-
-- [开发指南](DEVELOPMENT.md) - 本地开发和贡献指南
-- [代码规范](CODE_STYLE.md) - 代码风格和最佳实践
-
----
-
-## 📜 其他
-
-- [更新日志](CHANGELOG.md) - 版本更新记录
-- [常见问题](FAQ.md) - 常见问题解答
-- [许可证](../LICENSE) - GPL-3.0协议
-
----
-
----
-
-## 🆕 v2.2.2 更新
-
-- [新增功能说明](NEW_FEATURES.md) - 6种题库 + 任务恢复 + 在线验证 ⚡
-- [更新日志](CHANGELOG.md) - 完整版本历史
-- [数据库迁移指南](DATABASE_MIGRATION.md) - SQLite → PostgreSQL
-- [升级指南](UPGRADE_GUIDE.md) - 版本升级步骤
-
----
-
-**版本：** v2.2.2  
-**最后更新：** 2025-10-13
-
+**GPL-3.0** 开源协议 | 完全免费使用

@@ -192,13 +192,20 @@ class PaginatedResponse(BaseModel):
 
 
 class StatisticsResponse(BaseModel):
-    """统计数据响应"""
-    total_users: int = 0
-    active_users: int = 0
-    total_tasks: int = 0
-    running_tasks: int = 0
-    completed_tasks: int = 0
-    failed_tasks: int = 0
+    """统计数据响应 - 使用camelCase字段名"""
+    totalUsers: int = 0
+    activeUsers: int = 0
+    totalTasks: int = 0
+    runningTasks: int = 0
+    completedTasks: int = 0
+    failedTasks: int = 0
+    todayCompleted: int = 0
+    todayFailed: int = 0
+    successRate: float = 0.0
+    warnings: int = 0
+    
+    class Config:
+        from_attributes = True
 
 
 # ============= WebSocket消息 =============

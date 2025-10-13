@@ -2,15 +2,23 @@
 
 <p align="center">
   <a href="https://github.com/Samueli924/chaoxing"><img src="https://img.shields.io/github/stars/Samueli924/chaoxing" alt="Stars" /></a>
-  <a href="https://github.com/ViVi141/chaoxing"><img src="https://img.shields.io/badge/version-2.2.2-blue" alt="Version" /></a>
+  <a href="https://github.com/ViVi141/chaoxing"><img src="https://img.shields.io/badge/version-2.2.3-blue" alt="Version" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-green" alt="License" /></a>
   <img src="https://img.shields.io/badge/Refine-v5-orange" alt="Refine v5" />
   <img src="https://img.shields.io/badge/React_Router-v7-blue" alt="React Router v7" />
+  <img src="https://img.shields.io/badge/Vite-v7-purple" alt="Vite v7" />
 </p>
 
 > 基于[Samueli924/chaoxing](https://github.com/Samueli924/chaoxing)的增强版本，提供命令行和Web两种使用方式
 > 
-> 🆕 **v2.2.2更新**: 新增6种题库（含DeepSeek/硅基流动AI）+ 任务自动恢复 + AI题库在线验证
+> 🆕 **v2.2.3更新**: 在线配置管理 + 用户管理增强 + 任务暂停修复 + Vite 7升级 + 开源声明
+
+---
+
+## ⚠️ 声明
+
+> 本项目采用 **GPL-3.0** 开源协议，完全免费使用。  
+> 禁止任何形式的强制收费或未授权商业化运营。
 
 ---
 
@@ -87,14 +95,11 @@ python main.py -c config.ini
 
 ## 📚 文档
 
-- **快速开始**: [docs/QUICK_START.md](docs/QUICK_START.md)
-- **新增功能**: [docs/NEW_FEATURES.md](docs/NEW_FEATURES.md) ⚡
-- **文档索引**: [docs/INDEX.md](docs/INDEX.md)
-- **API文档**: [docs/API.md](docs/API.md)
-- **架构说明**: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-- **配置指南**: [docs/CONFIGURATION.md](docs/CONFIGURATION.md)
-- **安全指南**: [docs/SECURITY.md](docs/SECURITY.md)
-- **常见问题**: [docs/FAQ.md](docs/FAQ.md)
+- [快速开始](docs/QUICK_START.md) - 5分钟快速上手
+- [新增功能](docs/NEW_FEATURES.md) - v2.2.3功能说明
+- [更新日志](docs/CHANGELOG.md) - 版本历史
+- [常见问题](docs/FAQ.md) - FAQ
+- [完整文档](docs/INDEX.md) - 所有文档索引
 
 ---
 
@@ -120,8 +125,12 @@ python main.py -c config.ini
 - ✅ bcrypt密码哈希
 - ✅ 数据加密存储
 - ✅ 用户数据隔离
-- ✅ 权限严格控制
+- ✅ 权限严格控制（RBAC）
 - ✅ 日志自动脱敏
+- ✅ CORS动态配置（生产环境限制）
+- ✅ LIKE注入防护
+- ✅ SQL注入防护（ORM）
+- ✅ XSS防护（输入清理）
 
 ---
 
@@ -162,83 +171,25 @@ GPL-3.0 License
 
 ## 🆕 版本更新
 
-### v2.2.2 (2025-10-13)
+## 📅 更新日志
 
-#### 新增功能
-- ✅ **6种题库支持** + **在线验证** 🧪
-  - 言溪题库（TikuYanxi）
-  - LIKE知识库（TikuLike）
-  - TikuAdapter（开源）
-  - AI大模型（OpenAI兼容）🧪
-  - DeepSeek官方API（DeepSeek）🔥 推荐 + 🧪
-  - 硅基流动AI（SiliconFlow）⚡ 推荐 + 🧪
-  
-- ✅ **4种通知方式**
-  - Server酱（多平台推送）
-  - Qmsg酱（QQ推送）
-  - Bark（iOS推送）
-  - SMTP邮件 📧 支持自定义收件邮箱
-  
-- ✅ **任务自动恢复** 🔄
-  - 系统崩溃后自动恢复运行中任务
-  - 管理员可手动触发批量恢复
-  - 详细的恢复日志和统计
-  
-- ✅ **仪表盘数据修复** 📊
-  - 修复统计数据显示为0的问题
-  - 新增今日完成/失败统计
-  - 新增任务成功率计算
-  
-- ✅ **AI题库验证** 🧪
-  - 支持AI、DeepSeek、SiliconFlow在线验证
-  - 实时测试API配置正确性
-  - 友好的错误提示
+### v2.2.3 (2025-10-13) ⚡
+- 在线配置管理 + 用户管理增强
+- 仪表盘数据、任务暂停修复  
+- Vite 7 + 依赖更新 + 开源声明
 
-#### 技术改进
-- ✅ 新增DeepSeek题库类（+100行）
-- ✅ 新增SMTP通知类（+100行）
-- ✅ 新增3个API端点（题库验证、任务恢复、SMTP测试）
-- ✅ 修复任务恢复参数错误
-- ✅ 统一后端字段命名（驼峰格式）
+### v2.2.2 (2025-10-12)
+- 6种题库（DeepSeek/硅基流动）
+- SMTP邮件 + 任务自动恢复
+
+### v2.2.0
+- Refine v5 + React Router v7
+- 图形化数据库迁移
+
+[完整日志](docs/CHANGELOG.md)
 
 ---
 
-### v2.2.0 (2025-10-13)
+## 📞 支持
 
-#### 技术栈升级
-- ✅ Refine v4 → **v5**（大版本升级）
-- ✅ React Router v6 → **v7**（大版本升级）
-- ✅ Ant Design 5.21 → **5.27**（最新稳定版）
-- ✅ 新增 React Query 5.x（现代化状态管理）
-
-#### 新增功能
-- ✅ **图形化数据库迁移系统**
-  - Web界面一键迁移SQLite到PostgreSQL
-  - 实时进度显示
-  - 自动备份和验证
-  - 跨平台重启脚本
-
-#### 代码质量
-- ✅ TypeScript错误：0个
-- ✅ 修复75%的第三方库警告
-- ✅ API迁移到最新标准
-
----
-
-### 📖 详细说明
-- 完整功能说明：[docs/NEW_FEATURES.md](docs/NEW_FEATURES.md)
-- 版本历史：[docs/CHANGELOG.md](docs/CHANGELOG.md)
-- 配置指南：[docs/CONFIGURATION.md](docs/CONFIGURATION.md)
-
----
-
-## 📞 技术支持
-
-- **原项目Issues**: https://github.com/Samueli924/chaoxing/issues
-- **增强版Issues**: https://github.com/ViVi141/chaoxing/issues
-- **邮箱**: 747384120@qq.com
-- **数据库迁移文档**: [docs/DATABASE_MIGRATION.md](docs/DATABASE_MIGRATION.md)
-
----
-
-**⭐ 觉得有帮助？给个Star吧！**
+[Issues](https://github.com/ViVi141/chaoxing/issues) | [原始项目](https://github.com/Samueli924/chaoxing)

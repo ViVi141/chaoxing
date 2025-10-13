@@ -295,7 +295,7 @@ export const AdminDashboard = () => {
             <Row gutter={[16, 16]}>
               <Col span={12}>
                 <Text type="secondary">系统版本</Text>
-                <div><Text strong>v2.0.0 (Refine)</Text></div>
+                <div><Text strong>v2.2.3 (Refine)</Text></div>
               </Col>
               <Col span={12}>
                 <Text type="secondary">部署模式</Text>

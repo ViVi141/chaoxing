@@ -29,6 +29,7 @@ import { CustomLogin, VerifyEmail, ForgotPassword, ResetPassword } from './pages
 
 // 管理员页面
 import { AdminDashboard, AdminUsersList, AdminTasksList, SystemConfig, DatabaseMigration } from './pages/admin';
+import { AdminUserShow, AdminUserEdit } from './pages/admin/users/index';
 
 function App() {
   // 配置全局 message，防止重复弹窗
@@ -98,6 +99,8 @@ function App() {
               {
                 name: 'admin/users',
                 list: '/admin/users',
+                show: '/admin/users/show/:id',
+                edit: '/admin/users/edit/:id',
                 meta: {
                   label: '用户管理',
                   parent: 'admin',
@@ -157,7 +160,11 @@ function App() {
                 {/* 管理员路由 */}
                 <Route path="/admin">
                   <Route path="dashboard" element={<AdminDashboard />} />
-                  <Route path="users" element={<AdminUsersList />} />
+                  <Route path="users">
+                    <Route index element={<AdminUsersList />} />
+                    <Route path="show/:id" element={<AdminUserShow />} />
+                    <Route path="edit/:id" element={<AdminUserEdit />} />
+                  </Route>
                   <Route path="tasks" element={<AdminTasksList />} />
                   <Route path="system-config" element={<SystemConfig />} />
                   <Route path="database-migration" element={<DatabaseMigration />} />

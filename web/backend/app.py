@@ -4,7 +4,7 @@ FastAPI主应用
 """
 import sys
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -70,7 +70,7 @@ async def recover_interrupted_tasks():
                             # 用户不存在或已禁用，标记任务为失败
                             task.status = "failed"
                             task.error_msg = "任务恢复失败：用户不存在或已被禁用"
-                            task.end_time = datetime.utcnow()
+                            task.end_time = datetime.now(timezone.utc)
                             failed_count += 1
                             logger.warning(f"  - 任务 {task.id} (用户 {task.user_id}): 用户不可用，标记为失败")
                             continue
@@ -91,7 +91,7 @@ async def recover_interrupted_tasks():
                         # 更新Celery任务ID
                         task.celery_task_id = celery_task.id
                         task.status = "running"
-                        task.start_time = datetime.utcnow()
+                        task.start_time = datetime.now(timezone.utc)
                         await session.commit()
                         
                         recovered_count += 1
@@ -101,7 +101,7 @@ async def recover_interrupted_tasks():
                         # 单个任务恢复失败，标记为失败状态
                         task.status = "failed"
                         task.error_msg = f"任务恢复失败: {str(task_error)}"
-                        task.end_time = datetime.utcnow()
+                        task.end_time = datetime.now(timezone.utc)
                         await session.commit()
                         failed_count += 1
                         logger.error(f"  ❌ 任务 {task.id}: 恢复失败 - {task_error}")
@@ -161,14 +161,18 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# 配置CORS（允许所有本地开发端口）
+# 配置CORS（根据环境动态设置）
+cors_origins = ["*"] if settings.DEBUG else settings.get_cors_origins()
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 开发环境允许所有源
+    allow_origins=cors_origins,  # 生产环境限制源
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["*"],
 )
+
+logger.info(f"CORS配置: DEBUG={settings.DEBUG}, Origins={cors_origins if settings.DEBUG else '已配置'}")
 
 # 注册路由（移除安装向导）
 # app.include_router(setup_router, tags=["安装向导"])  # 已移除
@@ -218,6 +222,16 @@ async def global_exception_handler(request, exc):
 
 if __name__ == "__main__":
     import uvicorn
+    
+    logger.info("=" * 60)
+    logger.info("🚀 超星学习通Web平台启动中...")
+    logger.info(f"📍 监听: {settings.HOST}:{settings.PORT}")
+    logger.info(f"🗄️  模式: {settings.DEPLOY_MODE}")
+    logger.info("=" * 60)
+    logger.info("🎁 本项目是开源免费软件 (GPL-3.0)")
+    logger.info("⚠️  请勿用于强制收费或商业化运营")
+    logger.info("💡 GitHub: https://github.com/ViVi141/chaoxing")
+    logger.info("=" * 60)
     
     uvicorn.run(
         "app:app",

@@ -24,6 +24,22 @@ from api.logger import logger
 router = APIRouter()
 
 
+def escape_like_pattern(pattern: str) -> str:
+    """
+    转义LIKE模式中的特殊字符，防止LIKE注入
+    
+    Args:
+        pattern: 原始搜索模式
+        
+    Returns:
+        转义后的模式
+    """
+    if not pattern:
+        return pattern
+    # 转义反斜杠、百分号和下划线
+    return pattern.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+
+
 @router.get("/users", response_model=PaginatedResponse)
 async def get_all_users(
     page: int = Query(1, ge=1),
@@ -41,11 +57,12 @@ async def get_all_users(
     """
     query = select(User)
     
-    # 搜索
+    # 搜索（防止LIKE注入）
     if search:
+        escaped_search = escape_like_pattern(search)
         query = query.where(
-            (User.username.like(f"%{search}%")) |
-            (User.email.like(f"%{search}%"))
+            (User.username.like(f"%{escaped_search}%", escape='\\')) |
+            (User.email.like(f"%{escaped_search}%", escape='\\'))
         )
     
     # 角色过滤
@@ -58,12 +75,25 @@ async def get_all_users(
     
     query = query.order_by(desc(User.created_at))
     
-    # 获取总数
-    count_result = await db.execute(query)
-    all_users = count_result.scalars().all()
-    total = len(all_users)
+    # 优化：使用count()查询总数，而非加载所有数据
+    count_query = select(func.count()).select_from(User)
     
-    # 分页
+    # 应用相同的过滤条件
+    if search:
+        escaped_search = escape_like_pattern(search)
+        count_query = count_query.where(
+            (User.username.like(f"%{escaped_search}%", escape='\\')) |
+            (User.email.like(f"%{escaped_search}%", escape='\\'))
+        )
+    if role:
+        count_query = count_query.where(User.role == role)
+    if is_active is not None:
+        count_query = count_query.where(User.is_active == is_active)
+    
+    count_result = await db.execute(count_query)
+    total = count_result.scalar() or 0
+    
+    # 分页查询数据
     offset = (page - 1) * page_size
     paginated_query = query.offset(offset).limit(page_size)
     result = await db.execute(paginated_query)
@@ -202,12 +232,17 @@ async def get_all_tasks(
     
     query = query.order_by(desc(Task.created_at))
     
-    # 获取总数
-    count_result = await db.execute(query)
-    all_tasks = count_result.scalars().all()
-    total = len(all_tasks)
+    # 优化：使用count()查询总数
+    count_query = select(func.count()).select_from(Task)
+    if status:
+        count_query = count_query.where(Task.status == status)
+    if user_id:
+        count_query = count_query.where(Task.user_id == user_id)
     
-    # 分页
+    count_result = await db.execute(count_query)
+    total = count_result.scalar() or 0
+    
+    # 分页查询数据
     offset = (page - 1) * page_size
     paginated_query = query.offset(offset).limit(page_size)
     result = await db.execute(paginated_query)
@@ -260,13 +295,17 @@ async def force_stop_task(
         )
     
     # 取消Celery任务
-    # if task.celery_task_id:
-    #     from celery_app import app as celery_app
-    #     celery_app.control.revoke(task.celery_task_id, terminate=True)
+    if task.celery_task_id:
+        try:
+            from celery_app import app as celery_app
+            celery_app.control.revoke(task.celery_task_id, terminate=True)
+            logger.info(f"已终止Celery任务: {task.celery_task_id}")
+        except Exception as e:
+            logger.warning(f"无法终止Celery任务 {task.celery_task_id}: {e}")
     
     task.status = "cancelled"
-    from datetime import datetime
-    task.end_time = datetime.utcnow()
+    from datetime import datetime, timezone
+    task.end_time = datetime.now(timezone.utc)
     task.error_msg = f"由管理员{admin_user.username}强制停止"
     
     await db.commit()
@@ -315,8 +354,8 @@ async def get_statistics(
     failed_tasks = failed_tasks_result.scalar()
     
     # 今日统计
-    from datetime import datetime, timedelta
-    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    from datetime import datetime, timedelta, timezone
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     
     today_completed_result = await db.execute(
         select(func.count(Task.id)).where(
@@ -375,12 +414,15 @@ async def get_system_logs(
     
     query = query.order_by(desc(SystemLog.created_at))
     
-    # 获取总数
-    count_result = await db.execute(query)
-    all_logs = count_result.scalars().all()
-    total = len(all_logs)
+    # 优化：使用count()查询总数
+    count_query = select(func.count()).select_from(SystemLog)
+    if level:
+        count_query = count_query.where(SystemLog.level == level)
     
-    # 分页
+    count_result = await db.execute(count_query)
+    total = count_result.scalar() or 0
+    
+    # 分页查询数据
     offset = (page - 1) * page_size
     paginated_query = query.offset(offset).limit(page_size)
     result = await db.execute(paginated_query)
@@ -432,7 +474,7 @@ async def recover_interrupted_tasks_manually(
                     # 用户不存在或已禁用，标记任务为失败
                     task.status = "failed"
                     task.error_msg = "任务恢复失败：用户不存在或已被禁用"
-                    task.end_time = datetime.utcnow()
+                    task.end_time = datetime.now(timezone.utc)
                     failed_count += 1
                     logger.warning(f"任务 {task.id}: 用户不可用，标记为失败")
                     continue
@@ -453,7 +495,7 @@ async def recover_interrupted_tasks_manually(
                 # 更新Celery任务ID
                 task.celery_task_id = celery_task.id
                 task.status = "running"
-                task.start_time = datetime.utcnow()
+                task.start_time = datetime.now(timezone.utc)
                 await db.commit()
                 
                 recovered_count += 1
@@ -462,7 +504,7 @@ async def recover_interrupted_tasks_manually(
             except Exception as task_error:
                 task.status = "failed"
                 task.error_msg = f"任务恢复失败: {str(task_error)}"
-                task.end_time = datetime.utcnow()
+                task.end_time = datetime.now(timezone.utc)
                 await db.commit()
                 failed_count += 1
                 logger.error(f"任务 {task.id} 恢复失败: {task_error}")

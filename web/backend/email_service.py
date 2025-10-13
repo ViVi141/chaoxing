@@ -4,7 +4,7 @@
 """
 import smtplib
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.utils import formataddr
@@ -516,7 +516,7 @@ async def create_email_verification(
     else:
         expires_minutes = settings.EMAIL_VERIFICATION_EXPIRE_MINUTES
     
-    expires_at = datetime.utcnow() + timedelta(minutes=expires_minutes)
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=expires_minutes)
     
     # 保存到数据库
     async with AsyncSessionLocal() as db:

@@ -121,8 +121,13 @@ class WebSocketManager {
 }
 
 // 创建全局WebSocket实例
-// ✅ 正确的WebSocket端点: /ws/connect
-const wsUrl = 'ws://localhost:8000/ws/connect';
+// ✅ 从环境变量读取API URL并转换为WebSocket URL
+const API_URL: string = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000/api';
+const wsUrl =
+  API_URL.replace(/^http:\/\//, 'ws://')
+         .replace(/^https:\/\//, 'wss://')
+         .replace(/\/api\/?$/, '/ws/connect');
+
 export const websocketManager = new WebSocketManager(wsUrl);
 
 // React Hook for WebSocket
