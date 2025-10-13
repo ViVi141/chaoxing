@@ -143,16 +143,18 @@ jobs:
       - name: 构建 Docker 镜像
         run: |
           cd web
-          docker-compose build --no-cache
+          docker compose build
+        timeout-minutes: 20
       
       - name: 测试 Docker 容器
         run: |
           cd web
-          docker-compose up -d
-          sleep 10
-          docker-compose ps
-          docker-compose logs backend
-          docker-compose down
+          docker compose up -d
+          sleep 15
+          docker compose ps
+          docker compose logs backend
+          docker compose down
+        timeout-minutes: 10
 
   security:
     name: 安全扫描
