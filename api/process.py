@@ -1,5 +1,4 @@
 import time
-from typing import Union
 from api.config import GlobalConst as gc
 
 

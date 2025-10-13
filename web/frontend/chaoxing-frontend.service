@@ -1,0 +1,37 @@
+# systemd服务配置 - 前端（开发模式）
+# 注意：生产环境建议使用Nginx托管构建后的静态文件
+# 安装位置: /etc/systemd/system/chaoxing-frontend.service
+# 安装命令: sudo cp chaoxing-frontend.service /etc/systemd/system/
+# 启动命令: sudo systemctl start chaoxing-frontend
+# 开机自启: sudo systemctl enable chaoxing-frontend
+
+[Unit]
+Description=Chaoxing Frontend Service (Vite Dev Server)
+After=network.target chaoxing-backend.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/chaoxing/web/frontend
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+Environment="NODE_ENV=development"
+
+# 开发模式（Vite dev server）
+ExecStart=/usr/bin/npm run dev -- --host 0.0.0.0 --port 5173
+
+# 生产模式应该使用Nginx托管构建后的dist目录
+# 构建命令: npm run build
+# Nginx配置: 参见 nginx.conf.example
+
+# 重启策略
+Restart=always
+RestartSec=10
+
+# 标准输出
+StandardOutput=append:/opt/chaoxing/web/frontend/logs/frontend.log
+StandardError=append:/opt/chaoxing/web/frontend/logs/frontend_error.log
+
+[Install]
+WantedBy=multi-user.target
+

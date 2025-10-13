@@ -4,7 +4,6 @@
 提供配置文件密码加密/解密功能
 """
 import base64
-import getpass
 import hashlib
 import os
 from pathlib import Path

@@ -144,6 +144,8 @@ coverage/
 .cache
 nosetests.xml
 coverage.xml
+*.pyc
+.ruff_cache/
 
 # ================================
 # 临时文件
@@ -184,40 +186,26 @@ $RECYCLE.BIN/
 .directory
 
 # ================================
-# 文档临时文件（清理后的临时说明）
+# 文档临时文件
 # ================================
 *完成报告*.md
 *完成总结*.md
-*修复*.txt
-*说明*.txt
-*指南*.txt
-开始使用.txt
-快速开始*.txt
-登录说明.txt
-完成说明.txt
-导入错误*.txt
-任务创建*.txt
-课程列表*.txt
-邮件系统*.txt
-重试功能*.txt
+*分析*.md
+*ANALYSIS*.md
+*SUMMARY*.md
+*COMPLETE*.md
+*IMPLEMENTATION*.md
+*IMPROVEMENTS*.md
+*PHASE*.md
+*VERSION_UPDATE*.md
+*UPDATE*.txt
+改进*.txt
+更新*.txt
 
 # 但保留正式文档
 !README.md
 !docs/
 !web/README.md
-!web/START_GUIDE.md
-!web/DEPLOYMENT_GUIDE.md
-
-# ================================
-# 项目特定临时文件
-# ================================
-API测试完成报告.md
-Celery异步修复*.txt
-SSL连接错误修复.txt
-SMTP配置指南.txt
-清理完成报告.md
-项目完整性检查报告.md
-项目结构.md
-FINAL_SUMMARY.md
-README_REFINE.md
-REFINE_*.md
+!tests/README.md
+!DAEMON_QUICK_REF.md
+!UPDATE_COMPLETE.txt

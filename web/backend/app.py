@@ -14,10 +14,9 @@ from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 
-from database import engine, Base, init_db
+from database import engine, Base
 from auth import init_default_admin
 from config import settings
 # 移除config_manager - 不再需要动态配置
@@ -37,7 +36,7 @@ async def recover_interrupted_tasks():
     在应用启动时检查数据库中状态为 running 或 pending 的任务，
     自动重新提交这些任务到Celery队列继续执行。
     """
-    from sqlalchemy import select, update
+    from sqlalchemy import select
     from models import Task, User
     from database import AsyncSessionLocal
     

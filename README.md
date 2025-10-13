@@ -1,16 +1,17 @@
 # 超星学习通自动化完成任务点（增强版）
 
 <p align="center">
-  <a href="https://github.com/ViVi141/chaoxing"><img src="https://img.shields.io/badge/version-2.2.3-blue" alt="Version" /></a>
+  <a href="https://github.com/ViVi141/chaoxing"><img src="https://img.shields.io/badge/version-2.3.0-blue" alt="Version" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-green" alt="License" /></a>
   <img src="https://img.shields.io/badge/Refine-v5-orange" alt="Refine v5" />
   <img src="https://img.shields.io/badge/React_Router-v7-blue" alt="React Router v7" />
   <img src="https://img.shields.io/badge/Vite-v7-purple" alt="Vite v7" />
+  <img src="https://img.shields.io/badge/Tests-14_passing-brightgreen" alt="Tests" />
 </p>
 
 > 基于[Samueli924/chaoxing](https://github.com/Samueli924/chaoxing)的增强版本，提供命令行和Web两种使用方式
 > 
-> 🆕 **v2.2.3更新**: 在线配置管理 + 用户管理增强 + 任务暂停修复 + Vite 7升级 + 开源声明
+> 🆕 **v2.3.0更新**: 测试框架 + CI/CD + API限流 + 数据备份 + 守护进程完整方案
 
 ---
 
@@ -39,9 +40,14 @@
 - ✅ 任务详细日志查看
 - ✅ 管理员后台（系统配置/用户管理）
 - ✅ 零依赖部署（SQLite+文件队列）
-- 🆕 **6种题库**（言溪/LIKE/TikuAdapter/AI/DeepSeek/硅基流动）
-- 🆕 **4种通知**（Server酱/Qmsg/Bark/SMTP邮件）
-- 🆕 **图形化数据库迁移**（SQLite → PostgreSQL + Redis）
+- ✅ **6种题库**（言溪/LIKE/TikuAdapter/AI/DeepSeek/硅基流动）
+- ✅ **4种通知**（Server酱/Qmsg/Bark/SMTP邮件）
+- ✅ **图形化数据库迁移**（SQLite → PostgreSQL + Redis）
+- 🆕 **自动化测试**（pytest + 14个测试用例）
+- 🆕 **CI/CD流程**（GitHub Actions + 自动部署）
+- 🆕 **API限流**（多级防护 + 暴力破解防护）
+- 🆕 **数据备份**（自动化脚本 + 定时任务）
+- 🆕 **守护进程**（6种部署方案 + 统一管理）
 
 ---
 
@@ -94,11 +100,19 @@ python main.py -c config.ini
 
 ## 📚 文档
 
+### 快速入门
 - [快速开始](docs/QUICK_START.md) - 5分钟快速上手
-- [新增功能](docs/NEW_FEATURES.md) - v2.2.3功能说明
-- [更新日志](docs/CHANGELOG.md) - 版本历史
+- [完整文档索引](docs/INDEX.md) - 所有文档列表
+
+### v2.3.0新增 🆕
+- [守护进程部署](docs/DAEMON.md) - 生产环境部署（systemd/supervisor/Docker）
+- [测试指南](tests/README.md) - 自动化测试框架
+- [守护进程命令](DAEMON_QUICK_REF.md) - 快速参考
+
+### 更多文档
+- [更新日志](docs/CHANGELOG.md) - 版本历史（含v2.3.0详情）
 - [常见问题](docs/FAQ.md) - FAQ
-- [完整文档](docs/INDEX.md) - 所有文档索引
+- [配置指南](docs/CONFIGURATION.md) - 详细配置
 
 ---
 
@@ -172,7 +186,15 @@ GPL-3.0 License
 
 ## 📅 更新日志
 
-### v2.2.3 (2025-10-13) ⚡
+### v2.3.0 (2025-10-13) 🚀 生产就绪版
+- ✅ **自动化测试框架**（pytest + 14个测试用例）
+- ✅ **CI/CD流程**（GitHub Actions自动化）
+- ✅ **API限流防护**（多级限流 + 暴力破解防护）
+- ✅ **数据备份方案**（自动化脚本 + 双平台）
+- ✅ **守护进程部署**（6种方案 + 统一管理）
+- ✅ **代码优化**（清理冗余代码 + 性能提升）
+
+### v2.2.3 (2025-10-13)
 - 在线配置管理 + 用户管理增强
 - 仪表盘数据、任务暂停修复  
 - Vite 7 + 依赖更新 + 开源声明
@@ -180,10 +202,6 @@ GPL-3.0 License
 ### v2.2.2 (2025-10-12)
 - 6种题库（DeepSeek/硅基流动）
 - SMTP邮件 + 任务自动恢复
-
-### v2.2.0
-- Refine v5 + React Router v7
-- 图形化数据库迁移
 
 [完整日志](docs/CHANGELOG.md)
 

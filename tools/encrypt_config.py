@@ -11,7 +11,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from api.secure_config import migrate_config_to_encrypted
-from api.logger import logger
 
 
 def main():
