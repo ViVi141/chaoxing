@@ -181,7 +181,8 @@ jobs:
             chmod +x release-package/scripts/backup.sh
           fi
           
-          cp DAEMON_QUICK_REF.md release-package/
+          # 复制文档（从docs目录）
+          cp docs/DAEMON_QUICK_REF.md release-package/ 2>/dev/null || echo "DAEMON_QUICK_REF.md not found, skipping"
           
           # 解压前端构建产物（修复路径）
           mkdir -p release-package/web/frontend
@@ -284,7 +285,9 @@ jobs:
           cp daemon_control.bat source-package/
           cp 一键安装.sh source-package/
           cp 一键安装.bat source-package/
-          cp DAEMON_QUICK_REF.md source-package/
+          
+          # 复制文档（从docs目录）
+          cp docs/DAEMON_QUICK_REF.md source-package/ 2>/dev/null || echo "DAEMON_QUICK_REF.md not found, skipping"
           
           tar -czf chaoxing-${GITHUB_REF_NAME}-source.tar.gz source-package/
           
