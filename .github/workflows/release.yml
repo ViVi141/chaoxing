@@ -83,9 +83,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: 提取版本号
-        id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      - name: 提取版本号和仓库信息
+        id: meta
+        run: |
+          echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          echo "REPO_LOWER=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
       
       - name: 构建并推送Docker镜像
         uses: docker/build-push-action@v5
@@ -95,8 +97,8 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ steps.get_version.outputs.VERSION }}
+            ghcr.io/${{ steps.meta.outputs.REPO_LOWER }}:latest
+            ghcr.io/${{ steps.meta.outputs.REPO_LOWER }}:${{ steps.meta.outputs.VERSION }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
   
@@ -336,14 +338,15 @@ jobs:
           
           ### Docker镜像🐳
           ```bash
-          # GitHub Container Registry
-          docker pull ghcr.io/${GITHUB_REPOSITORY}:${GITHUB_REF_NAME}
-          docker pull ghcr.io/${GITHUB_REPOSITORY}:latest
+          # GitHub Container Registry（镜像名称自动转为小写）
+          # 如果仓库是 ViVi141/chaoxing，镜像会是 vivi141/chaoxing
+          docker pull ghcr.io/vivi141/chaoxing:${GITHUB_REF_NAME}
+          docker pull ghcr.io/vivi141/chaoxing:latest
           ```
           
           **支持架构**: linux/amd64, linux/arm64
           
-          **注意**: Docker镜像发布到GitHub Container Registry，无需额外配置。
+          **注意**: Docker镜像发布到GitHub Container Registry，仓库名称自动转换为小写。
           
           ---
           
@@ -351,8 +354,8 @@ jobs:
           
           ### 方式1：Docker（最简单）
           ```bash
-          # 拉取镜像
-          docker pull ghcr.io/${GITHUB_REPOSITORY}:${GITHUB_REF_NAME}
+          # 拉取镜像（镜像名称为小写）
+          docker pull ghcr.io/vivi141/chaoxing:${GITHUB_REF_NAME}
           
           # 启动完整环境
           wget https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/main/web/docker-compose.yml
