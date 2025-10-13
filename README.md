@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="https://github.com/Samueli924/chaoxing"><img src="https://img.shields.io/github/stars/Samueli924/chaoxing" alt="Stars" /></a>
-  <a href="https://github.com/ViVi141/chaoxing"><img src="https://img.shields.io/badge/version-2.2.1-blue" alt="Version" /></a>
+  <a href="https://github.com/ViVi141/chaoxing"><img src="https://img.shields.io/badge/version-2.2.2-blue" alt="Version" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-green" alt="License" /></a>
   <img src="https://img.shields.io/badge/Refine-v5-orange" alt="Refine v5" />
   <img src="https://img.shields.io/badge/React_Router-v7-blue" alt="React Router v7" />
@@ -10,7 +10,7 @@
 
 > 基于[Samueli924/chaoxing](https://github.com/Samueli924/chaoxing)的增强版本，提供命令行和Web两种使用方式
 > 
-> 🆕 **v2.2.1更新**: 新增5种题库（含硅基流动AI）+ 4种通知方式（含SMTP邮件）
+> 🆕 **v2.2.2更新**: 新增6种题库（含DeepSeek/硅基流动AI）+ 任务自动恢复 + AI题库在线验证
 
 ---
 
@@ -20,7 +20,7 @@
 - ✅ 视频/音频自动播放（1.0-2.0倍速）
 - ✅ 文档自动阅读
 - ✅ 章节测验自动答题
-- ✅ 5种题库支持（含AI大模型）
+- ✅ 6种题库支持（含AI大模型）
 - ✅ 4种通知方式（含SMTP邮件）
 - ✅ 配置文件加密
 - ✅ 日志自动脱敏
@@ -32,7 +32,7 @@
 - ✅ 任务详细日志查看
 - ✅ 管理员后台（系统配置/用户管理）
 - ✅ 零依赖部署（SQLite+文件队列）
-- 🆕 **5种题库**（言溪/LIKE/TikuAdapter/AI/硅基流动）
+- 🆕 **6种题库**（言溪/LIKE/TikuAdapter/AI/DeepSeek/硅基流动）
 - 🆕 **4种通知**（Server酱/Qmsg/Bark/SMTP邮件）
 - 🆕 **图形化数据库迁移**（SQLite → PostgreSQL + Redis）
 
@@ -160,41 +160,75 @@ GPL-3.0 License
 
 ---
 
-## 🆕 v2.2.0 & v2.2.1 更新内容
+## 🆕 版本更新
 
-### 技术栈升级
-- ✅ Refine v4 → **v5**（大版本升级）
-- ✅ React Router v6 → **v7**（大版本升级）
-- ✅ Ant Design 5.21 → **5.27**（最新稳定版）
-- ✅ 新增 React Query 5.x（现代化状态管理）
+### v2.2.2 (2025-10-13)
 
-### 新增功能
-- ✅ **5种题库支持**
+#### 新增功能
+- ✅ **6种题库支持** + **在线验证** 🧪
   - 言溪题库（TikuYanxi）
   - LIKE知识库（TikuLike）
   - TikuAdapter（开源）
-  - AI大模型（OpenAI兼容）
-  - 硅基流动AI（SiliconFlow）⚡ 推荐
+  - AI大模型（OpenAI兼容）🧪
+  - DeepSeek官方API（DeepSeek）🔥 推荐 + 🧪
+  - 硅基流动AI（SiliconFlow）⚡ 推荐 + 🧪
   
 - ✅ **4种通知方式**
   - Server酱（多平台推送）
   - Qmsg酱（QQ推送）
   - Bark（iOS推送）
-  - SMTP邮件 📧 新增
+  - SMTP邮件 📧 支持自定义收件邮箱
   
+- ✅ **任务自动恢复** 🔄
+  - 系统崩溃后自动恢复运行中任务
+  - 管理员可手动触发批量恢复
+  - 详细的恢复日志和统计
+  
+- ✅ **仪表盘数据修复** 📊
+  - 修复统计数据显示为0的问题
+  - 新增今日完成/失败统计
+  - 新增任务成功率计算
+  
+- ✅ **AI题库验证** 🧪
+  - 支持AI、DeepSeek、SiliconFlow在线验证
+  - 实时测试API配置正确性
+  - 友好的错误提示
+
+#### 技术改进
+- ✅ 新增DeepSeek题库类（+100行）
+- ✅ 新增SMTP通知类（+100行）
+- ✅ 新增3个API端点（题库验证、任务恢复、SMTP测试）
+- ✅ 修复任务恢复参数错误
+- ✅ 统一后端字段命名（驼峰格式）
+
+---
+
+### v2.2.0 (2025-10-13)
+
+#### 技术栈升级
+- ✅ Refine v4 → **v5**（大版本升级）
+- ✅ React Router v6 → **v7**（大版本升级）
+- ✅ Ant Design 5.21 → **5.27**（最新稳定版）
+- ✅ 新增 React Query 5.x（现代化状态管理）
+
+#### 新增功能
 - ✅ **图形化数据库迁移系统**
   - Web界面一键迁移SQLite到PostgreSQL
   - 实时进度显示
   - 自动备份和验证
   - 跨平台重启脚本
 
-### 代码质量
+#### 代码质量
 - ✅ TypeScript错误：0个
 - ✅ 修复75%的第三方库警告
 - ✅ API迁移到最新标准
 
-### 详细说明
-查看完整功能说明：[docs/NEW_FEATURES.md](docs/NEW_FEATURES.md)
+---
+
+### 📖 详细说明
+- 完整功能说明：[docs/NEW_FEATURES.md](docs/NEW_FEATURES.md)
+- 版本历史：[docs/CHANGELOG.md](docs/CHANGELOG.md)
+- 配置指南：[docs/CONFIGURATION.md](docs/CONFIGURATION.md)
 
 ---
 

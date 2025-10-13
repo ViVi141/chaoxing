@@ -220,7 +220,7 @@ async def test_tiku_config(
     
     验证AI题库或硅基流动的API配置是否正确
     """
-    from api.answer import AI, SiliconFlow
+    from api.answer import AI, SiliconFlow, DeepSeek
     
     provider = tiku_config.provider
     
@@ -230,11 +230,11 @@ async def test_tiku_config(
             detail="未指定题库提供商"
         )
     
-    # 仅支持AI和SiliconFlow的验证
-    if provider not in ['AI', 'SiliconFlow']:
+    # 仅支持AI、SiliconFlow和DeepSeek的验证
+    if provider not in ['AI', 'SiliconFlow', 'DeepSeek']:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"暂不支持验证{provider}题库，仅支持AI和SiliconFlow"
+            detail=f"暂不支持验证{provider}题库，仅支持AI、SiliconFlow和DeepSeek"
         )
     
     try:
@@ -282,6 +282,28 @@ async def test_tiku_config(
                 'siliconflow_model': tiku_config.siliconflow_model or 'deepseek-ai/DeepSeek-R1',
                 'siliconflow_endpoint': tiku_config.siliconflow_endpoint or 'https://api.siliconflow.cn/v1/chat/completions',
                 'min_interval_seconds': str(tiku_config.min_interval_seconds or 3),
+                'submit': 'false',
+                'cover_rate': '0.9',
+                'delay': '1.0',
+                'true_list': '正确,对,√,是',
+                'false_list': '错误,错,×,否,不对,不正确'
+            }
+            
+        elif provider == 'DeepSeek':
+            # 验证必填字段
+            if not tiku_config.deepseek_key:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="DeepSeek配置不完整，需要deepseek_key"
+                )
+            
+            tiku = DeepSeek()
+            config_dict = {
+                'deepseek_key': tiku_config.deepseek_key,
+                'deepseek_model': tiku_config.deepseek_model or 'deepseek-chat',
+                'deepseek_endpoint': tiku_config.deepseek_endpoint or 'https://api.deepseek.com/v1/chat/completions',
+                'min_interval_seconds': str(tiku_config.min_interval_seconds or 3),
+                'http_proxy': tiku_config.http_proxy or '',
                 'submit': 'false',
                 'cover_rate': '0.9',
                 'delay': '1.0',

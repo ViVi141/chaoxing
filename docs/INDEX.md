@@ -53,14 +53,15 @@
 
 ---
 
-## 🆕 v2.2.1 更新
+## 🆕 v2.2.2 更新
 
-- [新增功能说明](NEW_FEATURES.md) - AI题库 + SMTP通知 ⚡
+- [新增功能说明](NEW_FEATURES.md) - 6种题库 + 任务恢复 + 在线验证 ⚡
+- [更新日志](CHANGELOG.md) - 完整版本历史
 - [数据库迁移指南](DATABASE_MIGRATION.md) - SQLite → PostgreSQL
 - [升级指南](UPGRADE_GUIDE.md) - 版本升级步骤
 
 ---
 
-**版本：** v2.2.1  
-**最后更新：** 2025-10-12
+**版本：** v2.2.2  
+**最后更新：** 2025-10-13
 

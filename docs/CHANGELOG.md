@@ -1,14 +1,15 @@
 # 📝 更新日志
 
-## v2.2.1 (2025-10-12)
+## v2.2.2 (2025-10-13)
 
 ### ✨ 新功能
 
-#### 5种题库全面支持（Web + 命令行）
+#### 6种题库全面支持（Web + 命令行）
 - ✅ **言溪题库**（TikuYanxi） - Token-based
 - ✅ **LIKE知识库**（TikuLike） - Token-based + AI模型
 - ✅ **TikuAdapter** - 开源自建服务
 - ✅ **AI大模型** - OpenAI兼容API（DeepSeek、Moonshot等）
+- ✅ **DeepSeek官方API**（DeepSeek）🔥 - 官方API，准确率高，推荐使用
 - ✅ **硅基流动AI**（SiliconFlow）⚡ - 性价比最高，推荐使用
 
 #### 4种通知方式完整支持
@@ -34,38 +35,70 @@
   - NotificationConfig：支持SMTP配置
 
 #### 前端更新
-- ✅ `web/frontend/src/pages/config/full.tsx` - 配置界面重构（+300行）
-  - 5种题库配置表单
-  - 4种通知配置表单
+- ✅ `web/frontend/src/pages/config/full.tsx` - 配置界面重构（+400行）
+  - 6种题库配置表单（新增DeepSeek）
+  - 4种通知配置表单（新增SMTP）
   - 动态渲染、智能提示
+  - AI题库在线验证功能
 - ✅ `web/frontend/src/pages/admin/SystemConfig.tsx` - 系统设置完善
+  - SMTP测试自定义收件邮箱
   - 功能列表展示
   - 系统信息显示
+- ✅ `web/frontend/src/pages/admin/dashboard.tsx` - 管理员控制台
+  - 仪表盘统计数据修复
+  - 任务自动恢复按钮
 
 #### 配置文件更新
-- ✅ `config_template.ini` - 添加SMTP配置示例
-- ✅ 支持硅基流动AI完整配置
+- ✅ `config_template.ini` - 添加SMTP和DeepSeek配置示例
+- ✅ 支持硅基流动AI和DeepSeek完整配置
+
+#### 新增功能
+- ✅ **任务自动恢复** - 系统崩溃后自动恢复运行中的任务
+  - 启动时自动检测中断任务
+  - 自动重新提交到Celery队列
+  - 管理员可手动触发恢复
+- ✅ **AI题库在线验证** - 支持AI、DeepSeek、SiliconFlow配置验证
+  - 一键测试API连接
+  - 实时验证配置正确性
+  - 友好的错误提示
 
 ### 📚 文档新增
 - ✅ `docs/NEW_FEATURES.md` - 详细功能说明文档（320行）
-  - 5种题库完整配置指南
+  - 6种题库完整配置指南
   - 4种通知方式使用说明
   - 常见问题和故障排查
   - 使用场景推荐
 
 ### 🎯 代码修改统计
-- **5个文件**更新
-- **500+行**代码新增
+- **10个文件**更新
+- **800+行**代码新增
 - **1个新文档**（NEW_FEATURES.md）
+- **1个新题库类**（DeepSeek）
+- **3个新API端点**
+  - `POST /user/config/test-tiku` - 题库配置验证
+  - `POST /admin/recover-tasks` - 手动恢复任务
+  - `POST /system-config/smtp/test` - SMTP测试（支持自定义收件）
 - **TypeScript错误**: 0个
-- **代码质量**: 通过所有检查
+- **Python Linter**: 通过
+- **代码质量**: 完全通过所有检查
+
+### 🎁 核心亮点
+- 🔥 **DeepSeek官方API** - 准确率最高的AI题库
+- 🧪 **在线验证功能** - 一键测试配置正确性
+- 🔄 **任务自动恢复** - 系统崩溃后无缝恢复
+- 📊 **完整统计数据** - 实时监控系统状态
+- ✉️ **灵活SMTP测试** - 自定义收件邮箱
 
 ### 💡 推荐配置
+
+#### 方案1：DeepSeek官方API（准确率高）
 ```ini
 [tiku]
-provider=SiliconFlow
-siliconflow_key=sk-你的密钥
-siliconflow_model=deepseek-ai/DeepSeek-R1
+provider=DeepSeek
+deepseek_key=sk-你的密钥
+deepseek_model=deepseek-chat
+deepseek_endpoint=https://api.deepseek.com/v1/chat/completions
+min_interval_seconds=3
 
 [notification]
 provider=SMTP
@@ -74,6 +107,26 @@ smtp_port=587
 smtp_username=your_email@gmail.com
 smtp_password=your_app_password
 smtp_to_email=recipient@example.com
+smtp_use_tls=true
+```
+
+#### 方案2：硅基流动AI（性价比高）
+```ini
+[tiku]
+provider=SiliconFlow
+siliconflow_key=sk-你的密钥
+siliconflow_model=deepseek-ai/DeepSeek-R1
+siliconflow_endpoint=https://api.siliconflow.cn/v1/chat/completions
+min_interval_seconds=3
+
+[notification]
+provider=SMTP
+smtp_host=smtp.qq.com
+smtp_port=587
+smtp_username=your_email@qq.com
+smtp_password=your_auth_code
+smtp_to_email=recipient@example.com
+smtp_use_tls=true
 ```
 
 ---

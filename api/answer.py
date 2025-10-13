@@ -620,3 +620,108 @@ class SiliconFlow(Tiku):
 
 
         self.min_interval = int(self._conf.get('min_interval_seconds', 3))
+
+
+class DeepSeek(Tiku):
+    """DeepSeek官方API题库实现"""
+    
+    def __init__(self) -> None:
+        super().__init__()
+        self.name = 'DeepSeek题库'
+        self.last_request_time = None
+
+    def _query(self, q_info: dict):
+        """使用DeepSeek API查询答案"""
+        def remove_md_json_wrapper(md_str):
+            # 使用正则表达式匹配Markdown代码块并提取内容
+            pattern = r'^\s*```(?:json)?\s*(.*?)\s*```\s*$'
+            match = re.search(pattern, md_str, re.DOTALL)
+            return match.group(1).strip() if match else md_str.strip()
+
+        # 构建请求头
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+
+        # 根据题目类型构建不同的系统提示
+        type_prompts = {
+            "single": "本题为单选题，你只能选择一个选项，请根据题目和选项回答问题，以json格式输出正确的选项内容，示例回答：{\"Answer\": [\"答案\"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。",
+            "multiple": "本题为多选题，你必须选择两个或以上选项，请根据题目和选项回答问题，以json格式输出正确的选项内容，示例回答：{\"Answer\": [\"答案1\",\n\"答案2\"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。",
+            "completion": "本题为填空题，请根据题目回答，以json格式输出答案内容，示例回答：{\"Answer\": [\"答案1\", \"答案2\"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。",
+            "judgement": "本题为判断题，请根据题目判断对错，以json格式输出\"正确\"或\"错误\"，示例回答：{\"Answer\": [\"正确\"]}或{\"Answer\": [\"错误\"]}。除此之外不要输出任何多余的内容，也不要使用MD语法。"
+        }
+        
+        system_prompt = type_prompts.get(q_info['type'], type_prompts['single'])
+        
+        # 去除选项字母
+        options_list = q_info['options'].split('\n') if isinstance(q_info['options'], str) else []
+        cleaned_options = [re.sub(r"^[A-Z]\s*", "", option) for option in options_list]
+        options = "\n".join(cleaned_options)
+        
+        # 构建请求payload
+        payload = {
+            "model": self.model_name,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": system_prompt
+                },
+                {
+                    "role": "user",
+                    "content": f"题目：{q_info['title']}\n选项：{options}" if options else f"题目：{q_info['title']}"
+                }
+            ],
+            "stream": False,
+            "max_tokens": 2048,
+            "temperature": 0.1,
+            "top_p": 0.7
+        }
+
+        # 处理请求间隔
+        if self.last_request_time:
+            interval = time.time() - self.last_request_time
+            if interval < self.min_interval:
+                time.sleep(self.min_interval - interval)
+
+        try:
+            # 发送请求
+            if self.http_proxy:
+                proxies = {"http": self.http_proxy, "https": self.http_proxy}
+                response = requests.post(
+                    self.api_endpoint,
+                    headers=headers,
+                    json=payload,
+                    timeout=30,
+                    proxies=proxies
+                )
+            else:
+                response = requests.post(
+                    self.api_endpoint,
+                    headers=headers,
+                    json=payload,
+                    timeout=30
+                )
+            
+            self.last_request_time = time.time()
+            
+            if response.status_code == 200:
+                result = response.json()
+                content = result['choices'][0]['message']['content']
+                parsed = json.loads(remove_md_json_wrapper(content))
+                return "\n".join(parsed['Answer']).strip()
+            else:
+                logger.error(f"DeepSeek API请求失败：{response.status_code} {response.text}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"DeepSeek API异常：{e}")
+            return None
+
+    def _init_tiku(self):
+        # 从配置文件读取参数
+        self.api_endpoint = self._conf.get('deepseek_endpoint', 'https://api.deepseek.com/v1/chat/completions')
+        self.api_key = self._conf['deepseek_key']
+        self.model_name = self._conf.get('deepseek_model', 'deepseek-chat')
+        self.min_interval = int(self._conf.get('min_interval_seconds', 3))
+        self.http_proxy = self._conf.get('http_proxy', '')

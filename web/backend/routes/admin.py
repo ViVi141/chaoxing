@@ -446,9 +446,9 @@ async def recover_interrupted_tasks_manually(
                 
                 await db.commit()
                 
-                # 重新提交任务到Celery
+                # 重新提交任务到Celery（需要传递task_id和user_id）
                 from tasks.study_tasks import start_study_task
-                celery_task = start_study_task.delay(task.id)
+                celery_task = start_study_task.delay(task.id, task.user_id)
                 
                 # 更新Celery任务ID
                 task.celery_task_id = celery_task.id

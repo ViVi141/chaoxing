@@ -72,6 +72,10 @@ class TikuConfig(BaseModel):
     siliconflow_key: Optional[str] = Field(None, description="硅基流动API Key")
     siliconflow_model: Optional[str] = Field(None, description="硅基流动模型")
     siliconflow_endpoint: Optional[str] = Field(None, description="硅基流动端点")
+    # DeepSeek专用字段
+    deepseek_key: Optional[str] = Field(None, description="DeepSeek API Key")
+    deepseek_model: Optional[str] = Field(None, description="DeepSeek模型")
+    deepseek_endpoint: Optional[str] = Field(None, description="DeepSeek端点")
     # LIKE知识库专用字段
     likeapi_search: Optional[bool] = Field(False, description="LIKE联网搜索")
     likeapi_model: Optional[str] = Field(None, description="LIKE模型")

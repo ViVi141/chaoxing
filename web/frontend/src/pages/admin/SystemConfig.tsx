@@ -344,7 +344,7 @@ export const SystemConfig = () => {
                       {window.location.protocol}//{window.location.hostname}:5000
                     </Descriptions.Item>
                     <Descriptions.Item label="配置版本">
-                      v2.2.1
+                      v2.2.2
                     </Descriptions.Item>
                   </Descriptions>
 
@@ -360,7 +360,10 @@ export const SystemConfig = () => {
                       <div>
                         <strong>✅ 用户题库配置</strong>
                         <div style={{ color: '#666', fontSize: 12 }}>
-                          支持5种题库：言溪、LIKE知识库、TikuAdapter、AI大模型、硅基流动AI
+                          支持6种题库：言溪、LIKE知识库、TikuAdapter、AI大模型、DeepSeek🔥、硅基流动⚡
+                        </div>
+                        <div style={{ color: '#999', fontSize: 11, marginTop: 4 }}>
+                          AI/DeepSeek/硅基流动支持在线验证🧪
                         </div>
                       </div>
                       
@@ -375,6 +378,13 @@ export const SystemConfig = () => {
                         <strong>✅ 数据库迁移</strong>
                         <div style={{ color: '#666', fontSize: 12 }}>
                           图形化界面迁移SQLite到PostgreSQL
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <strong>✅ 任务自动恢复</strong>
+                        <div style={{ color: '#666', fontSize: 12 }}>
+                          系统崩溃后自动恢复运行中任务，管理员可手动触发
                         </div>
                       </div>
                     </Space>

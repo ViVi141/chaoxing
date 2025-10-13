@@ -241,6 +241,7 @@ export const ConfigPageFull = () => {
                       <Select.Option value="TikuLike">LIKE知识库</Select.Option>
                       <Select.Option value="TikuAdapter">TikuAdapter</Select.Option>
                       <Select.Option value="AI">AI大模型（OpenAI兼容）</Select.Option>
+                      <Select.Option value="DeepSeek">DeepSeek 官方API 🔥</Select.Option>
                       <Select.Option value="SiliconFlow">硅基流动AI ⚡</Select.Option>
                     </Select>
                   </Form.Item>
@@ -410,6 +411,53 @@ export const ConfigPageFull = () => {
                         );
                       }
 
+                      // DeepSeek
+                      if (provider === 'DeepSeek') {
+                        return (
+                          <>
+                            <Alert
+                              message="DeepSeek 官方API 🔥"
+                              description="DeepSeek官方提供的API服务，准确率高，推荐使用"
+                              type="success"
+                              style={{ marginBottom: 16 }}
+                            />
+                            <Form.Item
+                              label="API Key"
+                              name="deepseek_key"
+                              rules={[{ required: true, message: '请输入DeepSeek API Key' }]}
+                              extra={<a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noreferrer">获取API Key →</a>}
+                            >
+                              <Input.Password placeholder="sk-..." size="large" />
+                            </Form.Item>
+                            <Form.Item 
+                              label="模型选择" 
+                              name="deepseek_model" 
+                              initialValue="deepseek-chat"
+                              extra={<a href="https://platform.deepseek.com/docs" target="_blank" rel="noreferrer">查看文档 →</a>}
+                            >
+                              <Select>
+                                <Select.Option value="deepseek-chat">DeepSeek Chat（推荐）</Select.Option>
+                                <Select.Option value="deepseek-coder">DeepSeek Coder</Select.Option>
+                              </Select>
+                            </Form.Item>
+                            <Form.Item 
+                              label="API端点" 
+                              name="deepseek_endpoint" 
+                              initialValue="https://api.deepseek.com/v1/chat/completions"
+                            >
+                              <Input size="large" />
+                            </Form.Item>
+                            <Form.Item label="请求间隔（秒）" name="min_interval_seconds" initialValue={3}>
+                              <InputNumber min={0} max={60} style={{ width: '100%' }} />
+                            </Form.Item>
+                            <Form.Item label="HTTP代理（可选）" name="http_proxy">
+                              <Input placeholder="http://proxy.example.com" size="large" />
+                            </Form.Item>
+                            {commonFields}
+                          </>
+                        );
+                      }
+
                       // 硅基流动
                       if (provider === 'SiliconFlow') {
                         return (
@@ -468,8 +516,8 @@ export const ConfigPageFull = () => {
                     {({ getFieldValue }) => {
                       const provider = getFieldValue('provider');
                       
-                      // 只有AI和SiliconFlow支持在线验证
-                      if (provider === 'AI' || provider === 'SiliconFlow') {
+                      // 只有AI、DeepSeek和SiliconFlow支持在线验证
+                      if (provider === 'AI' || provider === 'DeepSeek' || provider === 'SiliconFlow') {
                         return (
                           <Alert
                             message="配置验证"
@@ -506,8 +554,8 @@ export const ConfigPageFull = () => {
                         {({ getFieldValue }) => {
                           const provider = getFieldValue('provider');
                           
-                          // 只有AI和SiliconFlow支持测试
-                          if (provider === 'AI' || provider === 'SiliconFlow') {
+                          // 只有AI、DeepSeek和SiliconFlow支持测试
+                          if (provider === 'AI' || provider === 'DeepSeek' || provider === 'SiliconFlow') {
                             return (
                               <Button 
                                 type="default" 
