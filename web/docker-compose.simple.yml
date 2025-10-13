@@ -14,10 +14,11 @@ services:
       - "6379:6379"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "simple_redis_pass", "ping"]
       interval: 10s
       timeout: 5s
       retries: 3
+      start_period: 5s
 
   # 后端服务（SQLite + Redis模式）
   backend:
@@ -27,28 +28,33 @@ services:
     #   context: ..
     #   dockerfile: web/backend/Dockerfile
     container_name: chaoxing_backend
+    working_dir: /app/web/backend
+    command: >
+      bash -c "
+      alembic upgrade head 2>/dev/null || echo 'DB already initialized';
+      cd /app && uvicorn app:app --host 0.0.0.0 --port 8000
+      "
     environment:
-      # 使用SQLite数据库（简单模式）
-      DATABASE_URL: sqlite:///./data/chaoxing.db
+      # 使用SQLite数据库（简单模式，注意必须使用aiosqlite异步驱动）
+      DATABASE_URL: "sqlite+aiosqlite:////app/data/chaoxing.db"
       
       # Redis连接（用于Celery和缓存）
-      REDIS_URL: redis://:${REDIS_PASSWORD:-simple_redis_pass}@redis:6379/0
-      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-simple_redis_pass}@redis:6379/0
-      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD:-simple_redis_pass}@redis:6379/0
+      REDIS_URL: "redis://:${REDIS_PASSWORD:-simple_redis_pass}@redis:6379/0"
+      CELERY_BROKER_URL: "redis://:${REDIS_PASSWORD:-simple_redis_pass}@redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://:${REDIS_PASSWORD:-simple_redis_pass}@redis:6379/0"
       
       # 应用密钥（默认值，生产环境强烈建议修改！）
       # 生成新密钥：python -c "import secrets; print(secrets.token_urlsafe(32))"
-      SECRET_KEY: ${SECRET_KEY:-insecure-default-secret-key-please-change-in-production-minimum-32-chars}
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-insecure-default-jwt-secret-key-change-me-minimum-32-chars}
+      SECRET_KEY: "${SECRET_KEY:-insecure-default-secret-key-please-change-in-production-minimum-32-chars}"
+      JWT_SECRET_KEY: "${JWT_SECRET_KEY:-insecure-default-jwt-secret-key-change-me-minimum-32-chars}"
       
       # 调试模式（可选）
-      DEBUG: ${DEBUG:-False}
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DEBUG: "${DEBUG:-False}"
+      LOG_LEVEL: "${LOG_LEVEL:-INFO}"
     
     volumes:
       - ./backend/data:/app/data        # SQLite数据库文件
       - ./backend/logs:/app/logs        # 日志文件
-      - ./backend/.env:/app/.env        # 配置文件（可选）
     
     ports:
       - "8000:8000"
@@ -69,13 +75,15 @@ services:
   celery:
     image: ghcr.io/vivi141/chaoxing:latest
     container_name: chaoxing_celery_lite
+    working_dir: /app/web/backend
     command: celery -A celery_app worker --loglevel=info --concurrency=2
     environment:
-      DATABASE_URL: sqlite:///./data/chaoxing.db
-      REDIS_URL: redis://:${REDIS_PASSWORD:-simple_redis_pass}@redis:6379/0
-      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-simple_redis_pass}@redis:6379/0
-      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD:-simple_redis_pass}@redis:6379/0
-      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-me-in-production}
+      DATABASE_URL: "sqlite+aiosqlite:////app/data/chaoxing.db"
+      REDIS_URL: "redis://:${REDIS_PASSWORD:-simple_redis_pass}@redis:6379/0"
+      CELERY_BROKER_URL: "redis://:${REDIS_PASSWORD:-simple_redis_pass}@redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://:${REDIS_PASSWORD:-simple_redis_pass}@redis:6379/0"
+      SECRET_KEY: "${SECRET_KEY:-insecure-default-secret-key-please-change-in-production-minimum-32-chars}"
+      JWT_SECRET_KEY: "${JWT_SECRET_KEY:-insecure-default-jwt-secret-key-change-me-minimum-32-chars}"
     volumes:
       - ./backend/data:/app/data
       - ./backend/logs:/app/logs

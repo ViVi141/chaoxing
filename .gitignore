@@ -68,6 +68,17 @@ web/backend/*.log
 celeryresults.sqlite3
 web/backend/data/chaoxing.db
 web/backend/data/*.db
+web/backend/data/
+data/
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Docker数据卷目录（可能包含敏感数据）
+web/backend/data/
+web/backend/logs/
+docker-data/
+volumes/
 
 # ================================
 # Celery相关（重要：临时文件）
@@ -80,8 +91,9 @@ web/backend/data/celery_results/
 celery-task-meta-*
 
 # ================================
-# 配置文件和敏感信息
+# 配置文件和敏感信息（重要！）
 # ================================
+# 通用敏感文件
 config.ini
 cookies.txt
 cache.json
@@ -89,15 +101,45 @@ cache.json
 web_config.json
 web/backend/web_config.json
 web/backend/cookies.txt
-.env
-.env.local
-.env.production
-.envrc
+secrets.yaml
+secrets.json
 
-# 但保留示例文件
+# 环境变量文件（包含密码、密钥）
+.env
+.env.*
+.envrc
+*.env
+web/.env
+web/backend/.env
+web/frontend/.env
+
+# 特别注意：包含真实密码的配置文件
+你的配置.env
+web/你的配置.env
+*密码*.env
+*配置*.env
+
+# 密钥和证书文件
+*.key
+*.pem
+*.crt
+*.cert
+*.p12
+*.pfx
+id_rsa
+id_rsa.pub
+*.pub
+jwt_secret*
+secret_key*
+
+# 但保留示例文件和模板
 !config_template.ini
 !web/env.example
+!web/env.template
 !.env.example
+!.env.template
+!*.example
+!*.template
 
 # ================================
 # 前端构建和依赖
@@ -136,6 +178,7 @@ vite.config.ts.timestamp-*
 # ================================
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
 .tox/
 .hypothesis/
@@ -146,6 +189,9 @@ nosetests.xml
 coverage.xml
 *.pyc
 .ruff_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
 
 # ================================
 # 临时文件
@@ -157,13 +203,51 @@ tmp/
 .temp/
 
 # ================================
-# 打包文件
+# 打包文件和备份（可能包含数据）
 # ================================
 *.exe
 *.zip
 *.tar.gz
 *.rar
 *.7z
+*.bak
+*.backup
+*backup*
+*备份*
+backup/
+backups/
+*.sql
+*.dump
+*.dmp
+
+# ================================
+# 其他敏感信息
+# ================================
+# 用户上传的文件
+uploads/
+upload/
+user_files/
+attachments/
+
+# 会话和认证token
+*.session
+session/
+sessions/
+tokens/
+*.token
+
+# API密钥和配置
+apikeys.txt
+api_keys.txt
+*api*key*.txt
+*api*key*.json
+
+# 私人笔记和文档（不应提交）
+私人*.md
+个人*.txt
+笔记*.md
+PRIVATE*.md
+TODO_PRIVATE*.md
 
 # ================================
 # 操作系统
