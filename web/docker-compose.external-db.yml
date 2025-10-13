@@ -12,11 +12,7 @@ services:
     #   dockerfile: web/backend/Dockerfile
     container_name: chaoxing_backend
     working_dir: /app/web/backend
-    command: >
-      bash -c "
-      alembic upgrade head 2>/dev/null || echo 'DB already initialized';
-      cd /app && uvicorn app:app --host 0.0.0.0 --port 8000
-      "
+    command: bash -c "alembic upgrade head 2>/dev/null || true; uvicorn app:app --host 0.0.0.0 --port 8000"
     environment:
       # === 外部PostgreSQL配置（必需修改） ===
       # 格式：postgresql+asyncpg://用户名:密码@数据库容器名或IP:端口/数据库名
@@ -82,46 +78,4 @@ services:
     network_mode: "1panel-network"
     
     restart: unless-stopped
-
-# 使用说明：
-#
-# === 步骤1：创建.env文件配置数据库 ===
-#
-# 在 web/ 目录下创建 .env 文件：
-#
-# DATABASE_URL=postgresql+asyncpg://chaoxing_user:cAwXC8CNcQT4d3nt@1Panel-postgresql-LEsZ:5432/chaoxing_db
-# REDIS_URL=redis://:redis_GAWJ8Z@1Panel-redis-71AP:6379/0
-# CELERY_BROKER_URL=redis://:redis_GAWJ8Z@1Panel-redis-71AP:6379/0
-# CELERY_RESULT_BACKEND=redis://:redis_GAWJ8Z@1Panel-redis-71AP:6379/0
-# SECRET_KEY=inUZZsv9UeOIWytooE03cPdWGndUkFQ1NSqSV9A8EsY
-# JWT_SECRET_KEY=Ffdj9ptoV9UukOHTQN9Ey1LPnH-hJcFxDVqOk9q4toQ
-#
-# === 步骤2：启动 ===
-#
-# docker compose -f docker-compose.external-db.yml up -d
-#
-# === 注意事项 ===
-#
-# 1. 数据库容器名解析：
-#    - 如果在同一个Docker网络：使用容器名（如 1Panel-postgresql-LEsZ）
-#    - 如果不在同一网络：使用IP地址（如 172.17.0.5）
-#
-# 2. 查看容器网络：
-#    docker inspect 1Panel-postgresql-LEsZ | grep NetworkMode
-#    docker network ls
-#
-# 3. 测试连接（可选）：
-#    docker exec -it chaoxing_backend bash
-#    apt update && apt install postgresql-client redis-tools -y
-#    psql postgresql://chaoxing_user:密码@1Panel-postgresql-LEsZ:5432/chaoxing_db -c "SELECT 1"
-#    redis-cli -h 1Panel-redis-71AP -p 6379 -a 密码 ping
-#
-# 4. 如果容器名无法解析，改用IP：
-#    DATABASE_URL=postgresql+asyncpg://chaoxing_user:密码@172.17.0.5:5432/chaoxing_db
-#    REDIS_URL=redis://:密码@172.17.0.6:6379/0
-#
-# 5. 优势：
-#    ✅ 不重复部署数据库，节省资源
-#    ✅ 复用已有的数据库配置和备份
-#    ✅ 统一管理所有数据库
 

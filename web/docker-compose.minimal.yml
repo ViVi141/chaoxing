@@ -12,11 +12,7 @@ services:
     #   dockerfile: web/backend/Dockerfile
     container_name: chaoxing_minimal
     working_dir: /app/web/backend
-    command: >
-      bash -c "
-      alembic upgrade head 2>/dev/null || echo 'DB already initialized';
-      cd /app && uvicorn app:app --host 0.0.0.0 --port 8000
-      "
+    command: bash -c "alembic upgrade head 2>/dev/null || true; uvicorn app:app --host 0.0.0.0 --port 8000"
     environment:
       # 使用SQLite数据库（最简单）
       DATABASE_URL: "sqlite+aiosqlite:////app/data/chaoxing.db"
