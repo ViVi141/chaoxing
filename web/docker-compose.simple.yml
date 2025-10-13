@@ -36,9 +36,10 @@ services:
       CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-simple_redis_pass}@redis:6379/0
       CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD:-simple_redis_pass}@redis:6379/0
       
-      # 应用密钥（生产环境请修改！）
-      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-me-in-production}
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-jwt-secret-key-change-me}
+      # 应用密钥（默认值，生产环境强烈建议修改！）
+      # 生成新密钥：python -c "import secrets; print(secrets.token_urlsafe(32))"
+      SECRET_KEY: ${SECRET_KEY:-insecure-default-secret-key-please-change-in-production-minimum-32-chars}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-insecure-default-jwt-secret-key-change-me-minimum-32-chars}
       
       # 调试模式（可选）
       DEBUG: ${DEBUG:-False}
@@ -87,9 +88,20 @@ volumes:
   redis_data:
     driver: local
 
+# 使用说明：
+# 
+# 零配置快速启动：
+#   docker compose -f docker-compose.simple.yml up -d
+#   （使用默认密钥，仅用于测试）
+#
+# 生产环境启动（推荐）：
+#   1. 创建.env文件配置密钥
+#   2. docker compose -f docker-compose.simple.yml up -d
+#
 # 注意：
 # 1. 此配置使用SQLite + Redis，适合快速启动和小规模使用
 # 2. SQLite适合1-20人使用，超过建议升级到PostgreSQL
-# 3. Redis只用于Celery任务队列，轻量级
-# 4. 可以先用此配置启动，后续通过Web界面或手动迁移到PostgreSQL
-# 5. 生产环境（20+人）建议使用PostgreSQL（见docker-compose.yml）
+# 3. Redis只用于Celery任务队列，轻量级（~20MB内存）
+# 4. 默认密钥仅用于测试，生产环境必须修改！
+# 5. 可以先用此配置启动，后续手动升级到PostgreSQL（见docker-compose.yml）
+# 6. 未来版本会支持Web界面配置数据库（开发中）
