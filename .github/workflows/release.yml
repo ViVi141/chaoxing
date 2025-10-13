@@ -1,0 +1,394 @@
+name: Release Build - All Platforms
+
+# 全平台自动构建Release版本
+# 支持: Windows/Mac/Linux + Docker + K8s
+
+on:
+  push:
+    tags:
+      - 'v*'  # 当推送tag时触发（如 v2.3.0）
+  workflow_dispatch:  # 也支持手动触发
+    inputs:
+      version:
+        description: '版本号（如 2.3.0）'
+        required: false
+        default: 'latest'
+
+jobs:
+  build-frontend:
+    name: 构建前端（生产版本）
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: 安装依赖
+        run: |
+          cd web/frontend
+          npm ci
+      
+      - name: 构建生产版本
+        run: |
+          cd web/frontend
+          npm run build
+        env:
+          NODE_ENV: production
+      
+      - name: 打包前端文件
+        run: |
+          cd web/frontend
+          tar -czf frontend-dist.tar.gz dist/
+      
+      - name: 上传前端构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: web/frontend/frontend-dist.tar.gz
+          retention-days: 90
+  
+  build-docker:
+    name: 构建Docker镜像
+    runs-on: ubuntu-latest
+    needs: [build-frontend]
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      
+      - name: 下载前端构建产物
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: ./artifacts
+      
+      - name: 解压前端到正确位置
+        run: |
+          mkdir -p web/frontend/dist
+          tar -xzf artifacts/frontend-dist.tar.gz -C web/frontend/
+      
+      - name: 设置Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: 登录GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: 提取版本号
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      
+      - name: 构建并推送Docker镜像
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: web/backend/Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ steps.get_version.outputs.VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+  
+  build-packages:
+    name: 构建多平台安装包
+    runs-on: ${{ matrix.os }}
+    needs: [build-frontend]
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux-x64
+            ext: tar.gz
+          - os: macos-latest
+            platform: macos-x64
+            ext: tar.gz
+          - os: windows-latest
+            platform: windows-x64
+            ext: zip
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      
+      - name: 下载前端构建产物
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: ./artifacts
+      
+      - name: 创建平台特定包
+        shell: bash
+        run: |
+          # 创建发布目录
+          mkdir -p release-package
+          
+          # 复制核心文件
+          cp -r api release-package/
+          cp -r web release-package/
+          cp -r docs release-package/
+          cp -r tools release-package/
+          cp -r scripts release-package/
+          cp main.py release-package/
+          cp requirements.txt release-package/
+          cp README.md release-package/
+          cp LICENSE release-package/
+          cp config_template.ini release-package/
+          cp pytest.ini release-package/
+          cp pyproject.toml release-package/
+          
+          # 复制平台特定脚本
+          if [ "${{ matrix.platform }}" = "windows-x64" ]; then
+            cp daemon_control.bat release-package/
+            cp 一键安装.bat release-package/
+            cp scripts/backup.bat release-package/scripts/
+          else
+            cp daemon_control.sh release-package/
+            cp 一键安装.sh release-package/
+            cp scripts/backup.sh release-package/scripts/
+            chmod +x release-package/daemon_control.sh
+            chmod +x release-package/一键安装.sh
+            chmod +x release-package/scripts/backup.sh
+          fi
+          
+          cp DAEMON_QUICK_REF.md release-package/
+          
+          # 解压前端构建产物
+          mkdir -p release-package/web/frontend/dist
+          tar -xzf artifacts/frontend-dist.tar.gz -C release-package/web/frontend/
+          
+          # 创建版本信息
+          echo "Version: ${GITHUB_REF_NAME:-latest}" > release-package/VERSION.txt
+          echo "Platform: ${{ matrix.platform }}" >> release-package/VERSION.txt
+          echo "Build Date: $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> release-package/VERSION.txt
+          echo "Commit: ${GITHUB_SHA}" >> release-package/VERSION.txt
+          
+          # 创建平台说明
+          cat > release-package/INSTALL_${{ matrix.platform }}.txt << 'EOF'
+          # 安装说明 - ${{ matrix.platform }}
+          
+          ## 快速开始
+          
+          ### Windows
+          1. 解压到任意目录
+          2. 双击运行: 一键安装.bat
+          3. 按提示选择运行模式
+          
+          ### Linux/macOS
+          1. 解压: tar -xzf 文件名.tar.gz
+          2. 进入目录: cd release-package
+          3. 运行: ./一键安装.sh
+          
+          ## 详细文档
+          查看 README.md 和 docs/ 目录
+          EOF
+      
+      - name: 打包（Linux/macOS）
+        if: matrix.platform != 'windows-x64'
+        run: |
+          tar -czf chaoxing-${GITHUB_REF_NAME:-latest}-${{ matrix.platform }}.tar.gz release-package/
+      
+      - name: 打包（Windows）
+        if: matrix.platform == 'windows-x64'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path release-package/* -DestinationPath chaoxing-$env:GITHUB_REF_NAME-${{ matrix.platform }}.zip
+      
+      - name: 上传平台包
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-${{ matrix.platform }}
+          path: |
+            *.tar.gz
+            *.zip
+          retention-days: 90
+  
+  create-release:
+    name: 创建GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build-frontend, build-docker, build-packages]
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      
+      - name: 下载所有构建产物
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+      
+      - name: 创建通用包
+        run: |
+          # 创建source-only包（不含前端构建）
+          mkdir -p source-package
+          cp -r api source-package/
+          cp -r web source-package/
+          cp -r docs source-package/
+          cp -r tools source-package/
+          cp -r scripts source-package/
+          cp main.py source-package/
+          cp requirements.txt source-package/
+          cp README.md source-package/
+          cp LICENSE source-package/
+          cp config_template.ini source-package/
+          cp pytest.ini source-package/
+          cp pyproject.toml source-package/
+          cp daemon_control.sh source-package/
+          cp daemon_control.bat source-package/
+          cp 一键安装.sh source-package/
+          cp 一键安装.bat source-package/
+          cp DAEMON_QUICK_REF.md source-package/
+          
+          tar -czf chaoxing-${GITHUB_REF_NAME}-source.tar.gz source-package/
+          
+          # 创建仅前端包（用于更新）
+          mkdir -p frontend-only
+          tar -xzf artifacts/frontend-dist/frontend-dist.tar.gz -C frontend-only/
+          tar -czf chaoxing-${GITHUB_REF_NAME}-frontend-only.tar.gz -C frontend-only dist/
+          
+          # 创建K8s配置包
+          mkdir -p k8s-configs
+          cp -r k8s/* k8s-configs/ 2>/dev/null || echo "No k8s dir"
+          tar -czf chaoxing-${GITHUB_REF_NAME}-k8s.tar.gz k8s-configs/
+      
+      - name: 整理发布文件
+        run: |
+          mkdir -p release-files
+          
+          # 移动平台特定包
+          mv artifacts/package-linux-x64/*.tar.gz release-files/ 2>/dev/null || true
+          mv artifacts/package-macos-x64/*.tar.gz release-files/ 2>/dev/null || true
+          mv artifacts/package-windows-x64/*.zip release-files/ 2>/dev/null || true
+          
+          # 移动通用包
+          mv chaoxing-${GITHUB_REF_NAME}-source.tar.gz release-files/
+          mv chaoxing-${GITHUB_REF_NAME}-frontend-only.tar.gz release-files/
+          mv chaoxing-${GITHUB_REF_NAME}-k8s.tar.gz release-files/
+          
+          ls -lh release-files/
+      
+      - name: 生成发布说明
+        id: release_notes
+        run: |
+          cat > release_notes.md << 'EOF'
+          ## 📦 下载选择指南
+          
+          ### 🌟 推荐下载（按使用场景）
+          
+          #### 1. 普通用户（Windows）
+          - **chaoxing-${GITHUB_REF_NAME}-windows-x64.zip**
+          - ✅ Windows专用
+          - ✅ 包含前端构建
+          - ✅ 双击.bat即可安装
+          
+          #### 2. 普通用户（Mac）
+          - **chaoxing-${GITHUB_REF_NAME}-macos-x64.tar.gz**
+          - ✅ macOS专用
+          - ✅ 包含前端构建
+          - ✅ 运行.sh即可安装
+          
+          #### 3. Linux服务器
+          - **chaoxing-${GITHUB_REF_NAME}-linux-x64.tar.gz**
+          - ✅ Linux专用
+          - ✅ 包含前端构建
+          - ✅ 支持守护进程
+          
+          #### 4. Docker用户
+          - **直接拉取镜像**
+          - `docker pull ghcr.io/${GITHUB_REPOSITORY}:${GITHUB_REF_NAME}`
+          - ✅ 多架构支持（amd64/arm64）
+          - ✅ 一键部署
+          
+          #### 5. Kubernetes集群
+          - **chaoxing-${GITHUB_REF_NAME}-k8s.tar.gz**
+          - ✅ K8s完整配置
+          - ✅ Helm Chart
+          - ✅ 生产就绪
+          
+          ---
+          
+          ## 📋 所有下载文件说明
+          
+          ### 平台特定包（包含前端构建）⭐推荐
+          | 文件 | 平台 | 大小 | 说明 |
+          |------|------|------|------|
+          | **windows-x64.zip** | Windows | ~50MB | Windows专用，含前端 |
+          | **macos-x64.tar.gz** | macOS | ~50MB | macOS专用，含前端 |
+          | **linux-x64.tar.gz** | Linux | ~50MB | Linux专用，含前端 |
+          
+          ### 通用包
+          | 文件 | 用途 | 大小 | 说明 |
+          |------|------|------|------|
+          | **source.tar.gz** | 源码包 | ~30MB | 不含前端构建，需自行build |
+          | **frontend-only.tar.gz** | 前端更新 | ~5MB | 仅前端dist，用于更新 |
+          | **k8s.tar.gz** | K8s配置 | ~50KB | Kubernetes部署配置 |
+          
+          ### Docker镜像🐳
+          ```bash
+          # GitHub Container Registry
+          docker pull ghcr.io/${GITHUB_REPOSITORY}:${GITHUB_REF_NAME}
+          docker pull ghcr.io/${GITHUB_REPOSITORY}:latest
+          ```
+          
+          **支持架构**: linux/amd64, linux/arm64
+          
+          **注意**: Docker镜像发布到GitHub Container Registry，无需额外配置。
+          
+          ---
+          
+          ## 🚀 快速部署（按平台）
+          
+          ### 方式1：Docker（最简单）
+          ```bash
+          # 拉取镜像
+          docker pull ghcr.io/${GITHUB_REPOSITORY}:${GITHUB_REF_NAME}
+          
+          # 启动完整环境
+          wget https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/main/web/docker-compose.yml
+          docker compose up -d
+          ```
+          
+          ### 方式2：源码部署
+          ```bash
+          # 1. 下载并解压完整包
+          wget https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/chaoxing-${GITHUB_REF_NAME}-full.tar.gz
+          tar -xzf chaoxing-${GITHUB_REF_NAME}-full.tar.gz
+          cd release-package
+          
+          # 2. 安装Python依赖
+          pip install -r requirements.txt
+          
+          # 3. 启动服务（已包含前端构建）
+          ./daemon_control.sh start  # Linux
+          daemon_control.bat start   # Windows
+          ```
+          
+          ## 📝 更新日志
+          
+          详见 [CHANGELOG.md](https://github.com/你的用户名/chaoxing/blob/main/docs/CHANGELOG.md)
+          EOF
+          
+          echo "notes_file=release_notes.md" >> $GITHUB_OUTPUT
+      
+      - name: 创建GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release-files/*
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+          name: Release ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

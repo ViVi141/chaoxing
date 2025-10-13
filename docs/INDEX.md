@@ -32,11 +32,19 @@
 
 ### 📖 入门文档
 - [README](../README.md) - 项目主页
+- [Release下载指南](../RELEASE_DOWNLOAD.md) - 选择适合你的版本 🌟
+- [Release选择指南](RELEASE_GUIDE.md) - 详细对比所有版本
+- [快速部署](QUICK_DEPLOY.md) - 各平台部署教程
 - [快速开始](QUICK_START.md) - 5分钟快速上手
 - [常见问题](FAQ.md) - FAQ解答
 
 ### ⚙️ 配置部署
-- [守护进程部署](DAEMON.md) - 生产环境部署（6种方案）🆕
+- [Release下载指南](../RELEASE_DOWNLOAD.md) - 快速选择版本 🌟
+- [Release选择指南](RELEASE_GUIDE.md) - 详细对比和选择建议 🆕
+- [快速部署](QUICK_DEPLOY.md) - 各平台部署教程
+- [Docker部署指南](DOCKER_SETUP.md) - Docker完整文档 🐳
+- [Kubernetes部署](../k8s/README.md) - K8s生产环境部署 ☸️ 🆕
+- [守护进程部署](DAEMON.md) - 6种守护进程方案 🆕
 - [配置指南](CONFIGURATION.md) - 详细配置说明
 - [数据库迁移](DATABASE_MIGRATION.md) - SQLite→PostgreSQL
 - [升级指南](UPGRADE_GUIDE.md) - 版本升级

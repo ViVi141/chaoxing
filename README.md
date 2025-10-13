@@ -3,10 +3,16 @@
 <p align="center">
   <a href="https://github.com/ViVi141/chaoxing"><img src="https://img.shields.io/badge/version-2.3.0-blue" alt="Version" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-green" alt="License" /></a>
+  <img src="https://img.shields.io/docker/pulls/vivi141/chaoxing" alt="Docker Pulls" />
+  <img src="https://img.shields.io/docker/image-size/vivi141/chaoxing/latest" alt="Docker Size" />
+  <img src="https://img.shields.io/badge/Tests-14_passing-brightgreen" alt="Tests" />
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/Refine-v5-orange" alt="Refine v5" />
   <img src="https://img.shields.io/badge/React_Router-v7-blue" alt="React Router v7" />
   <img src="https://img.shields.io/badge/Vite-v7-purple" alt="Vite v7" />
-  <img src="https://img.shields.io/badge/Tests-14_passing-brightgreen" alt="Tests" />
+  <img src="https://img.shields.io/badge/Docker-Multi_Arch-2496ED?logo=docker" alt="Multi-Arch" />
 </p>
 
 > 基于[Samueli924/chaoxing](https://github.com/Samueli924/chaoxing)的增强版本，提供命令行和Web两种使用方式
@@ -53,39 +59,57 @@
 
 ## 🚀 快速开始
 
-### Web平台（推荐）
+### 方式1：Release版本（最简单）🌟
 
-**一键启动（Windows）：**
+**无需Node.js，前端已预编译！**
+
+#### Windows
 ```batch
-启动Refine完整版.bat
+1. 下载 https://github.com/ViVi141/chaoxing/releases/latest
+2. 解压 chaoxing-vX.X.X-full.zip
+3. 双击运行: 一键安装.bat
 ```
 
-**手动启动：**
+#### Linux/macOS
 ```bash
-# 终端1 - 后端
-cd web/backend
-python app.py
-
-# 终端2 - Celery
-cd web/backend  
-celery -A celery_app worker --loglevel=info
-
-# 终端3 - 前端
-cd web/frontend
-npm run dev
+wget https://github.com/ViVi141/chaoxing/releases/latest/download/chaoxing-v2.3.0-full.tar.gz
+tar -xzf chaoxing-v2.3.0-full.tar.gz
+cd release-package
+chmod +x 一键安装.sh
+./一键安装.sh
 ```
 
-访问：http://localhost:5173
-
-### 命令行版
+### 方式2：源码安装
 
 ```bash
-# 安装依赖
-pip install -r requirements.txt
+# 克隆仓库
+git clone https://github.com/ViVi141/chaoxing.git
+cd chaoxing
 
-# 运行
-python main.py -c config.ini
+# 一键安装
+./一键安装.sh     # Linux/macOS
+一键安装.bat      # Windows
 ```
+
+### 方式3：Docker镜像（推荐生产环境）
+
+```bash
+# 方式A：使用预构建镜像（最快）
+docker pull ghcr.io/vivi141/chaoxing:latest
+wget https://raw.githubusercontent.com/ViVi141/chaoxing/main/web/docker-compose.yml
+docker compose up -d
+
+# 方式B：从源码构建
+git clone https://github.com/ViVi141/chaoxing.git
+cd chaoxing/web
+docker compose up -d
+```
+
+访问：http://localhost:8000
+
+**Docker镜像**: 
+- GitHub Container Registry: `ghcr.io/vivi141/chaoxing:latest`
+- 支持架构: linux/amd64, linux/arm64
 
 ---
 
@@ -101,13 +125,31 @@ python main.py -c config.ini
 ## 📚 文档
 
 ### 快速入门
-- [快速开始](docs/QUICK_START.md) - 5分钟快速上手
+- [Release下载指南](RELEASE_DOWNLOAD.md) - 快速找到适合你的版本！ 🌟
+- [快速部署](docs/QUICK_DEPLOY.md) - 各平台5分钟部署教程
+- [快速开始](docs/QUICK_START.md) - 功能使用指南
 - [完整文档索引](docs/INDEX.md) - 所有文档列表
 
 ### v2.3.0新增 🆕
-- [守护进程部署](docs/DAEMON.md) - 生产环境部署（systemd/supervisor/Docker）
+
+#### 🎁 全平台Release（自动构建）
+- **Windows专用包** - 双击.bat即可安装
+- **macOS专用包** - 运行.sh即可安装  
+- **Linux专用包** - 含守护进程，生产可用
+- **Docker镜像** 🐳 - 多架构（amd64/arm64）
+- **Kubernetes配置** ☸️ - 高可用生产部署
+- **源码包** 💻 - 开发者可修改
+
+查看 [Release选择指南](docs/RELEASE_GUIDE.md) 了解详情
+
+#### 📦 部署文档
+- [Release下载指南](RELEASE_DOWNLOAD.md) - 选择适合的版本
+- [Docker部署指南](docs/DOCKER_SETUP.md) - Docker完整文档
+- [Kubernetes部署](k8s/README.md) - K8s生产环境
+- [一键安装脚本](一键安装.sh) - Linux/macOS自动部署
+- [一键安装脚本](一键安装.bat) - Windows自动部署
+- [守护进程部署](docs/DAEMON.md) - 6种守护进程方案
 - [测试指南](tests/README.md) - 自动化测试框架
-- [守护进程命令](DAEMON_QUICK_REF.md) - 快速参考
 
 ### 更多文档
 - [更新日志](docs/CHANGELOG.md) - 版本历史（含v2.3.0详情）
