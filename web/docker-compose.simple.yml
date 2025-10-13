@@ -29,7 +29,7 @@ services:
     #   dockerfile: web/backend/Dockerfile
     container_name: chaoxing_backend
     working_dir: /app/web/backend
-    command: bash -c "alembic upgrade head 2>/dev/null || true; uvicorn app:app --host 0.0.0.0 --port 8000"
+    command: uvicorn app:app --host 0.0.0.0 --port 8000
     environment:
       # 使用SQLite数据库（简单模式，注意必须使用aiosqlite异步驱动）
       DATABASE_URL: "sqlite+aiosqlite:////app/data/chaoxing.db"
