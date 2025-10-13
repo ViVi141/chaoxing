@@ -317,25 +317,28 @@ jobs:
       - name: 生成发布说明
         id: release_notes
         run: |
-          cat > release_notes.md << 'EOF'
+          VERSION="${GITHUB_REF_NAME}"
+          REPO="${GITHUB_REPOSITORY}"
+          
+          cat > release_notes.md << 'HEREDOC'
           ## 📦 下载选择指南
           
           ### 🌟 推荐下载（按使用场景）
           
           #### 1. 普通用户（Windows）
-          - **chaoxing-${GITHUB_REF_NAME}-windows-x64.zip**
+          - **chaoxing-${VERSION}-windows-x64.zip**
           - ✅ Windows专用
           - ✅ 包含前端构建
           - ✅ 双击.bat即可安装
           
           #### 2. 普通用户（Mac）
-          - **chaoxing-${GITHUB_REF_NAME}-macos-x64.tar.gz**
+          - **chaoxing-${VERSION}-macos-x64.tar.gz**
           - ✅ macOS专用
           - ✅ 包含前端构建
           - ✅ 运行.sh即可安装
           
           #### 3. Linux服务器
-          - **chaoxing-${GITHUB_REF_NAME}-linux-x64.tar.gz**
+          - **chaoxing-${VERSION}-linux-x64.tar.gz**
           - ✅ Linux专用
           - ✅ 包含前端构建
           - ✅ 支持守护进程
@@ -347,7 +350,7 @@ jobs:
           - ✅ 一键部署
           
           #### 5. Kubernetes集群
-          - **chaoxing-${GITHUB_REF_NAME}-k8s.tar.gz**
+          - **chaoxing-${VERSION}-k8s.tar.gz**
           - ✅ K8s完整配置
           - ✅ Helm Chart
           - ✅ 生产就绪
@@ -413,8 +416,18 @@ jobs:
           
           ## 📝 更新日志
           
-          详见 [CHANGELOG.md](https://github.com/你的用户名/chaoxing/blob/main/docs/CHANGELOG.md)
-          EOF
+          详见 [CHANGELOG.md](https://github.com/${REPO}/blob/main/docs/CHANGELOG.md)
+          HEREDOC
+          
+          # 替换所有变量为实际值
+          sed -i "s/\${VERSION}/${VERSION}/g" release_notes.md
+          sed -i "s|\${REPO}|${REPO}|g" release_notes.md
+          sed -i "s/\${GITHUB_REF_NAME}/${VERSION}/g" release_notes.md
+          sed -i "s|\${GITHUB_REPOSITORY}|${REPO}|g" release_notes.md
+          
+          # 验证替换结果
+          echo "=== Release notes preview ==="
+          head -50 release_notes.md
           
           echo "notes_file=release_notes.md" >> $GITHUB_OUTPUT
       
