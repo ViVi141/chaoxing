@@ -150,38 +150,69 @@ alembic upgrade head
 
 ### 方式2：Docker Compose（最简单）⭐⭐⭐⭐⭐
 
-#### 前置要求
-
-```bash
-# 安装Docker
-宝塔面板 → 软件商店 → Docker → 安装
-宝塔面板 → 软件商店 → Docker Compose → 安装
-```
-
-#### 部署步骤
+#### 快速模式：SQLite（推荐新手）
 
 ```bash
 # 1. 创建目录
 mkdir -p /www/wwwroot/chaoxing
 cd /www/wwwroot/chaoxing
 
-# 2. 下载docker-compose.yml
+# 2. 下载简化配置（SQLite模式）
+wget https://raw.githubusercontent.com/ViVi141/chaoxing/main/web/docker-compose.simple.yml
+
+# 3. 创建.env文件（生成安全密钥）
+cat > .env << EOF
+SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+JWT_SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+DEBUG=False
+EOF
+
+# 4. 启动（只需要后端，使用SQLite）
+docker compose -f docker-compose.simple.yml up -d
+
+# 5. 访问
+# http://localhost:8000
+```
+
+**特点**：
+- ✅ 1分钟启动
+- ✅ 无需配置数据库
+- ✅ 适合快速体验
+- ⚠️ 后续可在Web界面升级到PostgreSQL
+
+---
+
+#### 完整模式：PostgreSQL + Redis（生产环境）
+
+```bash
+# 1. 创建目录
+mkdir -p /www/wwwroot/chaoxing
+cd /www/wwwroot/chaoxing
+
+# 2. 下载完整配置
 wget https://raw.githubusercontent.com/ViVi141/chaoxing/main/web/docker-compose.yml
 
 # 3. 创建.env文件
 cat > .env << EOF
-POSTGRES_PASSWORD=your_secure_password
-REDIS_PASSWORD=your_redis_password
+POSTGRES_PASSWORD=your_secure_postgres_password
+REDIS_PASSWORD=your_secure_redis_password
 SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
 JWT_SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+DEBUG=False
 EOF
 
-# 4. 启动
+# 4. 启动（包含PostgreSQL + Redis + Celery）
 docker compose up -d
 
 # 5. 查看状态
 docker compose ps
 ```
+
+**特点**：
+- ✅ 生产就绪
+- ✅ 高性能
+- ✅ 支持后台任务
+- ✅ 适合团队使用
 
 #### 配置Nginx反向代理
 
@@ -204,47 +235,43 @@ location / {
 
 ### 方式1：Docker编排（推荐）⭐⭐⭐⭐⭐
 
-#### 步骤1：准备配置
+#### 快速模式：SQLite（新手推荐）
+
+**步骤1：准备配置**
 
 ```bash
 # 1. 创建项目目录
 mkdir -p /opt/chaoxing
 cd /opt/chaoxing
 
-# 2. 下载docker-compose.yml
-wget https://raw.githubusercontent.com/ViVi141/chaoxing/main/web/docker-compose.yml
+# 2. 下载简化配置（SQLite模式）
+wget https://raw.githubusercontent.com/ViVi141/chaoxing/main/web/docker-compose.simple.yml -O docker-compose.yml
+
+# 3. 生成密钥
+python3 -c "import secrets; print('SECRET_KEY=' + secrets.token_urlsafe(32))" > .env
+python3 -c "import secrets; print('JWT_SECRET_KEY=' + secrets.token_urlsafe(32))" >> .env
 ```
 
-#### 步骤2：1Panel导入
+**步骤2：1Panel导入**
 
 ```
 1. 1Panel → 容器 → 编排
 2. 点击"创建编排"
-3. 名称：chaoxing
-4. 描述：超星学习通自动化平台
+3. 名称：chaoxing-simple（SQLite模式）
+4. 描述：超星学习通 - SQLite快速体验版
 5. 路径：/opt/chaoxing
 6. 方式：上传docker-compose.yml 或 粘贴内容
 7. 点击"确定"
 ```
 
-#### 步骤3：配置环境变量
+**步骤3：配置环境变量**
 
 ```
-1. 在编排中找到chaoxing
+1. 在编排中找到chaoxing-simple
 2. 点击"编辑"
-3. 添加环境变量：
+3. 添加环境变量（SQLite模式只需要密钥）：
 
-# 数据库配置
-POSTGRES_PASSWORD=your_secure_postgres_password
-DATABASE_URL=postgresql+asyncpg://chaoxing_user:your_secure_postgres_password@postgres:5432/chaoxing_db
-
-# Redis配置
-REDIS_PASSWORD=your_secure_redis_password
-REDIS_URL=redis://:your_secure_redis_password@redis:6379/0
-CELERY_BROKER_URL=redis://:your_secure_redis_password@redis:6379/0
-CELERY_RESULT_BACKEND=redis://:your_secure_redis_password@redis:6379/0
-
-# 应用密钥（使用强密钥生成工具）
+# 应用密钥（必需）
 SECRET_KEY=your_secret_key_at_least_32_characters_long
 JWT_SECRET_KEY=your_jwt_secret_key_at_least_32_chars
 
@@ -270,15 +297,15 @@ openssl rand -base64 32
 # https://generate-secret.vercel.app/32
 ```
 
-#### 步骤4：启动
+**步骤4：启动**
 
 ```
 1. 点击"▶️ 启动"
-2. 等待1-2分钟
-3. 查看容器状态：全部Running
+2. 等待10-20秒（SQLite模式很快）
+3. 查看容器状态：chaoxing_backend Running
 ```
 
-#### 步骤5：配置反向代理
+**步骤5：配置反向代理**
 
 ```
 1. 1Panel → 网站 → 创建网站
@@ -287,9 +314,46 @@ openssl rand -base64 32
 4. 保存
 ```
 
-#### 步骤6：完成！
+**步骤6：完成！**
 
 访问：`http://your-domain.com`
+
+---
+
+#### 🔄 升级到PostgreSQL + Redis（可选）
+
+**当需要更高性能时**：
+
+```bash
+# 1. 停止简化版
+cd /opt/chaoxing
+docker compose -f docker-compose.simple.yml down
+
+# 2. 备份SQLite数据
+docker cp chaoxing_backend:/app/data/chaoxing.db ./chaoxing.db.backup
+
+# 3. 下载完整配置
+mv docker-compose.yml docker-compose.simple.yml.bak
+wget https://raw.githubusercontent.com/ViVi141/chaoxing/main/web/docker-compose.yml
+
+# 4. 更新.env添加数据库配置
+cat >> .env << 'EOF'
+POSTGRES_PASSWORD=your_secure_postgres_password
+REDIS_PASSWORD=your_secure_redis_password
+EOF
+
+# 5. 启动完整版
+docker compose up -d
+
+# 6. 等待数据库就绪
+docker compose logs -f postgres
+
+# 7. 数据迁移（可选）
+# 如果有旧数据需要迁移
+docker compose exec backend python tools/migrate_sqlite_to_postgres.py
+
+# 8. 完成！
+```
 
 ---
 

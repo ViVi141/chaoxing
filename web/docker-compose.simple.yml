@@ -1,82 +1,49 @@
-# 简单模式Docker Compose配置
-# 无需PostgreSQL和Redis，使用SQLite和文件队列
-version: '3.8'
+# Docker Compose 简化版
+# 使用SQLite，无需PostgreSQL和Redis
+# 适合快速体验和小规模使用
 
 services:
-  # 后端API服务
+  # 后端服务（SQLite模式）
   backend:
-    build:
-      context: ..
-      dockerfile: web/backend/Dockerfile
-    container_name: chaoxing_backend_simple
-    command: uvicorn app:app --host 0.0.0.0 --port 8000
+    image: ghcr.io/vivi141/chaoxing:latest
+    # 或从源码构建：
+    # build:
+    #   context: ..
+    #   dockerfile: web/backend/Dockerfile
+    container_name: chaoxing_backend
     environment:
-      DEPLOY_MODE: simple
-      DATABASE_URL: sqlite+aiosqlite:///./chaoxing_web.db
-      CELERY_BROKER_URL: filesystem://
-      CELERY_RESULT_BACKEND: file://./celery_results
-      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-me}
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-jwt-secret-key}
+      # 使用SQLite数据库（简单模式）
+      DATABASE_URL: sqlite:///./data/chaoxing.db
+      
+      # 应用密钥（生产环境请修改！）
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-me-in-production}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-jwt-secret-key-change-me}
+      
+      # 不使用Redis（可选功能会被禁用）
+      REDIS_URL: ""
+      CELERY_BROKER_URL: ""
+      
+      # 调试模式（可选）
       DEBUG: ${DEBUG:-False}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    
     volumes:
-      - ./backend:/app
-      - backend_data:/app/data
-      - backend_logs:/app/logs
+      - ./backend/data:/app/data        # SQLite数据库文件
+      - ./backend/logs:/app/logs        # 日志文件
+      - ./backend/.env:/app/.env        # 配置文件（可选）
+    
     ports:
       - "8000:8000"
+    
     restart: unless-stopped
-    networks:
-      - chaoxing_network
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  # Celery Worker（异步任务处理）
-  celery:
-    build:
-      context: ..
-      dockerfile: web/backend/Dockerfile
-    container_name: chaoxing_celery_simple
-    command: celery -A celery_app worker --loglevel=info --concurrency=2 --pool=solo
-    environment:
-      DEPLOY_MODE: simple
-      DATABASE_URL: sqlite+aiosqlite:///./chaoxing_web.db
-      CELERY_BROKER_URL: filesystem://
-      CELERY_RESULT_BACKEND: file://./celery_results
-      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-me}
-    volumes:
-      - ./backend:/app
-      - backend_data:/app/data
-      - celery_logs:/app/logs
-    depends_on:
-      - backend
-    restart: unless-stopped
-    networks:
-      - chaoxing_network
-
-  # 前端服务
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
-    container_name: chaoxing_frontend_simple
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend
-    restart: unless-stopped
-    networks:
-      - chaoxing_network
-
-volumes:
-  backend_data:
-    driver: local
-  backend_logs:
-    driver: local
-  celery_logs:
-    driver: local
-
-networks:
-  chaoxing_network:
-    driver: bridge
-
+# 注意：
+# 1. 此配置适合快速体验和小规模使用
+# 2. 生产环境建议使用PostgreSQL + Redis（见docker-compose.yml）
+# 3. 可以先用此配置启动，后续通过Web界面迁移到PostgreSQL
