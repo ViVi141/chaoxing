@@ -176,9 +176,11 @@ docker compose -f docker-compose.simple.yml up -d
 
 **特点**：
 - ✅ 1分钟启动
-- ✅ 无需配置数据库
-- ✅ 适合快速体验
-- ⚠️ 后续可在Web界面升级到PostgreSQL
+- ✅ 使用SQLite（轻量级）
+- ✅ 包含Redis（支持Celery）
+- ✅ 支持后台任务
+- ✅ 适合1-20人使用
+- ⚠️ 后续可升级到PostgreSQL（更高性能）
 
 ---
 

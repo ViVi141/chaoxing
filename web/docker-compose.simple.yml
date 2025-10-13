@@ -1,9 +1,25 @@
 # Docker Compose 简化版
-# 使用SQLite，无需PostgreSQL和Redis
-# 适合快速体验和小规模使用
+# 使用SQLite + 可选Redis，无需PostgreSQL
+# 适合快速体验和小规模使用（1-20人）
 
 services:
-  # 后端服务（SQLite模式）
+  # Redis（轻量级，用于Celery）
+  redis:
+    image: redis:7-alpine
+    container_name: chaoxing_redis_lite
+    command: redis-server --requirepass ${REDIS_PASSWORD:-simple_redis_pass}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # 后端服务（SQLite + Redis模式）
   backend:
     image: ghcr.io/vivi141/chaoxing:latest
     # 或从源码构建：
@@ -15,13 +31,14 @@ services:
       # 使用SQLite数据库（简单模式）
       DATABASE_URL: sqlite:///./data/chaoxing.db
       
+      # Redis连接（用于Celery和缓存）
+      REDIS_URL: redis://:${REDIS_PASSWORD:-simple_redis_pass}@redis:6379/0
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-simple_redis_pass}@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD:-simple_redis_pass}@redis:6379/0
+      
       # 应用密钥（生产环境请修改！）
       SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-me-in-production}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-jwt-secret-key-change-me}
-      
-      # 不使用Redis（可选功能会被禁用）
-      REDIS_URL: ""
-      CELERY_BROKER_URL: ""
       
       # 调试模式（可选）
       DEBUG: ${DEBUG:-False}
@@ -37,13 +54,42 @@ services:
     
     restart: unless-stopped
     
+    depends_on:
+      redis:
+        condition: service_healthy
+    
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
+  
+  # Celery Worker（异步任务，可选）
+  celery:
+    image: ghcr.io/vivi141/chaoxing:latest
+    container_name: chaoxing_celery_lite
+    command: celery -A celery_app worker --loglevel=info --concurrency=2
+    environment:
+      DATABASE_URL: sqlite:///./data/chaoxing.db
+      REDIS_URL: redis://:${REDIS_PASSWORD:-simple_redis_pass}@redis:6379/0
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-simple_redis_pass}@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD:-simple_redis_pass}@redis:6379/0
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-me-in-production}
+    volumes:
+      - ./backend/data:/app/data
+      - ./backend/logs:/app/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+    driver: local
 
 # 注意：
-# 1. 此配置适合快速体验和小规模使用
-# 2. 生产环境建议使用PostgreSQL + Redis（见docker-compose.yml）
-# 3. 可以先用此配置启动，后续通过Web界面迁移到PostgreSQL
+# 1. 此配置使用SQLite + Redis，适合快速启动和小规模使用
+# 2. SQLite适合1-20人使用，超过建议升级到PostgreSQL
+# 3. Redis只用于Celery任务队列，轻量级
+# 4. 可以先用此配置启动，后续通过Web界面或手动迁移到PostgreSQL
+# 5. 生产环境（20+人）建议使用PostgreSQL（见docker-compose.yml）

@@ -91,19 +91,34 @@ cd chaoxing
 一键安装.bat      # Windows
 ```
 
-### 方式3：Docker镜像（推荐生产环境）
+### 方式3：Docker镜像
+
+#### 快速模式：SQLite + Redis（推荐新手）
 
 ```bash
-# 方式A：使用预构建镜像（最快）
-docker pull ghcr.io/vivi141/chaoxing:latest
+# 1分钟启动，SQLite数据库 + Redis队列
+wget https://raw.githubusercontent.com/ViVi141/chaoxing/main/web/docker-compose.simple.yml
+docker compose -f docker-compose.simple.yml up -d
+```
+
+**特点**：
+- ✅ 极简配置（2个密钥即可）
+- ✅ 1分钟启动
+- ✅ 支持Celery后台任务
+- ✅ 适合1-20人
+
+#### 完整模式：PostgreSQL + Redis（生产环境）
+
+```bash
+# 完整配置，PostgreSQL数据库 + Redis + Celery
 wget https://raw.githubusercontent.com/ViVi141/chaoxing/main/web/docker-compose.yml
 docker compose up -d
-
-# 方式B：从源码构建
-git clone https://github.com/ViVi141/chaoxing.git
-cd chaoxing/web
-docker compose up -d
 ```
+
+**特点**：
+- ✅ 生产就绪
+- ✅ 高性能
+- ✅ 适合20+人
 
 访问：http://localhost:8000
 
