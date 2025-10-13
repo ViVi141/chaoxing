@@ -89,31 +89,38 @@ docker compose -f docker-compose.simple.yml up -d
 
 ---
 
-## 🔄 Web界面配置数据库（规划中）
+## 🔄 Web界面配置数据库（已支持！）✅
 
-### 未来功能（v2.4.0计划）
+### 功能已实现！
 
 ```
-访问：http://localhost:8000/admin/settings
+访问：http://localhost:8000/admin/database-migration
 
-1. 数据库配置
-   ├─ 当前：SQLite ✅
-   ├─ 添加PostgreSQL配置
+1. 查看当前配置
+   └─ 显示当前使用的数据库（SQLite/PostgreSQL）
+
+2. 测试PostgreSQL连接
+   ├─ 输入PostgreSQL连接信息
    ├─ 点击"测试连接"
-   ├─ 点击"迁移数据"
-   └─ 自动切换
+   └─ 验证连接是否成功
 
-2. Redis配置
-   ├─ 当前：未配置
-   ├─ 添加Redis连接
+3. 测试Redis连接
+   ├─ 输入Redis连接信息
    ├─ 点击"测试连接"
-   └─ 自动启用Celery
+   └─ 验证连接是否成功
 
-3. 应用重启
-   └─ 自动应用新配置
+4. 开始迁移
+   ├─ 自动备份SQLite数据
+   ├─ 迁移所有数据到PostgreSQL
+   ├─ 实时显示进度
+   ├─ 验证数据完整性
+   └─ 更新配置文件
+
+5. 重启服务
+   └─ 手动重启容器使配置生效
 ```
 
-**当前状态**：🚧 开发中
+**当前状态**：✅ **已完整实现！**
 
 ---
 

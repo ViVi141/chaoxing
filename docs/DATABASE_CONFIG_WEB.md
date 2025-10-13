@@ -60,15 +60,23 @@ cd /www/wwwroot/chaoxing/release-package
 
 ---
 
-## 📊 步骤2：Web界面配置（规划中）
+## 📊 步骤2：Web界面配置（已支持！）✅
 
-### 当前状态
-⚠️ **Web界面数据库配置功能正在开发中**
+### 功能已实现！
 
-当前需要手动配置（见步骤3），未来版本会提供：
-- 🔄 Web界面数据库迁移向导
-- 🔄 一键从SQLite迁移到PostgreSQL
-- 🔄 Redis配置管理界面
+**访问**: `http://localhost:8000/admin/database-migration`
+
+**功能清单**：
+- ✅ 查看当前数据库配置
+- ✅ 测试PostgreSQL连接
+- ✅ 测试Redis连接
+- ✅ 一键从SQLite迁移到PostgreSQL
+- ✅ 实时显示迁移进度
+- ✅ 自动备份源数据库
+- ✅ 自动验证数据完整性
+- ✅ 自动更新配置文件
+
+详细使用方法见：[数据库迁移指南](DATABASE_MIGRATION.md)
 
 ---
 

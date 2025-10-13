@@ -324,37 +324,58 @@ openssl rand -base64 32
 
 #### 🔄 升级到PostgreSQL + Redis（可选）
 
-**当需要更高性能时**：
+**方式A：Web界面迁移（推荐）⭐⭐⭐⭐⭐**
+
+```bash
+# 1. 启动PostgreSQL和Redis容器
+# 编辑docker-compose.yml，添加postgres和redis服务，或：
+docker run -d --name postgres \
+  --network chaoxing-net \
+  -e POSTGRES_USER=chaoxing_user \
+  -e POSTGRES_PASSWORD=your_password \
+  -e POSTGRES_DB=chaoxing_db \
+  postgres:15-alpine
+
+# 2. 访问Web界面
+http://localhost:8000/admin/database-migration
+
+# 3. 在界面中：
+#    - 输入PostgreSQL连接信息
+#    - 输入Redis连接信息（如果需要）
+#    - 点击"测试连接"
+#    - 点击"开始迁移"
+#    - 等待迁移完成（实时显示进度）
+#    - 自动备份、迁移、验证
+
+# 4. 重启服务
+docker compose restart backend celery
+
+# 5. 完成！
+```
+
+**方式B：手动迁移**
 
 ```bash
 # 1. 停止简化版
 cd /opt/chaoxing
-docker compose -f docker-compose.simple.yml down
+docker compose down
 
-# 2. 备份SQLite数据
-docker cp chaoxing_backend:/app/data/chaoxing.db ./chaoxing.db.backup
+# 2. 下载完整配置
+wget https://raw.githubusercontent.com/ViVi141/chaoxing/main/web/docker-compose.yml -O docker-compose.full.yml
 
-# 3. 下载完整配置
-mv docker-compose.yml docker-compose.simple.yml.bak
-wget https://raw.githubusercontent.com/ViVi141/chaoxing/main/web/docker-compose.yml
-
-# 4. 更新.env添加数据库配置
+# 3. 更新.env
 cat >> .env << 'EOF'
 POSTGRES_PASSWORD=your_secure_postgres_password
-REDIS_PASSWORD=your_secure_redis_password
+DATABASE_URL=postgresql+asyncpg://chaoxing_user:your_secure_postgres_password@postgres:5432/chaoxing_db
 EOF
 
-# 5. 启动完整版
-docker compose up -d
+# 4. 启动完整版
+docker compose -f docker-compose.full.yml up -d
 
-# 6. 等待数据库就绪
-docker compose logs -f postgres
+# 5. Web界面迁移数据
+http://localhost:8000/admin/database-migration
 
-# 7. 数据迁移（可选）
-# 如果有旧数据需要迁移
-docker compose exec backend python tools/migrate_sqlite_to_postgres.py
-
-# 8. 完成！
+# 6. 完成！
 ```
 
 ---

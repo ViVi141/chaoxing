@@ -102,10 +102,11 @@ docker compose -f docker-compose.simple.yml up -d
 ```
 
 **特点**：
-- ✅ 极简配置（2个密钥即可）
+- ✅ 零配置启动（使用默认密钥）
 - ✅ 1分钟启动
 - ✅ 支持Celery后台任务
 - ✅ 适合1-20人
+- ✅ 可在Web界面迁移到PostgreSQL
 
 #### 完整模式：PostgreSQL + Redis（生产环境）
 
