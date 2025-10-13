@@ -143,13 +143,13 @@ jobs:
       - name: 构建 Docker 镜像
         run: |
           cd web
-          docker compose build
+          docker compose build backend celery
         timeout-minutes: 20
       
       - name: 测试 Docker 容器
         run: |
           cd web
-          docker compose up -d
+          docker compose up -d postgres redis backend celery
           sleep 15
           docker compose ps
           docker compose logs backend
