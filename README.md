@@ -1,7 +1,6 @@
 # 超星学习通自动化完成任务点（增强版）
 
 <p align="center">
-  <a href="https://github.com/Samueli924/chaoxing"><img src="https://img.shields.io/github/stars/Samueli924/chaoxing" alt="Stars" /></a>
   <a href="https://github.com/ViVi141/chaoxing"><img src="https://img.shields.io/badge/version-2.2.3-blue" alt="Version" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-green" alt="License" /></a>
   <img src="https://img.shields.io/badge/Refine-v5-orange" alt="Refine v5" />
