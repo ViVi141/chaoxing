@@ -22,7 +22,7 @@ from schemas import (
     PasswordResetConfirm,
     VerifyEmailToken,
 )
-from auth import AuthService, get_current_active_user
+from security import AuthService, get_current_active_user
 import sys
 from pathlib import Path
 
