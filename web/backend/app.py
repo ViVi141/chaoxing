@@ -17,7 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from database import engine, Base
-from auth import init_default_admin
+from routes.auth import init_default_admin
 from config import settings
 
 # 移除config_manager - 不再需要动态配置
