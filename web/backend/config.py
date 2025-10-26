@@ -11,8 +11,8 @@ class Settings(BaseSettings):
     """应用配置 - 从 .env 文件读取"""
 
     # 密钥配置（固定，不再变更）
-    SECRET_KEY: str = Field(..., description="应用密钥")
-    JWT_SECRET_KEY: str = Field(..., description="JWT密钥")
+    SECRET_KEY: str = Field(default="dev-secret-key-please-change-in-production-minimum-32-chars", description="应用密钥")
+    JWT_SECRET_KEY: str = Field(default="dev-jwt-secret-key-change-me-minimum-32-chars", description="JWT密钥")
     JWT_ALGORITHM: str = Field(default="HS256", description="JWT算法")
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(
         default=1440, description="JWT过期时间（分钟）"

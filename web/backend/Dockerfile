@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.12.8-slim
 
 # 设置工作目录
 WORKDIR /app
@@ -14,6 +14,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN apt-get update && apt-get install -y \
     gcc \
     postgresql-client \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # 复制项目根目录的requirements.txt（context为项目根目录）
@@ -30,15 +31,14 @@ COPY . .
 WORKDIR /app/web/backend
 
 # 创建必要的目录
-RUN mkdir -p logs celery_broker celery_results
+RUN mkdir -p logs celery_broker celery_results data
 
 # 暴露端口
 EXPOSE 8000
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"
+    CMD curl -f http://localhost:8000/api/health || exit 1
 
 # 默认命令（可被docker-compose覆盖）
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
-
