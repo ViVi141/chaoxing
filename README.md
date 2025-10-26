@@ -1,7 +1,7 @@
 # 超星学习通自动化完成任务点（增强版）
 
 <p align="center">
-  <a href="https://github.com/ViVi141/chaoxing"><img src="https://img.shields.io/badge/version-2.4.0-blue" alt="Version" /></a>
+  <a href="https://github.com/ViVi141/chaoxing"><img src="https://img.shields.io/badge/version-2.5.0-blue" alt="Version" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-green" alt="License" /></a>
   <a href="https://github.com/ViVi141/chaoxing/pkgs/container/chaoxing"><img src="https://img.shields.io/badge/docker-ghcr.io-2496ED?logo=docker" alt="Docker" /></a>
   <img src="https://img.shields.io/badge/size-750KB-blue" alt="Release Size" />
@@ -12,12 +12,12 @@
   <img src="https://img.shields.io/badge/Refine-v5-orange" alt="Refine v5" />
   <img src="https://img.shields.io/badge/React_Router-v7-blue" alt="React Router v7" />
   <img src="https://img.shields.io/badge/Vite-v7-purple" alt="Vite v7" />
-  <img src="https://img.shields.io/badge/Platforms-Win_Mac_Linux_K8s-success" alt="Multi-Platform" />
+  <img src="https://img.shields.io/badge/Platforms-Win_Mac_Linux-success" alt="Multi-Platform" />
 </p>
 
 > 基于[Samueli924/chaoxing](https://github.com/Samueli924/chaoxing)的增强版本，提供命令行和Web两种使用方式
 > 
-> 🆕 **v2.4.0更新**: 全平台Release + 零配置启动 + Web界面数据库迁移 + 宝塔/1Panel支持
+> 🆕 **v2.5.0更新**: Docker部署优化 + Alembic数据库迁移 + 启动流程改进 + 健康检查增强
 
 ---
 
@@ -124,7 +124,7 @@ docker compose up -d
 访问：http://localhost:8000
 
 **Docker镜像**: 
-- GitHub Container Registry: `ghcr.io/vivi141/chaoxing:latest`
+- GitHub Container Registry: `ghcr.io/vivi141/chaoxing:latest` ✅ **免费**
 - 支持架构: linux/amd64, linux/arm64
 
 ---
@@ -152,10 +152,10 @@ docker compose up -d
 
 ## 📦 安装要求
 
-- **Python**: 3.10 / 3.11 / 3.12
+- **Python**: 3.12.8
 - **Node.js**: 18+ (Web版)
-- **数据库**: SQLite (默认) / PostgreSQL (可选)
-- **消息队列**: 文件系统 (默认) / Redis (可选)
+- **数据库**: SQLite (默认) / PostgreSQL 18 (可选)
+- **消息队列**: 文件系统 (默认) / Redis 7.4 (可选)
 
 ---
 
@@ -174,7 +174,6 @@ docker compose up -d
 - **macOS专用包** - 运行.sh即可安装  
 - **Linux专用包** - 含守护进程，生产可用
 - **Docker镜像** 🐳 - 多架构（amd64/arm64）
-- **Kubernetes配置** ☸️ - 高可用生产部署
 - **源码包** 💻 - 开发者可修改
 
 查看 [Release选择指南](docs/RELEASE_GUIDE.md) 了解详情
@@ -182,7 +181,6 @@ docker compose up -d
 #### 📦 部署文档
 - [Release下载指南](RELEASE_DOWNLOAD.md) - 选择适合的版本
 - [Docker部署指南](docs/DOCKER_SETUP.md) - Docker完整文档
-- [Kubernetes部署](k8s/README.md) - K8s生产环境
 - [一键安装脚本](一键安装.sh) - Linux/macOS自动部署
 - [一键安装脚本](一键安装.bat) - Windows自动部署
 - [守护进程部署](docs/DAEMON.md) - 6种守护进程方案

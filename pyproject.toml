@@ -1,10 +1,10 @@
 [project]
 name = "chaoxing"
-version = "2.4.0"
+version = "2.5.0"
 description = "超星学习通/超星尔雅/泛雅超星全自动无人值守完成任务点"
 readme = "README.md"
 license = { file = "LICENSE" }
-requires-python = ">=3.10,<4.0"
+requires-python = ">=3.12,<4.0"
 dependencies = [
     "argparse>=1.4.0",
     "beautifulsoup4>=4.13.3",

@@ -1,21 +1,20 @@
 # -*- coding: utf-8 -*-
 import argparse
 import configparser
-import random
-import time
+
 import sys
-import os
+
 import traceback
 from urllib3 import disable_warnings, exceptions
 
 from api.logger import logger
 from api.base import Chaoxing, Account
-from api.exceptions import LoginError, InputFormatError, MaxRollBackExceeded
+from api.exceptions import LoginError, InputFormatError
 from api.answer import Tiku
 from api.notification import Notification
 from api.config_validator import ConfigValidator
 from api.secure_config import SecureConfig
-from api.course_processor import CourseProcessor, RollBackManager
+from api.course_processor import CourseProcessor
 
 # 关闭警告
 disable_warnings(exceptions.InsecureRequestWarning)
@@ -95,7 +94,7 @@ def load_config_from_file(config_path):
             try:
                 common_config["speed"] = float(common_config["speed"])
             except (ValueError, TypeError):
-                logger.warning(f"speed配置无效，使用默认值1.0")
+                logger.warning("speed配置无效，使用默认值1.0")
                 common_config["speed"] = 1.0
         # 处理notopen_action，设置默认值为retry
         if "notopen_action" not in common_config:

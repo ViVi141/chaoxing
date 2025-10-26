@@ -4,7 +4,6 @@
 用于将配置文件中的明文密码加密
 """
 import sys
-import os
 from pathlib import Path
 
 # 添加父目录到sys.path

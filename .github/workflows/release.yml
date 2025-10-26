@@ -1,7 +1,7 @@
 name: Release Build - All Platforms
 
 # 全平台自动构建Release版本
-# 支持: Windows/Mac/Linux + Docker + K8s
+# 支持: Windows/Mac/Linux + Docker
 
 on:
   push:
@@ -165,7 +165,6 @@ jobs:
           # 如果有其他web子目录（nginx等），也复制
           [ -d "web/nginx" ] && cp -r web/nginx release-package/web/ || true
           [ -f "web/docker-compose.yml" ] && cp web/docker-compose.yml release-package/web/ || true
-          [ -f "web/docker-compose.simple.yml" ] && cp web/docker-compose.simple.yml release-package/web/ || true
           
           # 复制平台特定脚本
           if [ "${{ matrix.platform }}" = "windows-x64" ]; then
@@ -182,7 +181,7 @@ jobs:
           fi
           
           # 复制文档（从docs目录）
-          cp docs/DAEMON_QUICK_REF.md release-package/ 2>/dev/null || echo "DAEMON_QUICK_REF.md not found, skipping"
+          cp docs/DAEMON.md release-package/ 2>/dev/null || echo "DAEMON.md not found, skipping"
           
           # 解压前端构建产物（修复路径）
           mkdir -p release-package/web/frontend
@@ -287,7 +286,7 @@ jobs:
           cp 一键安装.bat source-package/
           
           # 复制文档（从docs目录）
-          cp docs/DAEMON_QUICK_REF.md source-package/ 2>/dev/null || echo "DAEMON_QUICK_REF.md not found, skipping"
+          cp docs/DAEMON.md source-package/ 2>/dev/null || echo "DAEMON.md not found, skipping"
           
           tar -czf chaoxing-${GITHUB_REF_NAME}-source.tar.gz source-package/
           
@@ -296,10 +295,7 @@ jobs:
           tar -xzf artifacts/frontend-dist/frontend-dist.tar.gz -C frontend-only/
           tar -czf chaoxing-${GITHUB_REF_NAME}-frontend-only.tar.gz -C frontend-only dist/
           
-          # 创建K8s配置包
-          mkdir -p k8s-configs
-          cp -r k8s/* k8s-configs/ 2>/dev/null || echo "No k8s dir"
-          tar -czf chaoxing-${GITHUB_REF_NAME}-k8s.tar.gz k8s-configs/
+          # K8s配置已移除
       
       - name: 整理发布文件
         run: |
@@ -313,7 +309,7 @@ jobs:
           # 移动通用包
           mv chaoxing-${GITHUB_REF_NAME}-source.tar.gz release-files/
           mv chaoxing-${GITHUB_REF_NAME}-frontend-only.tar.gz release-files/
-          mv chaoxing-${GITHUB_REF_NAME}-k8s.tar.gz release-files/
+          # K8s包已移除
           
           ls -lh release-files/
       
@@ -352,11 +348,11 @@ jobs:
           - ✅ 多架构支持（amd64/arm64）
           - ✅ 一键部署
           
-          #### 5. Kubernetes集群
-          - **chaoxing-${VERSION}-k8s.tar.gz**
-          - ✅ K8s完整配置
-          - ✅ Helm Chart
-          - ✅ 生产就绪
+          #### 5. 开发者
+          - **chaoxing-${VERSION}-source.tar.gz**
+          - ✅ 完整源码
+          - ✅ 不含前端构建
+          - ✅ 需要自行构建
           
           ---
           
@@ -374,7 +370,6 @@ jobs:
           |------|------|------|------|
           | **source.tar.gz** | 源码包 | ~30MB | 不含前端构建，需自行build |
           | **frontend-only.tar.gz** | 前端更新 | ~5MB | 仅前端dist，用于更新 |
-          | **k8s.tar.gz** | K8s配置 | ~50KB | Kubernetes部署配置 |
           
           ### Docker镜像🐳
           ```bash
