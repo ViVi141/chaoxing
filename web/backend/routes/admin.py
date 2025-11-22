@@ -18,7 +18,7 @@ from schemas import (
     PaginatedResponse,
     UserUpdate,
 )
-from auth import require_admin
+from routes.auth import require_admin
 from config import settings
 import sys
 from pathlib import Path

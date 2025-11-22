@@ -20,7 +20,7 @@ from schemas import (
     PaginatedResponse,
     TaskLogResponse,
 )
-from auth import get_current_active_user
+from routes.auth import get_current_active_user
 from config import settings
 from config_manager import config_manager
 import sys

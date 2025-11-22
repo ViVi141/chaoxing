@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 import redis as redis_client
 
 from models import User
-from auth import require_admin
+from routes.auth import require_admin
 from api.logger import logger
 from database_migration import DatabaseMigrator, DatabaseMigrationError
 

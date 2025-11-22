@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 from database import get_db
 from models import User, SystemConfig
-from auth import require_admin
+from routes.auth import require_admin
 from config import settings
 from config_manager import config_manager
 import sys

@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Dict, Any
 from loguru import logger
 
-from auth import get_current_active_user
+from routes.auth import get_current_active_user
 from database import get_db
 from models import User
 from api.base import Chaoxing, Account

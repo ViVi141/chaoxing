@@ -10,7 +10,7 @@ from database import get_db
 from models import User, UserConfig
 from schemas import UserConfigResponse, UserConfigUpdate, UserUpdate, MessageResponse
 import schemas
-from auth import get_current_active_user
+from routes.auth import get_current_active_user
 import sys
 from pathlib import Path
 

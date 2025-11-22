@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db, AsyncSessionLocal
 from models import User, Task
-from auth import AuthService
+from routes.auth import AuthService
 import json
 import asyncio
 import sys
