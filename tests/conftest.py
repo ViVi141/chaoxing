@@ -7,6 +7,14 @@ import sys
 import os
 from pathlib import Path
 
+# 在导入任何其他模块之前设置测试环境变量
+# 这很重要，因为database.py在导入时会立即创建引擎
+os.environ["TESTING"] = "1"
+os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
+os.environ["SECRET_KEY"] = "test-secret-key-for-testing-only"
+os.environ["DEBUG"] = "True"
+os.environ["DEPLOY_MODE"] = "simple"  # 使用简单模式（SQLite）
+
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
@@ -19,7 +27,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
-# 导入模型
+# 导入模型（此时环境变量已设置，database.py会使用正确的数据库URL）
 from web.backend.database import Base
 from web.backend.models import User, UserConfig, Task, SystemConfig
 
@@ -177,16 +185,18 @@ def pytest_collection_modifyitems(items):
 
 
 # 测试环境配置
+# 注意：环境变量已在文件顶部设置，这里不再重复设置
+# 这个fixture保留用于其他可能的测试环境配置
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_env():
-    """设置测试环境变量"""
-    os.environ["TESTING"] = "1"
-    os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
-    os.environ["SECRET_KEY"] = "test-secret-key-for-testing-only"
-    os.environ["DEBUG"] = "True"
-
+    """设置测试环境变量（已在文件顶部设置）"""
+    # 环境变量已在文件顶部设置，这里只是确保它们存在
+    assert os.environ.get("DATABASE_URL") == "sqlite+aiosqlite:///:memory:"
+    assert os.environ.get("TESTING") == "1"
+    
     yield
-
-    # 清理
-    for key in ["TESTING", "DATABASE_URL", "SECRET_KEY", "DEBUG"]:
-        os.environ.pop(key, None)
+    
+    # 测试结束后不清理环境变量，因为可能有其他测试需要
+    # 如果需要清理，可以取消下面的注释
+    # for key in ["TESTING", "DATABASE_URL", "SECRET_KEY", "DEBUG", "DEPLOY_MODE"]:
+    #     os.environ.pop(key, None)

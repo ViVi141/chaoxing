@@ -189,8 +189,9 @@ jobs:
       
       - name: 运行集成测试
         env:
-          DATABASE_URL: postgresql://test:test@localhost:5432/test_db
+          DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test_db
           REDIS_URL: redis://localhost:6379/0
+          DEPLOY_MODE: standard
         run: |
           pytest tests/integration/ -v --cov=web/backend --cov-report=xml --cov-report=term
       
