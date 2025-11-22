@@ -403,9 +403,10 @@ jobs:
           
           #### 4. Docker用户
           - **直接拉取镜像**
-          - `docker pull ghcr.io/${GITHUB_REPOSITORY}:${GITHUB_REF_NAME}`
+          - `docker pull ghcr.io/vivi141/chaoxing:latest`
           - ✅ 多架构支持（amd64/arm64）
           - ✅ 一键部署
+          - ✅ 自动获取最新版本
           
           #### 5. 开发者
           - **chaoxing-${VERSION}-source.tar.gz**
