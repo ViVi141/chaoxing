@@ -43,7 +43,7 @@ class Settings(BaseSettings):
 
     # 应用配置
     APP_NAME: str = Field(default="超星学习通多用户管理平台", description="应用名称")
-    VERSION: str = Field(default="2.5.7", description="版本号")
+    VERSION: str = Field(default="2.5.8", description="版本号")
     DEBUG: bool = Field(default=False, description="调试模式")
     HOST: str = Field(default="0.0.0.0", description="监听地址")
     PORT: int = Field(default=8000, description="监听端口")

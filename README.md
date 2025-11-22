@@ -1,7 +1,7 @@
 # 超星学习通自动化完成任务点（增强版）
 
 <p align="center">
-  <a href="https://github.com/ViVi141/chaoxing"><img src="https://img.shields.io/badge/version-2.5.7-blue" alt="Version" /></a>
+  <a href="https://github.com/ViVi141/chaoxing"><img src="https://img.shields.io/badge/version-2.5.8-blue" alt="Version" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-green" alt="License" /></a>
   <a href="https://github.com/ViVi141/chaoxing/pkgs/container/chaoxing"><img src="https://img.shields.io/badge/docker-ghcr.io-2496ED?logo=docker" alt="Docker" /></a>
   <img src="https://img.shields.io/badge/size-750KB-blue" alt="Release Size" />
@@ -17,7 +17,7 @@
 
 > 基于[Samueli924/chaoxing](https://github.com/Samueli924/chaoxing)的增强版本，提供命令行和Web两种使用方式
 > 
-> 🆕 **v2.5.7更新**: 前端静态文件服务 + Release下载指南统一使用latest标签
+> 🆕 **v2.5.8更新**: 增强默认管理员创建逻辑 + PostgreSQL数据库连接优化
 
 ---
 

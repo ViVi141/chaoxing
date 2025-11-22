@@ -187,6 +187,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
         logger.error(f"❌ 创建数据库表失败: {e}", exc_info=True)
         raise
 
+    # 确保表创建事务已提交，然后初始化默认管理员
+    # 使用新的会话来创建管理员，避免事务冲突
+    import asyncio
+    await asyncio.sleep(0.1)  # 短暂延迟，确保表创建事务完全提交
+    
     # 初始化默认管理员
     await init_default_admin()
 
