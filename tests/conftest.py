@@ -22,6 +22,7 @@ sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(project_root / "web" / "backend"))
 
 import pytest
+import pytest_asyncio
 import asyncio
 from typing import AsyncGenerator, Generator
 from sqlalchemy import create_engine
@@ -35,12 +36,22 @@ from web.backend.models import User
 # 注意：不再需要自定义event_loop fixture
 # pytest-asyncio会自动管理事件循环
 
+# 创建session级别的event_loop（用于session级别的异步fixture）
+# 注意：event_loop fixture必须是同步的，返回事件循环对象
+@pytest.fixture(scope="session")
+def event_loop():
+    """创建session级别的事件循环"""
+    policy = asyncio.get_event_loop_policy()
+    loop = policy.new_event_loop()
+    yield loop
+    loop.close()
+
+
 # 在测试会话开始时初始化数据库表
-@pytest.fixture(scope="session", autouse=True)
-async def initialize_database():
+@pytest_asyncio.fixture(scope="session", autouse=True)
+async def initialize_database(event_loop):
     """初始化数据库表（在测试会话开始时执行一次）"""
-    # 确保表已创建
-    # 使用全局引擎创建表
+    # 使用全局异步引擎创建表，确保使用同一个数据库
     async with global_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
