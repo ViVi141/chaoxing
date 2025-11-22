@@ -125,14 +125,12 @@ http://localhost:8000
 
 **Docker Hub**（国内可能较慢）:
 ```bash
-docker pull vivi141/chaoxing:latest      # 最新版
-docker pull vivi141/chaoxing:2.3.0       # 指定版本
+docker pull vivi141/chaoxing:latest
 ```
 
 **GitHub Container Registry**（推荐）:
 ```bash
 docker pull ghcr.io/vivi141/chaoxing:latest
-docker pull ghcr.io/vivi141/chaoxing:2.3.0
 ```
 
 **支持架构**:

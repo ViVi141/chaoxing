@@ -21,8 +21,7 @@
 - ✅ `linux/arm64` - ARM64服务器/树莓派
 
 **版本标签**:
-- `latest` - 最新稳定版
-- `2.3.0` - 指定版本号
+- `latest` - 最新稳定版（推荐使用）
 - `main` - 主分支最新（开发版）
 
 ---
@@ -249,16 +248,6 @@ docker compose up -d
 docker compose logs -f backend
 ```
 
-### 更新到指定版本
-
-```bash
-# 修改docker-compose.yml
-# backend:
-#   image: ghcr.io/vivi141/chaoxing:2.3.0
-
-docker compose down
-docker compose up -d
-```
 
 ---
 

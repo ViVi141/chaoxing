@@ -57,10 +57,7 @@
 #### Docker 部署
 
 ```bash
-# 拉取最新镜像
-docker pull ghcr.io/vivi141/chaoxing:2.5.6
-
-# 或使用 latest 标签
+# 拉取最新镜像（推荐使用 latest 标签）
 docker pull ghcr.io/vivi141/chaoxing:latest
 
 # 启动服务
@@ -156,10 +153,7 @@ docker-compose logs backend
 #### Docker 部署
 
 ```bash
-# 拉取最新镜像
-docker pull ghcr.io/vivi141/chaoxing:2.5.5
-
-# 或使用 latest 标签
+# 拉取最新镜像（推荐使用 latest 标签）
 docker pull ghcr.io/vivi141/chaoxing:latest
 
 # 启动服务
@@ -258,10 +252,7 @@ docker-compose logs backend
 #### Docker 部署
 
 ```bash
-# 拉取最新镜像
-docker pull ghcr.io/vivi141/chaoxing:2.5.4
-
-# 或使用 latest 标签
+# 拉取最新镜像（推荐使用 latest 标签）
 docker pull ghcr.io/vivi141/chaoxing:latest
 
 # 启动服务

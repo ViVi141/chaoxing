@@ -434,13 +434,13 @@ jobs:
           ```bash
           # GitHub Container Registry（镜像名称自动转为小写）
           # 如果仓库是 ViVi141/chaoxing，镜像会是 vivi141/chaoxing
-          docker pull ghcr.io/vivi141/chaoxing:${GITHUB_REF_NAME}
+          # 推荐使用 latest 标签（自动获取最新版本）
           docker pull ghcr.io/vivi141/chaoxing:latest
           ```
           
           **支持架构**: linux/amd64, linux/arm64
           
-          **注意**: Docker镜像发布到GitHub Container Registry，仓库名称自动转换为小写。
+          **注意**: Docker镜像发布到GitHub Container Registry，仓库名称自动转换为小写。推荐使用 `latest` 标签以自动获取最新版本。
           
           ---
           
@@ -448,8 +448,8 @@ jobs:
           
           ### 方式1：Docker（最简单）
           ```bash
-          # 拉取镜像（镜像名称为小写）
-          docker pull ghcr.io/vivi141/chaoxing:${GITHUB_REF_NAME}
+          # 拉取最新镜像（推荐使用 latest 标签）
+          docker pull ghcr.io/vivi141/chaoxing:latest
           
           # 启动完整环境
           wget https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/main/web/docker-compose.yml
