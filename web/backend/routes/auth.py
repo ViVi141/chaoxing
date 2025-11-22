@@ -369,3 +369,68 @@ async def reset_password(
     logger.info(f"用户{user.username}重置密码成功")
 
     return {"message": "密码重置成功，请使用新密码登录"}
+
+
+def require_admin(current_user: User = Depends(get_current_active_user)) -> User:
+    """
+    要求管理员权限的依赖函数
+
+    Args:
+        current_user: 当前用户（从get_current_active_user获取）
+
+    Returns:
+        User: 管理员用户对象
+
+    Raises:
+        HTTPException: 用户不是管理员
+    """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="需要管理员权限"
+        )
+    return current_user
+
+
+async def init_default_admin():
+    """
+    初始化默认管理员账号（如果不存在）
+    在应用启动时调用
+    """
+    from database import AsyncSessionLocal
+    from config import settings
+    
+    async with AsyncSessionLocal() as db:
+        # 检查是否已存在管理员
+        result = await db.execute(
+            select(User).where(User.username == settings.DEFAULT_ADMIN_USERNAME)
+        )
+        admin = result.scalar_one_or_none()
+        
+        if not admin:
+            # 创建默认管理员
+            admin = User(
+                username=settings.DEFAULT_ADMIN_USERNAME,
+                email=settings.DEFAULT_ADMIN_EMAIL,
+                role="admin",
+                is_active=True,
+                email_verified=True,  # 默认管理员邮箱已验证
+            )
+            admin.set_password(settings.DEFAULT_ADMIN_PASSWORD)
+            
+            # 创建用户配置
+            from models import UserConfig
+            config = UserConfig(user=admin)
+            
+            db.add(admin)
+            db.add(config)
+            await db.commit()
+            await db.refresh(admin)
+            
+            logger.info(f"✅ 默认管理员已创建: {admin.username}")
+        else:
+            logger.debug(f"默认管理员已存在: {admin.username}")
+
+
+# 重新导出，供其他路由文件使用
+# 这样其他文件可以从 auth 导入，而不需要直接导入 security
+__all__ = ["router", "AuthService", "get_current_active_user", "require_admin", "init_default_admin"]

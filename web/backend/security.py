@@ -3,15 +3,145 @@
 安全工具模块 - 额外的安全检查和辅助函数
 """
 from typing import Optional
-from fastapi import HTTPException, status
+from datetime import datetime, timedelta, timezone
+from fastapi import HTTPException, status, Depends
+from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
 from models import User, Task
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from database import get_db
+from config import settings
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from api.logger import logger
+
+# OAuth2 密码流
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+
+
+class AuthService:
+    """JWT认证服务"""
+
+    @staticmethod
+    def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+        """
+        创建JWT访问令牌
+
+        Args:
+            data: 要编码的数据（通常包含 sub, role, username）
+            expires_delta: 过期时间增量（可选）
+
+        Returns:
+            str: JWT令牌
+        """
+        to_encode = data.copy()
+        
+        if expires_delta:
+            expire = datetime.now(timezone.utc) + expires_delta
+        else:
+            expire = datetime.now(timezone.utc) + timedelta(
+                minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+            )
+        
+        to_encode.update({"exp": expire})
+        encoded_jwt = jwt.encode(
+            to_encode, 
+            settings.JWT_SECRET_KEY, 
+            algorithm=settings.JWT_ALGORITHM
+        )
+        return encoded_jwt
+
+    @staticmethod
+    def verify_token(token: str) -> Optional[dict]:
+        """
+        验证JWT令牌
+
+        Args:
+            token: JWT令牌
+
+        Returns:
+            dict: 解码后的载荷，如果无效则返回None
+        """
+        try:
+            payload = jwt.decode(
+                token, 
+                settings.JWT_SECRET_KEY, 
+                algorithms=[settings.JWT_ALGORITHM]
+            )
+            return payload
+        except JWTError:
+            return None
+
+
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db)
+) -> User:
+    """
+    从JWT令牌获取当前用户
+
+    Args:
+        token: JWT令牌
+        db: 数据库会话
+
+    Returns:
+        User: 当前用户对象
+
+    Raises:
+        HTTPException: 令牌无效或用户不存在
+    """
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="无法验证凭据",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    payload = AuthService.verify_token(token)
+    if payload is None:
+        raise credentials_exception
+    
+    user_id: str = payload.get("sub")
+    if user_id is None:
+        raise credentials_exception
+    
+    try:
+        user_id_int = int(user_id)
+    except ValueError:
+        raise credentials_exception
+    
+    result = await db.execute(select(User).where(User.id == user_id_int))
+    user = result.scalar_one_or_none()
+    
+    if user is None:
+        raise credentials_exception
+    
+    return user
+
+
+async def get_current_active_user(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    """
+    获取当前活跃用户（必须是激活状态）
+
+    Args:
+        current_user: 当前用户（从get_current_user获取）
+
+    Returns:
+        User: 活跃用户对象
+
+    Raises:
+        HTTPException: 用户未激活
+    """
+    if not current_user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="用户账号已被禁用"
+        )
+    return current_user
 
 
 async def verify_task_ownership(
