@@ -93,7 +93,7 @@ jobs:
       - name: 验证关键模块
         run: |
           python -c "
-          import requests, httpx, fastapi, sqlalchemy, cryptography, lxml, beautifulsoup4
+          import requests, httpx, fastapi, sqlalchemy, cryptography, lxml, bs4
           print('✓ 所有关键模块导入成功')
           "
   

@@ -41,6 +41,7 @@ WEB_DEPS = [
     "sqlalchemy",
     "alembic",
     "pydantic",
+    "pydantic-settings",
     "python-jose",
     "passlib",
     "python-multipart",
@@ -88,6 +89,8 @@ def check_module(module_name: str) -> Tuple[bool, str]:
             import_name = "email_validator"
         elif module_name == "python-dotenv":
             import_name = "dotenv"
+        elif module_name == "pydantic-settings":
+            import_name = "pydantic_settings"
         
         importlib.import_module(import_name)
         return True, ""
