@@ -9,8 +9,9 @@ from pathlib import Path
 
 # 在导入任何其他模块之前设置测试环境变量
 # 这很重要，因为database.py在导入时会立即创建引擎
+# 使用共享内存数据库，确保所有连接使用同一个数据库
 os.environ["TESTING"] = "1"
-os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
+os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///file::memory:?cache=shared"
 os.environ["SECRET_KEY"] = "test-secret-key-for-testing-only"
 os.environ["DEBUG"] = "True"
 os.environ["DEPLOY_MODE"] = "simple"  # 使用简单模式（SQLite）
@@ -31,32 +32,35 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from web.backend.database import Base
 from web.backend.models import User, UserConfig, Task, SystemConfig
 
-
-@pytest.fixture(scope="session")
-def event_loop():
-    """创建事件循环"""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
+# 注意：不再需要自定义event_loop fixture
+# pytest-asyncio会自动管理事件循环
 
 
 @pytest.fixture(scope="function")
 async def async_db_engine():
     """异步数据库引擎（测试用）"""
-    # 使用内存SQLite数据库
-    DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+    # 使用共享内存SQLite数据库，确保所有连接使用同一个数据库
+    # 注意：必须与conftest.py顶部设置的DATABASE_URL一致
+    DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite+aiosqlite:///file::memory:?cache=shared")
 
-    engine = create_async_engine(DATABASE_URL, echo=False, future=True)
+    engine = create_async_engine(
+        DATABASE_URL, 
+        echo=False, 
+        future=True,
+        connect_args={"check_same_thread": False, "timeout": 20}  # SQLite特定配置
+    )
 
     # 创建所有表
+    # Base.metadata是独立的，不绑定到特定引擎
+    # 使用这个引擎创建表，确保表在共享内存数据库中
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
     yield engine
 
-    # 清理
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+    # 清理（可选，因为内存数据库会在连接关闭时自动清理）
+    # async with engine.begin() as conn:
+    #     await conn.run_sync(Base.metadata.drop_all)
 
     await engine.dispose()
 
@@ -191,7 +195,9 @@ def pytest_collection_modifyitems(items):
 def setup_test_env():
     """设置测试环境变量（已在文件顶部设置）"""
     # 环境变量已在文件顶部设置，这里只是确保它们存在
-    assert os.environ.get("DATABASE_URL") == "sqlite+aiosqlite:///:memory:"
+    expected_db_url = "sqlite+aiosqlite:///file::memory:?cache=shared"
+    actual_db_url = os.environ.get("DATABASE_URL")
+    assert actual_db_url == expected_db_url, f"Expected DATABASE_URL={expected_db_url}, got {actual_db_url}"
     assert os.environ.get("TESTING") == "1"
     
     yield
