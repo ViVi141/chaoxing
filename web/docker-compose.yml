@@ -60,7 +60,7 @@ services:
   # Celery Worker（异步任务处理）
   celery:
     # 方式1：使用预构建镜像（推荐，快速启动）
-    image: ghcr.io/vivi141/chaoxing:2.5.4
+    image: ghcr.io/vivi141/chaoxing:latest
     # 方式2：从源码构建（开发时使用）
     # build:
     #   context: ..
