@@ -60,7 +60,8 @@ docker compose up -d
 docker compose logs -f backend
 
 # 7. 访问
-# http://localhost:8000
+# 前端界面：http://localhost:8000
+# API 文档：http://localhost:8000/api/docs
 ```
 
 ### 方式2：从源码构建
@@ -74,7 +75,8 @@ cd chaoxing/web
 docker compose up -d
 
 # 3. 访问
-# http://localhost:8000
+# 前端界面：http://localhost:8000
+# API 文档：http://localhost:8000/api/docs
 ```
 
 ---
@@ -153,6 +155,46 @@ services:
       - "8000:8000"
     restart: unless-stopped
 ```
+
+---
+
+## 🌐 访问说明
+
+### 端口配置
+
+**统一端口：`8000`**
+
+- **前端界面**：`http://localhost:8000`
+  - 访问 Web 管理界面
+  - 前端和后端统一通过端口 8000 提供服务
+  
+- **API 文档**：`http://localhost:8000/api/docs`
+  - Swagger UI 交互式 API 文档
+  - 可用于测试 API 接口
+
+- **API 端点**：`http://localhost:8000/api/*`
+  - 所有 API 请求以 `/api/` 开头
+  - 例如：`/api/auth/login`、`/api/tasks`
+
+- **WebSocket**：`ws://localhost:8000/ws/*`
+  - WebSocket 连接以 `/ws/` 开头
+  - 例如：`/ws/connect`
+
+### 生产环境部署
+
+如果需要在生产环境部署，建议：
+
+1. **使用 Nginx 反向代理**（推荐）
+   - 配置 SSL/TLS 证书
+   - 设置域名和端口映射
+   - 参考下方 Nginx 配置示例
+
+2. **修改端口映射**
+   ```yaml
+   ports:
+     - "80:8000"    # HTTP
+     - "443:8000"   # HTTPS（需要额外配置）
+   ```
 
 ---
 

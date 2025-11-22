@@ -121,7 +121,9 @@ docker compose up -d
 - ✅ 高性能
 - ✅ 适合20+人
 
-访问：http://localhost:8000
+访问：
+- **前端界面**：http://localhost:8000（前端和后端统一端口）
+- **API 文档**：http://localhost:8000/api/docs
 
 **Docker镜像**: 
 - GitHub Container Registry: `ghcr.io/vivi141/chaoxing:latest` ✅ **免费**

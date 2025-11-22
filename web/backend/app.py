@@ -12,9 +12,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from database import engine, Base
 from routes.auth import init_default_admin
@@ -146,7 +147,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     logger.info(f"✅ 数据目录已就绪: {data_dir.absolute()}")
 
     # 配置已从 .env 加载（不再需要动态加载）
-    logger.info(f"✅ 配置已从 .env 加载")
+    logger.info("✅ 配置已从 .env 加载")
     logger.info(f"   数据库: {settings.DATABASE_URL}")
     logger.info(f"   部署模式: {settings.DEPLOY_MODE}")
 
@@ -207,18 +208,50 @@ app.include_router(migration_router, prefix="/api/migration", tags=["数据库�
 app.include_router(websocket_router, prefix="/ws", tags=["WebSocket"])
 
 # 静态文件服务（前端构建文件）
-# app.mount("/static", StaticFiles(directory="static"), name="static")
+# 前端构建文件路径：web/frontend/dist
+frontend_dist_path = Path(__file__).parent.parent / "frontend" / "dist"
 
-
-@app.get("/")
-async def root():
-    """根路径"""
-    return {
-        "message": "超星学习通多用户管理平台 API",
-        "version": "1.0.0",
-        "docs": "/api/docs",
-        "status": "running",
-    }
+# 如果前端构建文件存在，提供静态文件服务
+if frontend_dist_path.exists() and (frontend_dist_path / "index.html").exists():
+    # 提供静态资源（JS、CSS、图片等）
+    assets_path = frontend_dist_path / "assets"
+    if assets_path.exists():
+        app.mount("/assets", StaticFiles(directory=str(assets_path)), name="assets")
+    
+    # 提供其他静态文件（如 favicon.ico, vite.svg 等）
+    # 注意：这个路由必须在所有 API 路由之后注册，作为 fallback
+    @app.get("/{path:path}", include_in_schema=False)
+    async def serve_frontend(path: str):
+        """提供前端页面（SPA路由支持）"""
+        # API 和 WebSocket 路由应该已经被前面的路由处理了
+        # 这里只处理前端静态文件和 SPA 路由
+        
+        # 检查请求的文件是否存在
+        file_path = frontend_dist_path / path
+        if file_path.exists() and file_path.is_file():
+            return FileResponse(str(file_path))
+        
+        # 对于所有其他路径，返回 index.html（SPA路由）
+        index_file = frontend_dist_path / "index.html"
+        if index_file.exists():
+            return FileResponse(str(index_file))
+        
+        raise HTTPException(status_code=404, detail="Not found")
+    
+    logger.info(f"✅ 前端静态文件服务已启用: {frontend_dist_path}")
+else:
+    logger.warning(f"⚠️  前端构建文件未找到: {frontend_dist_path}，仅提供 API 服务")
+    
+    @app.get("/")
+    async def root():
+        """根路径（仅API模式）"""
+        return {
+            "message": "超星学习通多用户管理平台 API",
+            "version": "1.0.0",
+            "docs": "/api/docs",
+            "status": "running",
+            "frontend": "not available",
+        }
 
 
 @app.get("/api/health")

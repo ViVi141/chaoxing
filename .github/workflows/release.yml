@@ -384,32 +384,33 @@ jobs:
           ### 🌟 推荐下载（按使用场景）
           
           #### 1. 普通用户（Windows）
-          - **chaoxing-${VERSION}-windows-x64.zip**
+          - **chaoxing-*-windows-x64.zip**（请下载最新版本）
           - ✅ Windows专用
           - ✅ 包含前端构建
           - ✅ 双击.bat即可安装
           
           #### 2. 普通用户（Mac）
-          - **chaoxing-${VERSION}-macos-x64.tar.gz**
+          - **chaoxing-*-macos-x64.tar.gz**（请下载最新版本）
           - ✅ macOS专用
           - ✅ 包含前端构建
           - ✅ 运行.sh即可安装
           
           #### 3. Linux服务器
-          - **chaoxing-${VERSION}-linux-x64.tar.gz**
+          - **chaoxing-*-linux-x64.tar.gz**（请下载最新版本）
           - ✅ Linux专用
           - ✅ 包含前端构建
           - ✅ 支持守护进程
           
-          #### 4. Docker用户
-          - **直接拉取镜像**
+          #### 4. Docker用户（推荐）⭐
+          - **直接拉取最新镜像**
           - `docker pull ghcr.io/vivi141/chaoxing:latest`
           - ✅ 多架构支持（amd64/arm64）
           - ✅ 一键部署
           - ✅ 自动获取最新版本
+          - ✅ 无需手动更新版本号
           
           #### 5. 开发者
-          - **chaoxing-${VERSION}-source.tar.gz**
+          - **chaoxing-*-source.tar.gz**（请下载最新版本）
           - ✅ 完整源码
           - ✅ 不含前端构建
           - ✅ 需要自行构建
@@ -421,15 +422,15 @@ jobs:
           ### 平台特定包（包含前端构建）⭐推荐
           | 文件 | 平台 | 大小 | 说明 |
           |------|------|------|------|
-          | **windows-x64.zip** | Windows | ~50MB | Windows专用，含前端 |
-          | **macos-x64.tar.gz** | macOS | ~50MB | macOS专用，含前端 |
-          | **linux-x64.tar.gz** | Linux | ~50MB | Linux专用，含前端 |
+          | **chaoxing-*-windows-x64.zip** | Windows | ~50MB | Windows专用，含前端（请下载最新版本） |
+          | **chaoxing-*-macos-x64.tar.gz** | macOS | ~50MB | macOS专用，含前端（请下载最新版本） |
+          | **chaoxing-*-linux-x64.tar.gz** | Linux | ~50MB | Linux专用，含前端（请下载最新版本） |
           
           ### 通用包
           | 文件 | 用途 | 大小 | 说明 |
           |------|------|------|------|
-          | **source.tar.gz** | 源码包 | ~30MB | 不含前端构建，需自行build |
-          | **frontend-only.tar.gz** | 前端更新 | ~5MB | 仅前端dist，用于更新 |
+          | **chaoxing-*-source.tar.gz** | 源码包 | ~30MB | 不含前端构建，需自行build（请下载最新版本） |
+          | **chaoxing-*-frontend-only.tar.gz** | 前端更新 | ~5MB | 仅前端dist，用于更新（请下载最新版本） |
           
           ### Docker镜像🐳
           ```bash
@@ -459,9 +460,11 @@ jobs:
           
           ### 方式2：源码部署
           ```bash
-          # 1. 下载并解压完整包
-          wget https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/chaoxing-${GITHUB_REF_NAME}-full.tar.gz
-          tar -xzf chaoxing-${GITHUB_REF_NAME}-full.tar.gz
+          # 1. 下载并解压最新完整包（请访问 Releases 页面下载最新版本）
+          # 下载链接：https://github.com/${GITHUB_REPOSITORY}/releases/latest
+          # 下载文件：chaoxing-*-linux-x64.tar.gz（Linux）或 chaoxing-*-windows-x64.zip（Windows）
+          tar -xzf chaoxing-*-linux-x64.tar.gz  # Linux
+          # 或解压 Windows zip 文件
           cd release-package
           
           # 2. 安装Python依赖
@@ -478,9 +481,8 @@ jobs:
           HEREDOC
           
           # 替换所有变量为实际值
-          sed -i "s/\${VERSION}/${VERSION}/g" release_notes.md
+          # 注意：文件名使用通配符（*），不替换版本号，引导用户下载最新版本
           sed -i "s|\${REPO}|${REPO}|g" release_notes.md
-          sed -i "s/\${GITHUB_REF_NAME}/${VERSION}/g" release_notes.md
           sed -i "s|\${GITHUB_REPOSITORY}|${REPO}|g" release_notes.md
           
           # 验证替换结果
