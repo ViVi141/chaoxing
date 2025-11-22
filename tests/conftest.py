@@ -49,7 +49,7 @@ def event_loop():
 
 # 在测试会话开始时初始化数据库表
 @pytest_asyncio.fixture(scope="session", autouse=True)
-async def initialize_database(event_loop):
+async def initialize_database():
     """初始化数据库表（在测试会话开始时执行一次）"""
     # 使用全局异步引擎创建表，确保使用同一个数据库
     async with global_engine.begin() as conn:
@@ -62,7 +62,9 @@ async def initialize_database(event_loop):
 async def async_db_engine():
     """异步数据库引擎（测试用）- 使用全局引擎"""
     # 使用全局引擎，确保所有连接使用同一个数据库
-    # 表已经在initialize_database fixture中创建
+    # 确保表已创建（每次测试前都检查并创建，以防万一）
+    async with global_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     yield global_engine
     # 不需要dispose，因为这是全局引擎
 
