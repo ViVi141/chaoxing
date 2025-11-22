@@ -504,7 +504,7 @@ export const SystemConfig = () => {
                       {window.location.protocol}//{window.location.hostname}:5000
                     </Descriptions.Item>
                     <Descriptions.Item label="配置版本">
-                      v2.2.3
+                      v2.5.4
                     </Descriptions.Item>
                   </Descriptions>
 
