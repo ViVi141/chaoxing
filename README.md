@@ -17,7 +17,7 @@
 
 > 基于[Samueli924/chaoxing](https://github.com/Samueli924/chaoxing)的增强版本，提供命令行和Web两种使用方式
 > 
-> 🆕 **v2.5.6更新**: 修复PostgreSQL时区错误 + DateTime字段时区支持
+> 🆕 **v2.5.7更新**: 前端静态文件服务 + Release下载指南统一使用latest标签
 
 ---
 
