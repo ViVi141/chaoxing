@@ -6,20 +6,20 @@ pytest配置文件
 import sys
 import os
 from pathlib import Path
-
-# 在导入任何其他模块之前设置测试环境变量
-# 这很重要，因为database.py在导入时会立即创建引擎
-# 使用共享内存数据库，确保所有连接使用同一个数据库
-os.environ["TESTING"] = "1"
-os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///file::memory:?cache=shared"
-os.environ["SECRET_KEY"] = "test-secret-key-for-testing-only"
-os.environ["DEBUG"] = "True"
-os.environ["DEPLOY_MODE"] = "simple"  # 使用简单模式（SQLite）
+import tempfile
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(project_root / "web" / "backend"))
+
+# Create temporary database file for tests
+test_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
+os.environ["TESTING"] = "1"
+os.environ["DATABASE_URL"] = f"sqlite+aiosqlite:///{test_db.name}"
+os.environ["SECRET_KEY"] = "test-secret-key-for-testing-only"
+os.environ["DEBUG"] = "True"
+os.environ["DEPLOY_MODE"] = "simple"  # 使用简单模式（SQLite）
 
 import pytest
 import pytest_asyncio
@@ -46,7 +46,6 @@ def event_loop():
     yield loop
     loop.close()
 
-
 # 在测试会话开始时初始化数据库表
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def initialize_database():
@@ -57,7 +56,6 @@ async def initialize_database():
     yield
     # 测试结束后清理（可选）
 
-
 @pytest.fixture(scope="function")
 async def async_db_engine():
     """异步数据库引擎（测试用）- 使用全局引擎"""
@@ -67,7 +65,6 @@ async def async_db_engine():
         await conn.run_sync(Base.metadata.create_all)
     yield global_engine
     # 不需要dispose，因为这是全局引擎
-
 
 @pytest.fixture(scope="function")
 async def async_db_session() -> AsyncGenerator[AsyncSession, None]:
@@ -83,7 +80,6 @@ async def async_db_session() -> AsyncGenerator[AsyncSession, None]:
         finally:
             await session.close()
 
-
 @pytest.fixture(scope="function")
 def sync_db_engine():
     """同步数据库引擎（测试用）"""
@@ -97,7 +93,6 @@ def sync_db_engine():
     Base.metadata.drop_all(engine)
     engine.dispose()
 
-
 @pytest.fixture(scope="function")
 def sync_db_session(sync_db_engine) -> Generator[Session, None, None]:
     """同步数据库会话"""
@@ -108,7 +103,6 @@ def sync_db_session(sync_db_engine) -> Generator[Session, None, None]:
         yield session
     finally:
         session.close()
-
 
 @pytest.fixture
 def test_user_data():
@@ -121,7 +115,6 @@ def test_user_data():
         "is_active": True,
     }
 
-
 @pytest.fixture
 def test_admin_data():
     """测试管理员数据"""
@@ -132,7 +125,6 @@ def test_admin_data():
         "role": "admin",
         "is_active": True,
     }
-
 
 @pytest.fixture
 async def test_user(async_db_session: AsyncSession, test_user_data):
@@ -152,7 +144,6 @@ async def test_user(async_db_session: AsyncSession, test_user_data):
 
     return user
 
-
 @pytest.fixture
 async def test_admin(async_db_session: AsyncSession, test_admin_data):
     """创建测试管理员"""
@@ -171,12 +162,10 @@ async def test_admin(async_db_session: AsyncSession, test_admin_data):
 
     return admin
 
-
 @pytest.fixture
 def mock_tiku_response():
     """模拟题库响应"""
     return {"success": True, "answer": "A", "confidence": 0.95}
-
 
 @pytest.fixture
 def mock_course_data():
@@ -189,14 +178,12 @@ def mock_course_data():
         "has_finished": False,
     }
 
-
 # 标记所有异步测试
 def pytest_collection_modifyitems(items):
     """自动标记异步测试"""
     for item in items:
         if asyncio.iscoroutinefunction(item.obj):
             item.add_marker(pytest.mark.asyncio)
-
 
 # 测试环境配置
 # 注意：环境变量已在文件顶部设置，这里不再重复设置
@@ -205,14 +192,20 @@ def pytest_collection_modifyitems(items):
 def setup_test_env():
     """设置测试环境变量（已在文件顶部设置）"""
     # 环境变量已在文件顶部设置，这里只是确保它们存在
-    expected_db_url = "sqlite+aiosqlite:///file::memory:?cache=shared"
+    expected_db_url = f"sqlite+aiosqlite:///{test_db.name}"
     actual_db_url = os.environ.get("DATABASE_URL")
     assert actual_db_url == expected_db_url, f"Expected DATABASE_URL={expected_db_url}, got {actual_db_url}"
     assert os.environ.get("TESTING") == "1"
     
     yield
     
-    # 测试结束后不清理环境变量，因为可能有其他测试需要
-    # 如果需要清理，可以取消下面的注释
-    # for key in ["TESTING", "DATABASE_URL", "SECRET_KEY", "DEBUG", "DEPLOY_MODE"]:
-    #     os.environ.pop(key, None)
+    # Cleanup temp file
+    try:
+        os.unlink(test_db.name)
+    except OSError:
+        pass
+
+# 测试结束后不清理环境变量，因为可能有其他测试需要
+# 如果需要清理，可以取消下面的注释
+# for key in ["TESTING", "DATABASE_URL", "SECRET_KEY", "DEBUG", "DEPLOY_MODE"]:
+#     os.environ.pop(key, None)
