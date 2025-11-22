@@ -30,8 +30,12 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # 导入模型（此时环境变量已设置，database.py会使用正确的数据库URL）
-from web.backend.database import Base, engine as global_engine, AsyncSessionLocal
-from web.backend.models import User
+# 注意：models.py 使用 from database import Base，所以需要确保路径正确
+# 由于我们已经将 web/backend 添加到 sys.path，可以直接导入 database
+from database import Base, engine as global_engine, AsyncSessionLocal, init_db
+# 导入所有模型，确保它们注册到 Base.metadata
+import models  # 这会触发所有模型的注册
+from models import User
 
 # 注意：不再需要自定义event_loop fixture
 # pytest-asyncio会自动管理事件循环
@@ -50,9 +54,8 @@ def event_loop():
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def initialize_database():
     """初始化数据库表（在测试会话开始时执行一次）"""
-    # 使用全局异步引擎创建表，确保使用同一个数据库
-    async with global_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # 使用 init_db() 函数创建表，确保使用正确的引擎
+    await init_db()
     yield
     # 测试结束后清理（可选）
 
@@ -61,23 +64,30 @@ async def async_db_engine():
     """异步数据库引擎（测试用）- 使用全局引擎"""
     # 使用全局引擎，确保所有连接使用同一个数据库
     # 确保表已创建（每次测试前都检查并创建，以防万一）
-    async with global_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    await init_db()
     yield global_engine
     # 不需要dispose，因为这是全局引擎
 
 @pytest.fixture(scope="function")
 async def async_db_session() -> AsyncGenerator[AsyncSession, None]:
     """异步数据库会话 - 使用全局引擎的会话工厂"""
+    # 确保表已创建（在创建会话之前）
+    await init_db()
+    
     # 使用全局的AsyncSessionLocal，确保使用正确的引擎
     async with AsyncSessionLocal() as session:
+        # 开始一个嵌套事务，测试结束后自动回滚
+        trans = await session.begin()
         try:
             yield session
-            await session.commit()
+            # 测试成功时不提交，让 finally 中的回滚清理数据
         except Exception:
             await session.rollback()
             raise
         finally:
+            # 每个测试后都回滚，确保数据隔离
+            if trans.is_active:
+                await session.rollback()
             await session.close()
 
 @pytest.fixture(scope="function")
