@@ -26,54 +26,49 @@ import asyncio
 from typing import AsyncGenerator, Generator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # 导入模型（此时环境变量已设置，database.py会使用正确的数据库URL）
-from web.backend.database import Base
-from web.backend.models import User, UserConfig, Task, SystemConfig
+from web.backend.database import Base, engine as global_engine, AsyncSessionLocal
+from web.backend.models import User
 
 # 注意：不再需要自定义event_loop fixture
 # pytest-asyncio会自动管理事件循环
 
+# 在测试会话开始时初始化数据库表
+@pytest.fixture(scope="session", autouse=True)
+async def initialize_database():
+    """初始化数据库表（在测试会话开始时执行一次）"""
+    # 确保表已创建
+    # 使用全局引擎创建表
+    async with global_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+    # 测试结束后清理（可选）
+
 
 @pytest.fixture(scope="function")
 async def async_db_engine():
-    """异步数据库引擎（测试用）"""
-    # 使用共享内存SQLite数据库，确保所有连接使用同一个数据库
-    # 注意：必须与conftest.py顶部设置的DATABASE_URL一致
-    DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite+aiosqlite:///file::memory:?cache=shared")
-
-    engine = create_async_engine(
-        DATABASE_URL, 
-        echo=False, 
-        future=True,
-        connect_args={"check_same_thread": False, "timeout": 20}  # SQLite特定配置
-    )
-
-    # 创建所有表
-    # Base.metadata是独立的，不绑定到特定引擎
-    # 使用这个引擎创建表，确保表在共享内存数据库中
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    yield engine
-
-    # 清理（可选，因为内存数据库会在连接关闭时自动清理）
-    # async with engine.begin() as conn:
-    #     await conn.run_sync(Base.metadata.drop_all)
-
-    await engine.dispose()
+    """异步数据库引擎（测试用）- 使用全局引擎"""
+    # 使用全局引擎，确保所有连接使用同一个数据库
+    # 表已经在initialize_database fixture中创建
+    yield global_engine
+    # 不需要dispose，因为这是全局引擎
 
 
 @pytest.fixture(scope="function")
-async def async_db_session(async_db_engine) -> AsyncGenerator[AsyncSession, None]:
-    """异步数据库会话"""
-    async_session = async_sessionmaker(
-        async_db_engine, class_=AsyncSession, expire_on_commit=False
-    )
-
-    async with async_session() as session:
-        yield session
+async def async_db_session() -> AsyncGenerator[AsyncSession, None]:
+    """异步数据库会话 - 使用全局引擎的会话工厂"""
+    # 使用全局的AsyncSessionLocal，确保使用正确的引擎
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
 
 
 @pytest.fixture(scope="function")
@@ -138,7 +133,8 @@ async def test_user(async_db_session: AsyncSession, test_user_data):
     user.set_password(test_user_data["password"])
 
     async_db_session.add(user)
-    await async_db_session.commit()
+    # 刷新以获取ID，但不提交（async_db_session会在fixture结束时自动提交）
+    await async_db_session.flush()
     await async_db_session.refresh(user)
 
     return user
@@ -156,7 +152,8 @@ async def test_admin(async_db_session: AsyncSession, test_admin_data):
     admin.set_password(test_admin_data["password"])
 
     async_db_session.add(admin)
-    await async_db_session.commit()
+    # 刷新以获取ID，但不提交（async_db_session会在fixture结束时自动提交）
+    await async_db_session.flush()
     await async_db_session.refresh(admin)
 
     return admin
