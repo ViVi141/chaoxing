@@ -1,7 +1,7 @@
 # 超星学习通自动化完成任务点（增强版）
 
 <p align="center">
-  <a href="https://github.com/ViVi141/chaoxing"><img src="https://img.shields.io/badge/version-2.5.6-blue" alt="Version" /></a>
+  <a href="https://github.com/ViVi141/chaoxing"><img src="https://img.shields.io/badge/version-2.5.7-blue" alt="Version" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-green" alt="License" /></a>
   <a href="https://github.com/ViVi141/chaoxing/pkgs/container/chaoxing"><img src="https://img.shields.io/badge/docker-ghcr.io-2496ED?logo=docker" alt="Docker" /></a>
   <img src="https://img.shields.io/badge/size-750KB-blue" alt="Release Size" />
