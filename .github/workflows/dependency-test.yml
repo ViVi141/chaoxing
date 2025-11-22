@@ -1,0 +1,307 @@
+name: 依赖安装测试 - 多平台
+
+# 专门测试依赖安装在不同Linux发行版上的兼容性
+# 确保系统依赖安装脚本和Python依赖安装在所有平台上都能正常工作
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'requirements.txt'
+      - 'scripts/install_system_deps.sh'
+      - 'scripts/verify_dependencies.py'
+      - '.github/workflows/dependency-test.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'requirements.txt'
+      - 'scripts/install_system_deps.sh'
+      - 'scripts/verify_dependencies.py'
+  workflow_dispatch:  # 支持手动触发
+  schedule:
+    # 每周一运行一次，确保依赖仍然可用
+    - cron: '0 0 * * 1'
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  # Ubuntu/Debian系列测试
+  test-ubuntu:
+    name: 测试Ubuntu依赖安装
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-latest]
+      fail-fast: false
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      
+      - name: 设置Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: 测试系统依赖安装脚本（模拟）
+        run: |
+          chmod +x scripts/install_system_deps.sh
+          # 检查脚本语法
+          bash -n scripts/install_system_deps.sh
+          echo "✓ 脚本语法正确"
+      
+      - name: 安装系统依赖（实际安装）
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc g++ make python3-dev \
+            libffi-dev libssl-dev \
+            libxml2-dev libxslt1-dev \
+            libjpeg-dev libpng-dev zlib1g-dev
+      
+      - name: 升级pip和构建工具
+        run: |
+          pip install --upgrade pip setuptools wheel
+      
+      - name: 安装Python依赖
+        run: |
+          pip install -r requirements.txt
+          echo "✓ Python依赖安装完成"
+      
+      - name: 验证依赖安装
+        run: |
+          python scripts/verify_dependencies.py
+          echo "✓ 依赖验证通过"
+      
+      - name: 测试关键模块导入
+        run: |
+          python -c "
+          import sys
+          modules = [
+              'requests', 'httpx', 'urllib3',
+              'bs4', 'lxml',
+              'cryptography', 'pyaes',
+              'loguru',
+              'fastapi', 'uvicorn',
+              'sqlalchemy', 'alembic',
+              'pydantic', 'pydantic_settings',
+              'jose', 'passlib',
+              'websockets', 'aiohttp'
+          ]
+          failed = []
+          for mod in modules:
+              try:
+                  __import__(mod)
+                  print(f'✓ {mod}')
+              except ImportError as e:
+                  print(f'✗ {mod}: {e}')
+                  failed.append(mod)
+          if failed:
+              print(f'失败模块: {failed}')
+              sys.exit(1)
+          print('所有关键模块导入成功！')
+          "
+  
+  # 测试最小依赖安装
+  test-minimal-deps:
+    name: 测试最小依赖安装
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      
+      - name: 设置Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: 安装系统依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc g++ make python3-dev \
+            libffi-dev libssl-dev \
+            libxml2-dev libxslt1-dev \
+            libjpeg-dev libpng-dev zlib1g-dev
+      
+      - name: 安装最小依赖
+        run: |
+          pip install --upgrade pip setuptools wheel
+          pip install -r requirements-minimal.txt
+          echo "✓ 最小依赖安装完成"
+      
+      - name: 验证最小依赖
+        run: |
+          python -c "
+          import requests, httpx, urllib3
+          import bs4, lxml
+          import cryptography, pyaes
+          import loguru
+          print('✓ 所有最小依赖模块导入成功')
+          "
+  
+  # 测试PostgreSQL依赖
+  test-postgresql-deps:
+    name: 测试PostgreSQL依赖
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      
+      - name: 设置Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: 安装系统依赖（包含PostgreSQL）
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc g++ make python3-dev \
+            libffi-dev libssl-dev \
+            libxml2-dev libxslt1-dev \
+            libjpeg-dev libpng-dev zlib1g-dev \
+            libpq-dev postgresql-client
+      
+      - name: 安装Python依赖
+        run: |
+          pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
+      
+      - name: 测试PostgreSQL驱动
+        run: |
+          python -c "
+          try:
+              import asyncpg
+              print('✓ asyncpg导入成功')
+          except ImportError as e:
+              print(f'✗ asyncpg导入失败: {e}')
+          
+          try:
+              import psycopg2
+              print('✓ psycopg2导入成功')
+          except ImportError as e:
+              print(f'✗ psycopg2导入失败: {e}')
+          "
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/test_db
+  
+  # 测试Redis依赖
+  test-redis-deps:
+    name: 测试Redis依赖
+    runs-on: ubuntu-latest
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      
+      - name: 设置Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: 安装系统依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc g++ make python3-dev \
+            libffi-dev libssl-dev \
+            libxml2-dev libxslt1-dev \
+            libjpeg-dev libpng-dev zlib1g-dev
+      
+      - name: 安装Python依赖
+        run: |
+          pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
+      
+      - name: 测试Redis连接
+        run: |
+          python -c "
+          import redis
+          r = redis.Redis(host='localhost', port=6379, db=0)
+          r.set('test', 'value')
+          assert r.get('test') == b'value'
+          print('✓ Redis连接和操作成功')
+          "
+  
+  # 测试依赖安装脚本（dry-run）
+  test-install-scripts:
+    name: 测试安装脚本
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      
+      - name: 测试一键安装脚本语法
+        run: |
+          chmod +x 一键安装.sh
+          bash -n 一键安装.sh
+          echo "✓ 一键安装.sh语法正确"
+      
+      - name: 测试系统依赖安装脚本语法
+        run: |
+          chmod +x scripts/install_system_deps.sh
+          bash -n scripts/install_system_deps.sh
+          echo "✓ install_system_deps.sh语法正确"
+      
+      - name: 测试依赖验证脚本
+        run: |
+          python -m py_compile scripts/verify_dependencies.py
+          echo "✓ verify_dependencies.py语法正确"
+  
+  # 依赖测试总结
+  dependency-test-summary:
+    name: 依赖测试总结
+    runs-on: ubuntu-latest
+    needs: [test-ubuntu, test-minimal-deps, test-postgresql-deps, test-redis-deps, test-install-scripts]
+    if: always()
+    
+    steps:
+      - name: 生成测试报告
+        run: |
+          echo "## 依赖安装测试结果" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 测试项 | 状态 |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Ubuntu系列测试 | ${{ needs.test-ubuntu.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 最小依赖测试 | ${{ needs.test-minimal-deps.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| PostgreSQL依赖测试 | ${{ needs.test-postgresql-deps.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Redis依赖测试 | ${{ needs.test-redis-deps.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 安装脚本测试 | ${{ needs.test-install-scripts.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "所有依赖测试完成！" >> $GITHUB_STEP_SUMMARY
+

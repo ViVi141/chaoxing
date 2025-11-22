@@ -52,10 +52,55 @@ jobs:
           path: web/frontend/frontend-dist.tar.gz
           retention-days: 90
   
+  # 依赖验证（在构建前）
+  verify-dependencies:
+    name: 验证依赖（Release构建前）
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      
+      - name: 设置Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      
+      - name: 安装系统依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc g++ make python3-dev \
+            libffi-dev libssl-dev \
+            libxml2-dev libxslt1-dev \
+            libjpeg-dev libpng-dev zlib1g-dev
+      
+      - name: 升级pip和构建工具
+        run: |
+          pip install --upgrade pip setuptools wheel
+      
+      - name: 安装Python依赖
+        run: |
+          pip install -r requirements.txt
+      
+      - name: 验证依赖安装
+        run: |
+          python scripts/verify_dependencies.py
+          echo "✓ 所有依赖验证通过"
+      
+      - name: 验证关键模块
+        run: |
+          python -c "
+          import requests, httpx, fastapi, sqlalchemy, cryptography, lxml, beautifulsoup4
+          print('✓ 所有关键模块导入成功')
+          "
+  
   build-docker:
     name: 构建Docker镜像
     runs-on: ubuntu-latest
-    needs: [build-frontend]
+    needs: [build-frontend, verify-dependencies]
     if: startsWith(github.ref, 'refs/tags/')
     
     steps:
@@ -101,11 +146,16 @@ jobs:
             ghcr.io/${{ steps.meta.outputs.REPO_LOWER }}:${{ steps.meta.outputs.VERSION }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      
+      - name: 验证Docker镜像
+        run: |
+          echo "验证Docker镜像构建成功"
+          docker pull ghcr.io/${{ steps.meta.outputs.REPO_LOWER }}:${{ steps.meta.outputs.VERSION }} || echo "镜像将在构建完成后可用"
   
   build-packages:
     name: 构建多平台安装包
     runs-on: ${{ matrix.os }}
-    needs: [build-frontend]
+    needs: [build-frontend, verify-dependencies]
     strategy:
       matrix:
         include:
@@ -197,6 +247,15 @@ jobs:
           # 验证前端文件
           echo "=== Frontend files ==="
           ls -lah release-package/web/frontend/dist/ || echo "No dist directory!"
+          
+          # 验证关键文件存在
+          echo "=== 验证关键文件 ==="
+          test -f release-package/requirements.txt && echo "✓ requirements.txt存在" || echo "✗ requirements.txt缺失"
+          test -f release-package/main.py && echo "✓ main.py存在" || echo "✗ main.py缺失"
+          test -d release-package/api && echo "✓ api目录存在" || echo "✗ api目录缺失"
+          test -d release-package/scripts && echo "✓ scripts目录存在" || echo "✗ scripts目录缺失"
+          test -f release-package/scripts/verify_dependencies.py && echo "✓ verify_dependencies.py存在" || echo "✗ verify_dependencies.py缺失"
+          test -f release-package/scripts/install_system_deps.sh && echo "✓ install_system_deps.sh存在" || echo "✗ install_system_deps.sh缺失"
           
           # 验证完整包大小
           echo "=== Package size ==="

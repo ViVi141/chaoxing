@@ -55,19 +55,52 @@ if %errorlevel% equ 0 (
     echo [!] 虚拟环境创建失败，将全局安装
 )
 
-REM 4. 安装Python依赖
+REM 4. 安装系统级依赖（Windows）
+echo.
+echo [*] 检查系统级依赖（Windows）...
+if exist "scripts\install_system_deps.bat" (
+    call scripts\install_system_deps.bat
+) else (
+    echo [!] 未找到系统依赖安装脚本，跳过
+)
+
+REM 5. 安装Python依赖
 echo.
 echo [*] 安装Python依赖（这可能需要几分钟）...
 python -m pip install --upgrade pip >nul 2>&1
+python -m pip install --upgrade pip setuptools wheel >nul 2>&1
+
+echo [*] 正在安装Python包...
 pip install -r requirements.txt
 
 if %errorlevel% equ 0 (
     echo [+] Python依赖安装完成
 ) else (
-    echo [!] 部分依赖安装失败，请检查网络或手动安装
+    echo [!] 依赖安装失败！
+    echo.
+    echo 常见问题解决方案:
+    echo   1. 确保已安装 Visual C++ Build Tools
+    echo   2. 尝试使用国内镜像源:
+    echo      pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+    echo   3. 查看详细错误信息，手动安装失败的包
+    echo.
+    pause
+    exit /b 1
 )
 
-REM 5. 检查前端
+REM 验证依赖安装
+if exist "scripts\verify_dependencies.py" (
+    echo.
+    echo [*] 验证依赖安装...
+    python scripts\verify_dependencies.py
+    if %errorlevel% equ 0 (
+        echo [+] 依赖验证通过
+    ) else (
+        echo [!] 部分依赖可能缺失，但可以继续安装
+    )
+)
+
+REM 6. 检查前端
 if not exist "web\frontend\dist" (
     echo.
     echo [!] 未找到前端构建文件
@@ -87,7 +120,7 @@ if not exist "web\frontend\dist" (
     )
 )
 
-REM 6. 生成配置文件
+REM 7. 生成配置文件
 echo.
 echo [*] 生成配置文件...
 
@@ -99,11 +132,11 @@ if not exist "config.ini" (
     echo [!] config.ini 已存在，跳过
 )
 
-REM 7. 创建必要目录
+REM 8. 创建必要目录
 if not exist "web\backend\logs" mkdir web\backend\logs
 if not exist "web\backend\data" mkdir web\backend\data
 
-REM 8. 选择运行模式
+REM 9. 选择运行模式
 echo.
 echo 选择运行模式:
 echo   1. 命令行模式（简单，适合个人）

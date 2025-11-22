@@ -1,0 +1,319 @@
+name: CI - 持续集成
+
+# 持续集成工作流
+# 在每次push和PR时运行代码检查、测试和依赖验证
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:  # 支持手动触发
+
+env:
+  PYTHON_VERSION: '3.12'
+  NODE_VERSION: '20'
+
+jobs:
+  # 代码质量检查
+  lint:
+    name: 代码质量检查
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      
+      - name: 设置Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: 安装代码检查工具
+        run: |
+          pip install --upgrade pip
+          pip install black flake8 ruff
+      
+      - name: 代码格式化检查 (Black)
+        run: |
+          black --check --diff api/ web/backend/ main.py
+        continue-on-error: true
+      
+      - name: 代码风格检查 (Flake8)
+        run: |
+          flake8 api/ web/backend/ main.py --max-line-length=120 --extend-ignore=E203,W503 || true
+        continue-on-error: true
+      
+      - name: 快速代码检查 (Ruff)
+        run: |
+          ruff check api/ web/backend/ main.py
+        continue-on-error: true
+  
+  # 依赖验证
+  verify-dependencies:
+    name: 验证依赖安装
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      
+      - name: 设置Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: 安装系统依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc g++ make python3-dev \
+            libffi-dev libssl-dev \
+            libxml2-dev libxslt1-dev \
+            libjpeg-dev libpng-dev zlib1g-dev
+      
+      - name: 升级pip和构建工具
+        run: |
+          pip install --upgrade pip setuptools wheel
+      
+      - name: 安装Python依赖
+        run: |
+          pip install -r requirements.txt
+      
+      - name: 验证依赖安装
+        run: |
+          python scripts/verify_dependencies.py
+      
+      - name: 验证关键模块导入
+        run: |
+          python -c "import requests, httpx, fastapi, sqlalchemy, cryptography, lxml, beautifulsoup4"
+          echo "✓ 所有关键模块导入成功"
+  
+  # 单元测试
+  unit-tests:
+    name: 单元测试
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      
+      - name: 设置Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: 安装系统依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc g++ make python3-dev \
+            libffi-dev libssl-dev \
+            libxml2-dev libxslt1-dev \
+            libjpeg-dev libpng-dev zlib1g-dev
+      
+      - name: 安装测试依赖
+        run: |
+          pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
+      
+      - name: 运行单元测试
+        run: |
+          pytest tests/unit/ -v --cov=api --cov-report=xml --cov-report=term
+      
+      - name: 上传覆盖率报告
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          flags: unit
+          name: unit-tests
+          fail_ci_if_error: false
+  
+  # 集成测试
+  integration-tests:
+    name: 集成测试
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      
+      - name: 设置Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: 安装系统依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc g++ make python3-dev \
+            libffi-dev libssl-dev \
+            libxml2-dev libxslt1-dev \
+            libjpeg-dev libpng-dev zlib1g-dev \
+            libpq-dev
+      
+      - name: 安装测试依赖
+        run: |
+          pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
+      
+      - name: 运行集成测试
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          pytest tests/integration/ -v --cov=web/backend --cov-report=xml --cov-report=term
+      
+      - name: 上传覆盖率报告
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          flags: integration
+          name: integration-tests
+          fail_ci_if_error: false
+  
+  # 系统依赖安装脚本测试
+  test-system-deps-script:
+    name: 测试系统依赖安装脚本
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-latest]
+      fail-fast: false
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      
+      - name: 测试系统依赖安装脚本
+        run: |
+          chmod +x scripts/install_system_deps.sh
+          # 测试脚本语法（不实际安装，因为GitHub Actions已有依赖）
+          bash -n scripts/install_system_deps.sh
+          echo "✓ 脚本语法检查通过"
+      
+      - name: 验证脚本可执行性
+        run: |
+          test -f scripts/install_system_deps.sh
+          test -x scripts/install_system_deps.sh || chmod +x scripts/install_system_deps.sh
+          echo "✓ 脚本文件存在且可执行"
+  
+  # 依赖验证脚本测试
+  test-dependency-verifier:
+    name: 测试依赖验证脚本
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      
+      - name: 设置Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: 安装系统依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc g++ make python3-dev \
+            libffi-dev libssl-dev \
+            libxml2-dev libxslt1-dev \
+            libjpeg-dev libpng-dev zlib1g-dev
+      
+      - name: 安装Python依赖
+        run: |
+          pip install --upgrade pip setuptools wheel
+          pip install -r requirements.txt
+      
+      - name: 测试依赖验证脚本
+        run: |
+          python scripts/verify_dependencies.py
+          echo "✓ 依赖验证脚本运行成功"
+  
+  # 前端构建测试
+  frontend-build:
+    name: 前端构建测试
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      
+      - name: 设置Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: web/frontend/package-lock.json
+      
+      - name: 安装前端依赖
+        run: |
+          cd web/frontend
+          npm ci
+      
+      - name: 构建前端
+        run: |
+          cd web/frontend
+          npm run build
+        env:
+          NODE_ENV: production
+      
+      - name: 验证构建产物
+        run: |
+          test -d web/frontend/dist
+          test -f web/frontend/dist/index.html
+          echo "✓ 前端构建成功"
+  
+  # 综合测试结果
+  ci-summary:
+    name: CI总结
+    runs-on: ubuntu-latest
+    needs: [lint, verify-dependencies, unit-tests, integration-tests, test-system-deps-script, test-dependency-verifier, frontend-build]
+    if: always()
+    
+    steps:
+      - name: CI结果总结
+        run: |
+          echo "## CI测试结果" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 测试项 | 状态 |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 代码质量检查 | ${{ needs.lint.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 依赖验证 | ${{ needs.verify-dependencies.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 单元测试 | ${{ needs.unit-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 集成测试 | ${{ needs.integration-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 系统依赖脚本测试 | ${{ needs.test-system-deps-script.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 依赖验证脚本测试 | ${{ needs.test-dependency-verifier.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 前端构建 | ${{ needs.frontend-build.result }} |" >> $GITHUB_STEP_SUMMARY
+

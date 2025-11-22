@@ -141,14 +141,64 @@ else
     print_success "虚拟环境已创建"
 fi
 
-# 4. 安装Python依赖
+# 4. 安装系统级依赖
+print_step "检查系统级依赖..."
+
+# 检查是否已安装系统依赖脚本
+if [ -f "scripts/install_system_deps.sh" ]; then
+    print_step "安装系统级依赖（需要sudo权限）..."
+    chmod +x scripts/install_system_deps.sh
+    
+    # 询问是否安装PostgreSQL支持
+    read -p "是否安装PostgreSQL支持? (y/N): " INSTALL_PG
+    
+    if [ "$INSTALL_PG" = "y" ] || [ "$INSTALL_PG" = "Y" ]; then
+        ./scripts/install_system_deps.sh with-postgresql
+    else
+        ./scripts/install_system_deps.sh
+    fi
+else
+    print_warning "未找到系统依赖安装脚本，跳过系统依赖安装"
+    print_warning "如果遇到编译错误，请手动安装系统依赖:"
+    echo "  Ubuntu/Debian: sudo apt-get install -y gcc python3-dev libffi-dev libssl-dev libxml2-dev libxslt1-dev"
+    echo "  CentOS/RHEL: sudo yum install -y gcc python3-devel libffi-devel openssl-devel libxml2-devel libxslt-devel"
+fi
+
+# 5. 安装Python依赖
 print_step "安装Python依赖..."
 pip install --upgrade pip
-pip install -r requirements.txt
+
+# 检查pip版本，使用更可靠的安装方式
+print_step "安装Python包（这可能需要几分钟）..."
+pip install --upgrade pip setuptools wheel
+
+# 尝试安装依赖，如果失败则提供详细错误信息
+if ! pip install -r requirements.txt; then
+    print_error "依赖安装失败！"
+    echo ""
+    print_warning "常见问题解决方案:"
+    echo "  1. 确保已安装系统级依赖（运行 scripts/install_system_deps.sh）"
+    echo "  2. 检查网络连接和pip源配置"
+    echo "  3. 尝试使用国内镜像源:"
+    echo "     pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple"
+    echo "  4. 查看详细错误信息，手动安装失败的包"
+    exit 1
+fi
 
 print_success "Python依赖安装完成"
 
-# 5. 生成配置文件
+# 验证依赖安装
+if [ -f "scripts/verify_dependencies.py" ]; then
+    print_step "验证依赖安装..."
+    python3 scripts/verify_dependencies.py
+    if [ $? -eq 0 ]; then
+        print_success "依赖验证通过"
+    else
+        print_warning "部分依赖可能缺失，但可以继续安装"
+    fi
+fi
+
+# 6. 生成配置文件
 print_step "生成配置文件..."
 
 if [ ! -f "config.ini" ]; then
@@ -159,11 +209,11 @@ else
     print_warning "config.ini 已存在，跳过"
 fi
 
-# 6. 创建日志目录
+# 7. 创建日志目录
 mkdir -p web/backend/logs
 mkdir -p web/backend/data
 
-# 7. 选择运行模式
+# 8. 选择运行模式
 echo ""
 print_step "选择运行模式:"
 echo "  1. 命令行模式（简单，适合个人）"

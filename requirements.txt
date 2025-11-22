@@ -4,6 +4,25 @@
 # 更新日期: 2025-10-13
 # Python版本要求: 3.12+
 # ================================
+#
+# ⚠️ 重要提示：安装前请先安装系统级依赖！
+#
+# Linux系统依赖安装:
+#   Ubuntu/Debian: sudo apt-get install -y gcc python3-dev libffi-dev libssl-dev libxml2-dev libxslt1-dev libjpeg-dev libpng-dev zlib1g-dev
+#   CentOS/RHEL: sudo yum install -y gcc python3-devel libffi-devel openssl-devel libxml2-devel libxslt-devel libjpeg-turbo-devel libpng-devel zlib-devel
+#   或运行: bash scripts/install_system_deps.sh
+#
+# Windows系统:
+#   通常不需要额外依赖，但建议安装 Visual C++ Build Tools
+#   下载: https://visualstudio.microsoft.com/downloads/
+#
+# 安装Python依赖:
+#   pip install --upgrade pip setuptools wheel
+#   pip install -r requirements.txt
+#
+# 验证安装:
+#   python scripts/verify_dependencies.py
+# ================================
 
 # ============ 核心依赖（命令行版） ============
 # HTTP请求

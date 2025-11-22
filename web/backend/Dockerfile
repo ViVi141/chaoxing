@@ -10,19 +10,36 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PYTHONPATH=/app
 
-# 安装系统依赖
+# 安装系统依赖（完整版，确保所有Python包都能正确编译）
 RUN apt-get update && apt-get install -y \
     gcc \
+    g++ \
+    make \
+    python3-dev \
+    libffi-dev \
+    libssl-dev \
+    libxml2-dev \
+    libxslt1-dev \
+    libjpeg-dev \
+    libpng-dev \
+    zlib1g-dev \
     postgresql-client \
+    libpq-dev \
     curl \
+    wget \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # 复制项目根目录的requirements.txt（context为项目根目录）
 COPY requirements.txt .
 
-# 安装Python依赖
-RUN pip install --upgrade pip && \
+# 安装Python依赖（先升级pip和构建工具）
+RUN pip install --upgrade pip setuptools wheel && \
     pip install -r requirements.txt
+
+# 验证关键依赖是否正确安装
+RUN python -c "import requests, httpx, fastapi, sqlalchemy, cryptography, lxml" || \
+    (echo "依赖验证失败！" && exit 1)
 
 # 复制整个项目到/app
 COPY . .

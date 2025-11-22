@@ -165,6 +165,7 @@ docker compose up -d
 - [Release下载指南](RELEASE_DOWNLOAD.md) - 快速找到适合你的版本！ 🌟
 - [快速部署](docs/QUICK_DEPLOY.md) - 各平台5分钟部署教程
 - [快速开始](docs/QUICK_START.md) - 功能使用指南
+- [依赖安装指南](docs/DEPENDENCY_INSTALLATION.md) - 解决依赖缺失问题 ⚠️
 - [完整文档索引](docs/INDEX.md) - 所有文档列表
 
 ### v2.3.0新增 🆕
@@ -190,6 +191,7 @@ docker compose up -d
 - [更新日志](docs/CHANGELOG.md) - 版本历史（含v2.3.0详情）
 - [常见问题](docs/FAQ.md) - FAQ
 - [配置指南](docs/CONFIGURATION.md) - 详细配置
+- [CI/CD增强](docs/CI_CD_ENHANCEMENT.md) - CI/CD流程说明 🆕
 
 ---
 

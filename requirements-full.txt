@@ -1,0 +1,16 @@
+# ================================
+# 完整依赖 - 包含所有功能（命令行版 + Web平台 + 开发工具）
+# 这是 requirements.txt 的完整版本，包含所有可选依赖
+# ================================
+
+# 包含 requirements.txt 的所有依赖
+-r requirements.txt
+
+# 额外的可选依赖（如果requirements.txt中没有）
+# 这些依赖通常已经在requirements.txt中，此文件用于明确列出
+
+# ================================
+# 注意: 此文件与 requirements.txt 内容相同
+# 如果 requirements.txt 已包含所有依赖，直接使用 requirements.txt 即可
+# ================================
+
