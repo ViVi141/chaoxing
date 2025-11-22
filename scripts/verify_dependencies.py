@@ -7,7 +7,19 @@
 
 import sys
 import importlib
+import os
 from typing import List, Tuple
+
+# 设置输出编码（Windows兼容）
+if sys.platform == 'win32':
+    try:
+        # 尝试设置UTF-8编码
+        if hasattr(sys.stdout, 'reconfigure'):
+            sys.stdout.reconfigure(encoding='utf-8')
+            sys.stderr.reconfigure(encoding='utf-8')
+    except Exception:
+        # 如果失败，使用ASCII字符
+        pass
 
 # 必需的核心依赖
 CORE_DEPS = [
@@ -74,6 +86,8 @@ def check_module(module_name: str) -> Tuple[bool, str]:
             import_name = "multipart"
         elif module_name == "email-validator":
             import_name = "email_validator"
+        elif module_name == "python-dotenv":
+            import_name = "dotenv"
         
         importlib.import_module(import_name)
         return True, ""
@@ -127,10 +141,16 @@ def main():
     for dep_name, description in OPTIONAL_DEPS:
         success, error = check_module(dep_name)
         if success:
-            print(f"  ✓ {dep_name} - {description}")
+            try:
+                print(f"  ✓ {dep_name} - {description}")
+            except UnicodeEncodeError:
+                print(f"  [OK] {dep_name} - {description}")
             optional_success += 1
         else:
-            print(f"  ⚠ {dep_name} - 未安装 ({description})")
+            try:
+                print(f"  ⚠ {dep_name} - 未安装 ({description})")
+            except UnicodeEncodeError:
+                print(f"  [WARN] {dep_name} - 未安装 ({description})")
     
     # 总结
     print(f"\n{'='*60}")
@@ -144,10 +164,16 @@ def main():
     total_required = core_total + web_total
     
     if core_success == core_total and web_success == web_total:
-        print(f"\n✓ 所有必需依赖已正确安装！")
+        try:
+            print(f"\n✓ 所有必需依赖已正确安装！")
+        except UnicodeEncodeError:
+            print(f"\n[SUCCESS] 所有必需依赖已正确安装！")
         return 0
     else:
-        print(f"\n✗ 缺少 {total_required - total_success} 个必需依赖")
+        try:
+            print(f"\n✗ 缺少 {total_required - total_success} 个必需依赖")
+        except UnicodeEncodeError:
+            print(f"\n[FAIL] 缺少 {total_required - total_success} 个必需依赖")
         print("\n请运行以下命令安装缺失的依赖:")
         print("  pip install -r requirements.txt")
         return 1
