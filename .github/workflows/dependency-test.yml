@@ -28,11 +28,12 @@ env:
 jobs:
   # Ubuntu/Debian系列测试
   test-ubuntu:
-    name: 测试Ubuntu依赖安装
+    name: 测试Ubuntu依赖安装 (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 10  # 设置超时，避免无限等待
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-latest]
+        os: [ubuntu-22.04, ubuntu-latest]  # 移除 ubuntu-20.04，GitHub 将在 2025-04-15 停止支持
       fail-fast: false
     
     steps:

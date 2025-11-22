@@ -205,11 +205,12 @@ jobs:
   
   # 系统依赖安装脚本测试
   test-system-deps-script:
-    name: 测试系统依赖安装脚本
+    name: 测试系统依赖安装脚本 (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 5  # 设置超时，避免无限等待
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-latest]
+        os: [ubuntu-22.04, ubuntu-latest]  # 移除 ubuntu-20.04，因为可能不再被支持
       fail-fast: false
     
     steps:
@@ -217,6 +218,7 @@ jobs:
         uses: actions/checkout@v4
       
       - name: 测试系统依赖安装脚本
+        timeout-minutes: 2  # 单个步骤超时
         run: |
           chmod +x scripts/install_system_deps.sh
           # 测试脚本语法（不实际安装，因为GitHub Actions已有依赖）
@@ -224,6 +226,7 @@ jobs:
           echo "✓ 脚本语法检查通过"
       
       - name: 验证脚本可执行性
+        timeout-minutes: 1  # 单个步骤超时
         run: |
           test -f scripts/install_system_deps.sh
           test -x scripts/install_system_deps.sh || chmod +x scripts/install_system_deps.sh
