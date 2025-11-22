@@ -57,6 +57,11 @@ export const DatabaseMigration: React.FC = () => {
   const [migrationStatus, setMigrationStatus] = useState<MigrationStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [testingPG, setTestingPG] = useState(false);
+
+  // 设置页面标题
+  useEffect(() => {
+    document.title = '数据库迁移 - 超星学习通管理平台';
+  }, []);
   const [testingRedis, setTestingRedis] = useState(false);
   const [pgTestResult, setPgTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [redisTestResult, setRedisTestResult] = useState<{ success: boolean; message: string } | null>(null);

@@ -8,7 +8,7 @@ import {
   EyeOutlined,
   PauseCircleOutlined
 } from '@ant-design/icons';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { axiosInstance } from '../../providers/authProvider';
 import { useNavigate } from 'react-router-dom';
 
@@ -36,6 +36,11 @@ export const TaskList = () => {
   const [actionLoading, setActionLoading] = useState<Record<number, boolean>>({});
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const navigate = useNavigate();
+
+  // 设置页面标题
+  useEffect(() => {
+    document.title = '任务管理 - 超星学习通管理平台';
+  }, []);
 
   const refetch = () => window.location.reload();
 

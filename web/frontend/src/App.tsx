@@ -60,6 +60,7 @@ function App() {
                 list: '/',
                 meta: {
                   label: '仪表盘',
+                  title: '仪表盘 - 超星学习通管理平台',
                   icon: <span>📊</span>,
                 },
               },
@@ -70,6 +71,7 @@ function App() {
                 create: '/tasks/create',
                 meta: {
                   label: '任务管理',
+                  title: '任务管理 - 超星学习通管理平台',
                   icon: <span>📝</span>,
                 },
               },
@@ -78,6 +80,7 @@ function App() {
                 list: '/config',
                 meta: {
                   label: '配置管理',
+                  title: '配置管理 - 超星学习通管理平台',
                   icon: <span>⚙️</span>,
                 },
               },
@@ -93,6 +96,7 @@ function App() {
                 list: '/admin/dashboard',
                 meta: {
                   label: '控制台',
+                  title: '管理员控制台 - 超星学习通管理平台',
                   parent: 'admin',
                 },
               },
@@ -103,6 +107,7 @@ function App() {
                 edit: '/admin/users/edit/:id',
                 meta: {
                   label: '用户管理',
+                  title: '用户管理 - 超星学习通管理平台',
                   parent: 'admin',
                 },
               },
@@ -111,6 +116,7 @@ function App() {
                 list: '/admin/tasks',
                 meta: {
                   label: '任务监控',
+                  title: '任务监控 - 超星学习通管理平台',
                   parent: 'admin',
                 },
               },
@@ -119,6 +125,7 @@ function App() {
                 list: '/admin/system-config',
                 meta: {
                   label: '系统配置',
+                  title: '系统配置 - 超星学习通管理平台',
                   parent: 'admin',
                 },
               },
@@ -127,6 +134,7 @@ function App() {
                 list: '/admin/database-migration',
                 meta: {
                   label: '数据库迁移',
+                  title: '数据库迁移 - 超星学习通管理平台',
                   parent: 'admin',
                 },
               },

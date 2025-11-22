@@ -12,6 +12,11 @@ export const ConfigPageFull = () => {
   const [loading, setLoading] = useState(false);
   const [testingTiku, setTestingTiku] = useState(false);
 
+  // 设置页面标题
+  useEffect(() => {
+    document.title = '配置管理 - 超星学习通管理平台';
+  }, []);
+
   useEffect(() => {
     loadConfig();
   }, []);

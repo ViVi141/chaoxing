@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
+import sqlalchemy
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -133,6 +134,27 @@ async def recover_interrupted_tasks():
         logger.error(f"❌ 恢复被中断任务时出错: {e}", exc_info=True)
 
 
+async def wait_for_database(max_retries: int = 30, retry_delay: float = 1.0):
+    """等待数据库连接就绪"""
+    import asyncio
+    from sqlalchemy.exc import OperationalError
+    
+    for attempt in range(max_retries):
+        try:
+            async with engine.begin() as conn:
+                await conn.execute(sqlalchemy.text("SELECT 1"))
+            logger.info("✅ 数据库连接成功")
+            return True
+        except (OperationalError, Exception) as e:
+            if attempt < max_retries - 1:
+                logger.warning(f"⏳ 等待数据库就绪... ({attempt + 1}/{max_retries})")
+                await asyncio.sleep(retry_delay)
+            else:
+                logger.error(f"❌ 数据库连接失败: {e}")
+                raise
+    return False
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator:
     """应用生命周期管理"""
@@ -151,9 +173,19 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     logger.info(f"   数据库: {settings.DATABASE_URL}")
     logger.info(f"   部署模式: {settings.DEPLOY_MODE}")
 
+    # 等待数据库就绪（PostgreSQL 需要时间初始化）
+    if settings.DEPLOY_MODE == "standard":
+        logger.info("⏳ 等待数据库连接就绪...")
+        await wait_for_database()
+
     # 创建数据库表
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("✅ 数据库表已创建/验证")
+    except Exception as e:
+        logger.error(f"❌ 创建数据库表失败: {e}", exc_info=True)
+        raise
 
     # 初始化默认管理员
     await init_default_admin()

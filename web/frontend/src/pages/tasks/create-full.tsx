@@ -22,6 +22,11 @@ export const TaskCreateFull = () => {
   const [loading, setLoading] = useState(false);
   const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>([]);
 
+  // 设置页面标题
+  useEffect(() => {
+    document.title = '创建任务 - 超星学习通管理平台';
+  }, []);
+
   // 获取课程列表
   const loadCourses = async () => {
     try {

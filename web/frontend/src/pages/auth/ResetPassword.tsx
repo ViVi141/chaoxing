@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, Form, Input, Button, Alert, Typography, Result } from 'antd';
 import { LockOutlined, CheckCircleOutlined } from '@ant-design/icons';
@@ -13,6 +13,11 @@ export const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+
+  // 设置页面标题
+  useEffect(() => {
+    document.title = '重置密码 - 超星学习通管理平台';
+  }, []);
 
   const token = searchParams.get('token');
 

@@ -1,11 +1,17 @@
 import { useLogin } from '@refinedev/core';
 import { Form, Input, Button, Checkbox, Card, Typography, Space } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
+import { useEffect } from 'react';
 
 const { Title, Text } = Typography;
 
 export const CustomLogin = () => {
   const { mutate: login, isPending } = useLogin();
+
+  // 设置页面标题
+  useEffect(() => {
+    document.title = '登录 - 超星学习通管理平台';
+  }, []);
 
   const onFinish = (values: any) => {
     login(values);

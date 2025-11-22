@@ -399,36 +399,45 @@ async def init_default_admin():
     from database import AsyncSessionLocal
     from config import settings
     
-    async with AsyncSessionLocal() as db:
-        # 检查是否已存在管理员
-        result = await db.execute(
-            select(User).where(User.username == settings.DEFAULT_ADMIN_USERNAME)
-        )
-        admin = result.scalar_one_or_none()
-        
-        if not admin:
-            # 创建默认管理员
-            admin = User(
-                username=settings.DEFAULT_ADMIN_USERNAME,
-                email=settings.DEFAULT_ADMIN_EMAIL,
-                role="admin",
-                is_active=True,
-                email_verified=True,  # 默认管理员邮箱已验证
+    try:
+        async with AsyncSessionLocal() as db:
+            # 检查是否已存在管理员
+            result = await db.execute(
+                select(User).where(User.username == settings.DEFAULT_ADMIN_USERNAME)
             )
-            admin.set_password(settings.DEFAULT_ADMIN_PASSWORD)
+            admin = result.scalar_one_or_none()
             
-            # 创建用户配置
-            from models import UserConfig
-            config = UserConfig(user=admin)
-            
-            db.add(admin)
-            db.add(config)
-            await db.commit()
-            await db.refresh(admin)
-            
-            logger.info(f"✅ 默认管理员已创建: {admin.username}")
-        else:
-            logger.debug(f"默认管理员已存在: {admin.username}")
+            if not admin:
+                # 创建默认管理员
+                admin = User(
+                    username=settings.DEFAULT_ADMIN_USERNAME,
+                    email=settings.DEFAULT_ADMIN_EMAIL,
+                    role="admin",
+                    is_active=True,
+                    email_verified=True,  # 默认管理员邮箱已验证
+                )
+                admin.set_password(settings.DEFAULT_ADMIN_PASSWORD)
+                
+                # 创建用户配置
+                from models import UserConfig
+                config = UserConfig(user=admin)
+                
+                db.add(admin)
+                db.add(config)
+                await db.commit()
+                await db.refresh(admin)
+                
+                logger.info(f"✅ 默认管理员已创建: {admin.username}")
+                logger.info(f"   用户名: {settings.DEFAULT_ADMIN_USERNAME}")
+                logger.info(f"   密码: {settings.DEFAULT_ADMIN_PASSWORD}")
+                logger.info(f"   邮箱: {settings.DEFAULT_ADMIN_EMAIL}")
+                logger.warning("⚠️  请登录后立即修改默认密码！")
+            else:
+                logger.info(f"✅ 默认管理员已存在: {admin.username}")
+    except Exception as e:
+        logger.error(f"❌ 初始化默认管理员失败: {e}", exc_info=True)
+        logger.error("   请检查数据库连接和配置")
+        # 不抛出异常，允许应用继续启动，但记录错误
 
 
 # 重新导出，供其他路由文件使用

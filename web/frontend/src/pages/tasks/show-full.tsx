@@ -31,6 +31,15 @@ export const TaskShowFull = () => {
   const record = data?.data;
   const navigate = useNavigate();
 
+  // 设置页面标题
+  useEffect(() => {
+    if (record) {
+      document.title = `任务详情 - ${record.course_name || '任务'} - 超星学习通管理平台`;
+    } else {
+      document.title = '任务详情 - 超星学习通管理平台';
+    }
+  }, [record]);
+
   const [realTimeProgress, setRealTimeProgress] = useState(0);
   const [realTimeLogs, setRealTimeLogs] = useState<string[]>([]);
   const [actionLoading, setActionLoading] = useState(false);

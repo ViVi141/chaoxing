@@ -38,6 +38,11 @@ export const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [recovering, setRecovering] = useState(false);
 
+  // 设置页面标题
+  useEffect(() => {
+    document.title = '管理员控制台 - 超星学习通管理平台';
+  }, []);
+
   useEffect(() => {
     loadData();
   }, []);

@@ -14,6 +14,11 @@ export const SystemConfig = () => {
   const [editableConfigs, setEditableConfigs] = useState<any>(null);
   const [editingConfig, setEditingConfig] = useState<{[key: string]: any}>({});
 
+  // 设置页面标题
+  useEffect(() => {
+    document.title = '系统配置 - 超星学习通管理平台';
+  }, []);
+
   // 加载SMTP配置
   const loadSMTPConfig = async () => {
     try {

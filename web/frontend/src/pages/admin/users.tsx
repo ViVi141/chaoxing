@@ -1,5 +1,6 @@
 import { List, useTable, EditButton, DeleteButton, ShowButton } from '@refinedev/antd';
 import { Table, Space, Tag, Switch, message } from 'antd';
+import { useEffect } from 'react';
 import { axiosInstance } from '../../providers/authProvider';
 
 export const AdminUsersList = () => {
@@ -7,6 +8,11 @@ export const AdminUsersList = () => {
     resource: 'admin/users',
     syncWithLocation: true,
   });
+
+  // 设置页面标题
+  useEffect(() => {
+    document.title = '用户管理 - 超星学习通管理平台';
+  }, []);
 
   const handleToggleActive = async (userId: number, currentStatus: boolean) => {
     try {

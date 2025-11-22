@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Form, Input, Button, Alert, Typography } from 'antd';
 import { MailOutlined, ArrowLeftOutlined } from '@ant-design/icons';
@@ -12,6 +12,11 @@ export const ForgotPassword = () => {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+
+  // 设置页面标题
+  useEffect(() => {
+    document.title = '忘记密码 - 超星学习通管理平台';
+  }, []);
 
   const onFinish = async (values: any) => {
     try {

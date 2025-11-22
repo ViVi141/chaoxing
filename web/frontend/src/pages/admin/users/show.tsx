@@ -2,6 +2,7 @@ import { Show } from '@refinedev/antd';
 import { Descriptions, Card, Tag, Typography, Space, Button } from 'antd';
 import { useShow, useNavigation } from '@refinedev/core';
 import { EditOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { useEffect } from 'react';
 
 const { Text } = Typography;
 
@@ -11,6 +12,15 @@ export const AdminUserShow = () => {
   const { list, edit } = useNavigation();
 
   const record = data?.data;
+
+  // 设置页面标题
+  useEffect(() => {
+    if (record) {
+      document.title = `用户详情 - ${record.username || '用户'} - 超星学习通管理平台`;
+    } else {
+      document.title = '用户详情 - 超星学习通管理平台';
+    }
+  }, [record]);
 
   return (
     <Show

@@ -3,6 +3,7 @@ import { Form, Input, Switch, Select, Card, Space, Button } from 'antd';
 import { useForm } from '@refinedev/antd';
 import { useNavigation } from '@refinedev/core';
 import { ArrowLeftOutlined } from '@ant-design/icons';
+import { useEffect } from 'react';
 
 export const AdminUserEdit = () => {
   const { formProps, saveButtonProps } = useForm({ 
@@ -10,6 +11,11 @@ export const AdminUserEdit = () => {
     redirect: 'show'
   });
   const { list } = useNavigation();
+
+  // 设置页面标题
+  useEffect(() => {
+    document.title = '编辑用户 - 超星学习通管理平台';
+  }, []);
 
   return (
     <Edit

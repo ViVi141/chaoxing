@@ -56,6 +56,11 @@ export const DashboardPageFull = () => {
   const [recentTasks, setRecentTasks] = useState<RecentTask[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // 设置页面标题
+  useEffect(() => {
+    document.title = '仪表盘 - 超星学习通管理平台';
+  }, []);
+
   useEffect(() => {
     loadDashboardData();
   }, []);

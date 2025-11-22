@@ -1,6 +1,7 @@
 import { List, useTable, ShowButton } from '@refinedev/antd';
 import { Table, Space, Tag, Button, Popconfirm, message, Progress } from 'antd';
 import { StopOutlined, ReloadOutlined } from '@ant-design/icons';
+import { useEffect } from 'react';
 import { axiosInstance } from '../../providers/authProvider';
 
 const statusColors: Record<string, string> = {
@@ -26,6 +27,11 @@ export const AdminTasksList = () => {
     resource: 'admin/tasks',
     syncWithLocation: true,
   });
+
+  // 设置页面标题
+  useEffect(() => {
+    document.title = '任务监控 - 超星学习通管理平台';
+  }, []);
 
   const handleCancelTask = async (taskId: number) => {
     try {

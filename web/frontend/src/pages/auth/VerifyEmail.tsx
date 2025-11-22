@@ -10,6 +10,11 @@ export const VerifyEmail = () => {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('正在验证邮箱...');
 
+  // 设置页面标题
+  useEffect(() => {
+    document.title = '邮箱验证 - 超星学习通管理平台';
+  }, []);
+
   useEffect(() => {
     const token = searchParams.get('token');
     
