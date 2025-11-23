@@ -1,4 +1,4 @@
-import { Refine } from '@refinedev/core';
+import { Refine, Authenticated } from '@refinedev/core';
 import {
   AuthPage,
   ErrorComponent,
@@ -143,16 +143,21 @@ function App() {
             <Routes>
               <Route
                 element={
-                  <ThemedLayout
-                    Title={({ collapsed }) => (
-                      <ThemedTitle
-                        collapsed={collapsed}
-                        text="超星学习通"
-                      />
-                    )}
+                  <Authenticated
+                    key="authenticated-layout"
+                    fallback={<ErrorComponent />}
                   >
-                    <Outlet />
-                  </ThemedLayout>
+                    <ThemedLayout
+                      Title={({ collapsed }) => (
+                        <ThemedTitle
+                          collapsed={collapsed}
+                          text="超星学习通"
+                        />
+                      )}
+                    >
+                      <Outlet />
+                    </ThemedLayout>
+                  </Authenticated>
                 }
               >
                 <Route index element={<DashboardPageFull />} />

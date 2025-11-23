@@ -437,6 +437,14 @@ async def init_default_admin():
                 else:
                     logger.info(f"✅ 默认管理员已存在: {admin.username}")
                     logger.debug(f"   用户ID: {admin.id}, 邮箱: {admin.email}")
+                    # 确保密码是最新的（如果配置有变或密码不匹配）
+                    if not admin.check_password(settings.DEFAULT_ADMIN_PASSWORD):
+                        logger.info(f"🔄 更新默认管理员密码...")
+                        admin.set_password(settings.DEFAULT_ADMIN_PASSWORD)
+                        await db.commit()
+                        logger.info(f"✅ 默认管理员密码已更新为: {settings.DEFAULT_ADMIN_PASSWORD}")
+                    else:
+                        logger.debug(f"   密码验证通过（默认密码）")
             except Exception as inner_e:
                 await db.rollback()
                 raise inner_e

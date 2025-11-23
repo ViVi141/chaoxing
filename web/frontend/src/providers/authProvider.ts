@@ -88,9 +88,30 @@ export const authProvider: AuthProvider = {
 
   check: async () => {
     const token = localStorage.getItem('token');
-    if (token) {
+    if (!token) {
       return {
-        authenticated: true,
+        authenticated: false,
+        redirectTo: '/login',
+        logout: true,
+      };
+    }
+
+    // 验证 token 是否有效
+    try {
+      const response = await axiosInstance.get('/auth/me');
+      if (response.data) {
+        return {
+          authenticated: true,
+        };
+      }
+    } catch (error: any) {
+      // Token 无效，清除并重定向到登录页
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      return {
+        authenticated: false,
+        redirectTo: '/login',
+        logout: true,
       };
     }
 
